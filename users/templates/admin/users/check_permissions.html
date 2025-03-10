@@ -1,0 +1,73 @@
+{% extends "admin/base_site.html" %}
+{% load i18n %}
+{% load static %}
+
+{% block title %}{% trans "User Permissions" %} | {{ user.username }}{% endblock %}
+
+{% block breadcrumbs %}
+<div class="breadcrumbs">
+    <a href="{% url 'admin:index' %}">{% trans "Home" %}</a> &rsaquo;
+    <a href="{% url 'admin:users_customuser_changelist' %}">{% trans "Users" %}</a> &rsaquo;
+    <a href="{% url 'admin:users_customuser_change' user.id %}">{{ user.username }}</a> &rsaquo;
+    {% trans "Permissions" %}
+</div>
+{% endblock %}
+
+{% block content %}
+<div id="content-main">
+    <h1>{% trans "Permissions for" %} {{ user.username }}</h1>
+    
+    <div class="module">
+        <h2>{% trans "User Groups" %}</h2>
+        <div class="form-row">
+            {% if groups %}
+                <ul>
+                    {% for group in groups %}
+                        <li><strong>{{ group }}</strong></li>
+                    {% endfor %}
+                </ul>
+            {% else %}
+                <p>{% trans "This user is not a member of any groups." %}</p>
+            {% endif %}
+        </div>
+    </div>
+    
+    <div class="module">
+        <h2>{% trans "Permissions by Application" %}</h2>
+        
+        {% for app_label, models in permissions_by_app.items %}
+            <div class="module">
+                <h3>{{ app_label|title }}</h3>
+                
+                {% for model_name, perms in models.items %}
+                    <div class="form-row">
+                        <h4>{{ model_name|title }}</h4>
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>{% trans "Permission" %}</th>
+                                    <th>{% trans "Has Permission" %}</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for perm in perms %}
+                                    <tr>
+                                        <td>{{ perm.name }}</td>
+                                        <td>
+                                            {% if perm.has_perm %}
+                                                <img src="{% static 'admin/img/icon-yes.svg' %}" alt="True">
+                                            {% else %}
+                                                <img src="{% static 'admin/img/icon-no.svg' %}" alt="False">
+                                            {% endif %}
+                                        </td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% endfor %}
+            </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %} 

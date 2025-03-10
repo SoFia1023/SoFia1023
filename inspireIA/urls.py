@@ -9,10 +9,12 @@ from django.urls import path, include
 from catalog import views as catalog_views
 from django.conf import settings
 from django.conf.urls.static import static
+from .admin import admin_site
 
 urlpatterns = [
-    # Admin
-    path('admin/', admin.site.urls),
+    # Admin sites
+    path('admin/', admin.site.urls),  # Default admin site (for backward compatibility)
+    path('inspire-admin/', admin_site.urls, name='inspire_admin'),  # Custom admin site
     
     # Main pages
     path('', catalog_views.home, name='home'),
@@ -28,6 +30,9 @@ urlpatterns = [
     
     # Interaction app - handles chats, favorites, sharing
     path('interaction/', include('interaction.urls')),
+    
+    # Users app
+    path('users/', include('users.urls')),
     
     # Favorites
     path('ai/<uuid:ai_id>/favorite/', catalog_views.toggle_favorite, name='toggle_favorite'),

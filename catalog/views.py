@@ -1,4 +1,5 @@
-from .models import AITool, UserFavorite, Conversation, Message
+from .models import AITool, UserFavorite
+from interaction.models import Conversation, Message
 from django.shortcuts import render, redirect, get_object_or_404
 from django.db.models import Q
 from django.contrib.auth import get_user_model, authenticate, login, logout
