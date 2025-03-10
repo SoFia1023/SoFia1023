@@ -76,59 +76,73 @@ def chat_view(request, ai_id=None, conversation_id=None):
 @require_POST
 def send_message(request, conversation_id):
     """Handle sending a message in a conversation."""
-    conversation = get_object_or_404(
-        Conversation, 
-        id=conversation_id,
-        user=request.user
-    )
+    # Add debug logging
+    print(f"Received message request for conversation {conversation_id}")
     
-    # Get message from request
-    data = json.loads(request.body)
-    user_message = data.get('message', '').strip()
-    
-    if not user_message:
-        return JsonResponse({'error': 'Message cannot be empty'}, status=400)
-    
-    # Save user message
-    Message.objects.create(
-        conversation=conversation,
-        content=user_message,
-        is_user=True
-    )
-    
-    # Update conversation timestamp
-    conversation.updated_at = timezone.now()
-    conversation.save()
-    
-    # Process with appropriate API based on AI tool type
-    ai_tool = conversation.ai_tool
-    
-    # Prepare service configuration
-    service_config = {
-        'api_type': ai_tool.api_type,
-        'api_model': ai_tool.api_model,
-        'api_endpoint': ai_tool.api_endpoint
-    }
-    
-    # Send message to AI service
-    response = AIService.send_to_ai_service(user_message, service_config)
-    
-    if response.get('success'):
-        ai_response = response['data']
-    else:
-        ai_response = f"Error: {response.get('error', 'An error occurred while processing your request.')}"
-    
-    # Save AI response
-    ai_message = Message.objects.create(
-        conversation=conversation,
-        content=ai_response,
-        is_user=False
-    )
-    
-    return JsonResponse({
-        'message': ai_response,
-        'timestamp': ai_message.timestamp.isoformat()
-    })
+    try:
+        conversation = get_object_or_404(
+            Conversation, 
+            id=conversation_id,
+            user=request.user
+        )
+        
+        # Get message from request
+        data = json.loads(request.body)
+        user_message = data.get('message', '').strip()
+        
+        print(f"Message content: {user_message}")
+        
+        if not user_message:
+            print("Error: Empty message")
+            return JsonResponse({'error': 'Message cannot be empty'}, status=400)
+        
+        # Save user message
+        Message.objects.create(
+            conversation=conversation,
+            content=user_message,
+            is_user=True
+        )
+        
+        # Update conversation timestamp
+        conversation.updated_at = timezone.now()
+        conversation.save()
+        
+        # Process with appropriate API based on AI tool type
+        ai_tool = conversation.ai_tool
+        
+        # Prepare service configuration
+        service_config = {
+            'api_type': ai_tool.api_type,
+            'api_model': ai_tool.api_model,
+            'api_endpoint': ai_tool.api_endpoint
+        }
+        
+        print(f"Using service config: {service_config}")
+        
+        # Send message to AI service
+        response = AIService.send_to_ai_service(user_message, service_config)
+        
+        print(f"AI service response: {response}")
+        
+        if response.get('success'):
+            ai_response = response['data']
+        else:
+            ai_response = f"Error: {response.get('error', 'An error occurred while processing your request.')}"
+        
+        # Save AI response
+        ai_message = Message.objects.create(
+            conversation=conversation,
+            content=ai_response,
+            is_user=False
+        )
+        
+        return JsonResponse({
+            'message': ai_response,
+            'timestamp': ai_message.timestamp.isoformat()
+        })
+    except Exception as e:
+        print(f"Error in send_message: {str(e)}")
+        return JsonResponse({'error': f'An error occurred: {str(e)}'}, status=500)
 
 @login_required
 def conversation_history(request):

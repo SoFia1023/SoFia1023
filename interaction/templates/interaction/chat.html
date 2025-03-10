@@ -4,77 +4,34 @@
 {% block title %}Chat with {{ ai_tool.name }} - Inspire AI{% endblock %}
 
 {% block extra_css %}
-<style>
-    .chat-container {
-        height: calc(100vh - 250px);
-        min-height: 400px;
-        display: flex;
-        flex-direction: column;
-    }
-    
-    .chat-messages {
-        flex: 1;
-        overflow-y: auto;
-        padding: 1rem;
-        background-color: #f8f9fa;
-        border-radius: 0.5rem;
-    }
-    
-    .message {
-        margin-bottom: 1rem;
-        max-width: 80%;
-    }
-    
-    .message-user {
-        align-self: flex-end;
-        margin-left: auto;
-        background-color: #007bff;
-        color: white;
-        border-radius: 1rem 1rem 0 1rem;
-    }
-    
-    .message-ai {
-        align-self: flex-start;
-        background-color: #e9ecef;
-        color: #212529;
-        border-radius: 1rem 1rem 1rem 0;
-    }
-    
-    .message-content {
-        padding: 0.75rem 1rem;
-    }
-    
-    .message-time {
-        font-size: 0.75rem;
-        text-align: right;
-        margin-top: 0.25rem;
-        opacity: 0.8;
-    }
-    
-    .chat-input {
-        margin-top: 1rem;
-    }
-    
-    .favorite-prompts {
-        max-height: 200px;
-        overflow-y: auto;
-    }
-</style>
+<link rel="stylesheet" href="{% static 'interaction/css/chat.css' %}">
 {% endblock %}
 
 {% block content %}
-<div class="container py-4">
-    <div class="row mb-3">
-        <div class="col-12">
-            <div class="d-flex justify-content-between align-items-center">
-                <h1 class="h3">
-                    <a href="{% url 'chat_selection' %}" class="text-decoration-none">
-                        <i class="bi bi-arrow-left me-2"></i>
-                    </a>
-                    Chat with {{ ai_tool.name }}
-                </h1>
+<div class="chat-wrapper">
+    <!-- Main Chat Area -->
+    <div class="chat-main">
+        <!-- Chat Header -->
+        <div class="chat-header">
+            <div class="chat-header-info">
+                <a href="{% url 'chat_selection' %}" class="chat-header-button">
+                    <i class="bi bi-arrow-left"></i>
+                </a>
+                {% if ai_tool.image %}
+                <img src="{{ ai_tool.image.url }}" alt="{{ ai_tool.name }}" class="chat-header-avatar">
+                {% else %}
+                <div class="chat-header-avatar" style="display: flex; align-items: center; justify-content: center; color: white;">
+                    <i class="bi bi-robot"></i>
+                </div>
+                {% endif %}
+                <div>
+                    <div class="chat-header-title">{{ ai_tool.name }}</div>
+                    <div class="chat-header-subtitle">{{ ai_tool.provider }}</div>
+                </div>
+            </div>
+            <div class="chat-header-actions">
                 <div class="dropdown">
-                    <button class="btn btn-outline-secondary dropdown-toggle" type="button" id="chatOptionsDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                    <button class="chat-header-button" type="button" id="chatOptionsDropdown" data-bs-toggle="dropdown" aria-expanded="false">
                         <i class="bi bi-three-dots-vertical"></i>
                     </button>
                     <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="chatOptionsDropdown">
@@ -96,102 +53,146 @@
                 </div>
             </div>
         </div>
-    </div>
 
-    <div class="row">
-        <!-- Chat Area -->
-        <div class="col-md-8">
-            <div class="chat-container">
-                <div class="chat-messages" id="chatMessages">
-                    {% if messages %}
-                        {% for message in messages %}
-                            <div class="message {% if message.is_user %}message-user{% else %}message-ai{% endif %}">
-                                <div class="message-content">{{ message.content|linebreaksbr }}</div>
-                                <div class="message-time">{{ message.timestamp|time:"H:i" }}</div>
+        <!-- Chat Container -->
+        <div class="chat-container">
+            <div class="chat-messages" id="chatMessages">
+                {% if messages %}
+                    <!-- User Groups Messages -->
+                    {% for message in messages %}
+                        <div class="message-group">
+                            {% if message.is_user %}
+                                <div class="message-avatar user-avatar">
+                                    <i class="bi bi-person-fill"></i>
+                                </div>
+                            {% else %}
+                                {% if ai_tool.image %}
+                                <img src="{{ ai_tool.image.url }}" alt="{{ ai_tool.name }}" class="message-avatar ai-avatar">
+                                {% else %}
+                                <div class="message-avatar ai-avatar" style="display: flex; align-items: center; justify-content: center;">
+                                    <i class="bi bi-robot"></i>
+                                </div>
+                                {% endif %}
+                            {% endif %}
+                            
+                            <div class="message-content-wrapper">
+                                <div class="message-sender">
+                                    {% if message.is_user %}You{% else %}{{ ai_tool.name }}{% endif %}
+                                </div>
+                                <div class="message-bubbles">
+                                    <div class="message {% if message.is_user %}message-user{% else %}message-ai{% endif %}">
+                                        <div class="message-bubble">{{ message.content|linebreaksbr }}</div>
+                                        <div class="message-time">{{ message.timestamp|time:"H:i" }}</div>
+                                    </div>
+                                </div>
                             </div>
-                        {% endfor %}
-                    {% else %}
-                        <div class="text-center text-muted py-5">
-                            <i class="bi bi-chat-dots fs-1"></i>
-                            <p class="mt-3">Start a conversation with {{ ai_tool.name }}</p>
                         </div>
-                    {% endif %}
+                    {% endfor %}
+                {% else %}
+                    <!-- Empty State -->
+                    <div class="chat-empty-state">
+                        <div class="chat-empty-state-icon">
+                            <i class="bi bi-chat-dots" style="font-size: 3rem;"></i>
+                        </div>
+                        <h3>Start a new conversation</h3>
+                        <p>Ask {{ ai_tool.name }} anything or use the prompts in the sidebar to get started quickly.</p>
+                    </div>
+                {% endif %}
+            </div>
+            
+            <!-- Chat Input -->
+            <div class="chat-input-container">
+                <div class="chat-toolbar">
+                    <button class="toolbar-button" id="clearChatBtn">
+                        <i class="bi bi-trash"></i> Clear chat
+                    </button>
+                    <button class="toolbar-button" data-bs-toggle="modal" data-bs-target="#savePromptModal">
+                        <i class="bi bi-bookmark"></i> Save prompt
+                    </button>
                 </div>
-                
-                <div class="chat-input">
-                    <form id="chatForm" class="d-flex">
-                        <input type="text" id="messageInput" class="form-control me-2" placeholder="Type your message..." required>
-                        <button type="submit" class="btn btn-primary">
-                            <i class="bi bi-send"></i>
-                        </button>
-                    </form>
+                <div class="chat-input-wrapper">
+                    <textarea id="messageInput" class="chat-input" placeholder="Type your message..." required></textarea>
+                    <button type="button" class="send-button" id="sendBtn">
+                        <i class="bi bi-send-fill"></i>
+                    </button>
                 </div>
             </div>
         </div>
-        
-        <!-- Sidebar -->
-        <div class="col-md-4">
-            <div class="card">
-                <div class="card-header">
-                    <ul class="nav nav-tabs card-header-tabs" role="tablist">
-                        <li class="nav-item" role="presentation">
-                            <button class="nav-link active" id="about-tab" data-bs-toggle="tab" data-bs-target="#about" type="button" role="tab" aria-controls="about" aria-selected="true">About</button>
-                        </li>
-                        <li class="nav-item" role="presentation">
-                            <button class="nav-link" id="prompts-tab" data-bs-toggle="tab" data-bs-target="#prompts" type="button" role="tab" aria-controls="prompts" aria-selected="false">Prompts</button>
-                        </li>
-                    </ul>
-                </div>
-                <div class="card-body">
-                    <div class="tab-content">
-                        <!-- About Tab -->
-                        <div class="tab-pane fade show active" id="about" role="tabpanel" aria-labelledby="about-tab">
-                            <h5 class="card-title">{{ ai_tool.name }}</h5>
-                            <h6 class="card-subtitle mb-2 text-muted">{{ ai_tool.provider }}</h6>
-                            <p class="card-text">{{ ai_tool.description }}</p>
-                            <div class="d-flex justify-content-between align-items-center mt-3">
-                                <span class="badge bg-primary">{{ ai_tool.category }}</span>
-                                <a href="{{ ai_tool.endpoint }}" target="_blank" class="btn btn-sm btn-outline-secondary">
-                                    <i class="bi bi-box-arrow-up-right me-1"></i> Visit
-                                </a>
-                            </div>
-                        </div>
-                        
-                        <!-- Prompts Tab -->
-                        <div class="tab-pane fade" id="prompts" role="tabpanel" aria-labelledby="prompts-tab">
-                            <div class="d-flex justify-content-between align-items-center mb-3">
-                                <h5 class="card-title mb-0">Favorite Prompts</h5>
-                                <button type="button" class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#savePromptModal">
-                                    <i class="bi bi-plus"></i> Save
-                                </button>
-                            </div>
-                            
-                            <div class="favorite-prompts">
-                                {% if favorite_prompts %}
-                                    {% for prompt in favorite_prompts %}
-                                        <div class="card mb-2">
-                                            <div class="card-body py-2 px-3">
-                                                <h6 class="card-title mb-1">{{ prompt.title }}</h6>
-                                                <p class="card-text small text-muted mb-2">{{ prompt.prompt_text|truncatechars:60 }}</p>
-                                                <button class="btn btn-sm btn-outline-primary use-prompt" data-prompt="{{ prompt.prompt_text }}">
-                                                    Use
-                                                </button>
-                                            </div>
-                                        </div>
-                                    {% endfor %}
-                                {% else %}
-                                    <p class="text-muted">No saved prompts yet. Save your favorite prompts to reuse them later.</p>
-                                {% endif %}
-                            </div>
-                            
-                            <div class="mt-3">
-                                <a href="{% url 'ai_favorite_prompts' ai_id=ai_tool.id %}" class="btn btn-link btn-sm p-0">
-                                    Manage prompts
-                                </a>
-                            </div>
-                        </div>
+    </div>
+    
+    <!-- Sidebar -->
+    <div class="chat-sidebar">
+        <div class="sidebar-header">
+            <div class="sidebar-title">AI Information</div>
+        </div>
+        <div class="sidebar-content">
+            <div class="sidebar-tabs">
+                <div class="sidebar-tab active" data-tab="about">About</div>
+                <div class="sidebar-tab" data-tab="prompts">Prompts</div>
+            </div>
+            
+            <!-- About Tab -->
+            <div class="sidebar-tab-content" id="about-tab-content">
+                <div class="ai-info">
+                    {% if ai_tool.image %}
+                    <img src="{{ ai_tool.image.url }}" alt="{{ ai_tool.name }}" class="ai-avatar-large">
+                    {% else %}
+                    <div class="ai-avatar-large" style="display: flex; align-items: center; justify-content: center; background-color: var(--chat-accent-secondary); color: white;">
+                        <i class="bi bi-robot" style="font-size: 2rem;"></i>
                     </div>
+                    {% endif %}
+                    <h3 class="ai-name">{{ ai_tool.name }}</h3>
+                    <div class="ai-provider">{{ ai_tool.provider }}</div>
+                    <p class="ai-description">{{ ai_tool.description }}</p>
+                    
+                    <div class="ai-meta">
+                        <div class="ai-meta-item">
+                            <i class="bi bi-tag"></i> {{ ai_tool.category }}
+                        </div>
+                        <div class="ai-meta-item">
+                            <i class="bi bi-hdd-stack"></i> {{ ai_tool.api_type|title }}
+                        </div>
+                        {% if ai_tool.api_model %}
+                        <div class="ai-meta-item">
+                            <i class="bi bi-cpu"></i> {{ ai_tool.api_model }}
+                        </div>
+                        {% endif %}
+                    </div>
+                    
+                    <a href="{{ ai_tool.endpoint }}" target="_blank" class="btn btn-sm btn-outline-primary w-100">
+                        <i class="bi bi-box-arrow-up-right me-1"></i> Visit Official Website
+                    </a>
                 </div>
+            </div>
+            
+            <!-- Prompts Tab -->
+            <div class="sidebar-tab-content" id="prompts-tab-content" style="display: none;">
+                <div class="favorite-prompts">
+                    {% if favorite_prompts %}
+                        {% for prompt in favorite_prompts %}
+                            <div class="prompt-card">
+                                <div class="prompt-title">{{ prompt.title }}</div>
+                                <div class="prompt-text">{{ prompt.prompt_text }}</div>
+                                <div class="prompt-actions">
+                                    <button class="use-prompt-btn" data-prompt="{{ prompt.prompt_text }}">
+                                        Use prompt
+                                    </button>
+                                    <div class="prompt-date">{{ prompt.created_at|date:"M d" }}</div>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    {% else %}
+                        <p class="text-muted">No saved prompts yet. Save your favorite prompts to reuse them later.</p>
+                    {% endif %}
+                    
+                    <button class="add-prompt-btn" data-bs-toggle="modal" data-bs-target="#savePromptModal">
+                        <i class="bi bi-plus-circle"></i> Save a new prompt
+                    </button>
+                </div>
+                
+                <a href="{% url 'ai_favorite_prompts' ai_id=ai_tool.id %}" class="manage-prompts-link">
+                    Manage all prompts
+                </a>
             </div>
         </div>
     </div>
@@ -229,59 +230,174 @@
 {% block extra_js %}
 <script>
     document.addEventListener('DOMContentLoaded', function() {
-        const chatForm = document.getElementById('chatForm');
-        const messageInput = document.getElementById('messageInput');
+        // DOM elements
         const chatMessages = document.getElementById('chatMessages');
+        const messageInput = document.getElementById('messageInput');
+        const sendBtn = document.getElementById('sendBtn');
+        const clearChatBtn = document.getElementById('clearChatBtn');
+        const sidebarTabs = document.querySelectorAll('.sidebar-tab');
+        const sidebarContents = document.querySelectorAll('.sidebar-tab-content');
+        const savePromptBtn = document.getElementById('savePromptBtn');
         const savePromptForm = document.getElementById('savePromptForm');
         const promptTitle = document.getElementById('promptTitle');
         const promptText = document.getElementById('promptText');
-        const savePromptBtn = document.getElementById('savePromptBtn');
         const savePromptModal = new bootstrap.Modal(document.getElementById('savePromptModal'));
+        
+        // AI info
+        const aiName = '{{ ai_tool.name }}';
+        const hasAiImage = {% if ai_tool.image %}true{% else %}false{% endif %};
+        const aiImageUrl = {% if ai_tool.image %}'{{ ai_tool.image.url }}'{% else %}''{% endif %};
+        
+        console.log("Chat elements initialized:"); // Debug log
+        console.log("- chatMessages:", chatMessages);
+        console.log("- messageInput:", messageInput);
+        console.log("- sendBtn:", sendBtn);
+        console.log("- AI name:", aiName);
         
         // Scroll to bottom of chat
         function scrollToBottom() {
             chatMessages.scrollTop = chatMessages.scrollHeight;
         }
         
-        // Add a message to the chat
+        // Add message to chat
         function addMessage(content, isUser) {
+            console.log("Adding message:", content, "isUser:", isUser); // Debug log
+            
+            // Create message group
+            const messageGroup = document.createElement('div');
+            messageGroup.className = 'message-group';
+            
+            // Create avatar
+            const avatarDiv = document.createElement('div');
+            
+            if (isUser) {
+                avatarDiv.className = 'message-avatar user-avatar';
+                avatarDiv.innerHTML = '<i class="bi bi-person-fill"></i>';
+            } else {
+                avatarDiv.className = 'message-avatar ai-avatar';
+                
+                if (hasAiImage) {
+                    avatarDiv.innerHTML = '<img src="' + aiImageUrl + '" alt="' + aiName + '">';
+                } else {
+                    avatarDiv.innerHTML = '<i class="bi bi-robot"></i>';
+                    avatarDiv.style.display = 'flex';
+                    avatarDiv.style.alignItems = 'center';
+                    avatarDiv.style.justifyContent = 'center';
+                }
+            }
+            
+            // Create content wrapper
+            const contentWrapper = document.createElement('div');
+            contentWrapper.className = 'message-content-wrapper';
+            
+            // Create sender
+            const senderDiv = document.createElement('div');
+            senderDiv.className = 'message-sender';
+            senderDiv.textContent = isUser ? 'You' : aiName;
+            
+            // Create bubbles container
+            const bubblesDiv = document.createElement('div');
+            bubblesDiv.className = 'message-bubbles';
+            
+            // Create message
             const messageDiv = document.createElement('div');
-            messageDiv.className = `message ${isUser ? 'message-user' : 'message-ai'}`;
+            messageDiv.className = isUser ? 'message message-user' : 'message message-ai';
             
-            const contentDiv = document.createElement('div');
-            contentDiv.className = 'message-content';
-            contentDiv.innerHTML = content.replace(/\n/g, '<br>');
+            // Create message bubble
+            const bubbleDiv = document.createElement('div');
+            bubbleDiv.className = 'message-bubble';
+            bubbleDiv.innerHTML = content.replace(/\n/g, '<br>');
             
+            // Create time
             const timeDiv = document.createElement('div');
             timeDiv.className = 'message-time';
             const now = new Date();
             timeDiv.textContent = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
             
-            messageDiv.appendChild(contentDiv);
+            // Assemble the message
+            messageDiv.appendChild(bubbleDiv);
             messageDiv.appendChild(timeDiv);
+            bubblesDiv.appendChild(messageDiv);
             
-            chatMessages.appendChild(messageDiv);
+            contentWrapper.appendChild(senderDiv);
+            contentWrapper.appendChild(bubblesDiv);
+            
+            messageGroup.appendChild(avatarDiv);
+            messageGroup.appendChild(contentWrapper);
+            
+            // Check if we need to convert empty state to chat
+            if (document.querySelector('.chat-empty-state')) {
+                chatMessages.innerHTML = '';
+            }
+            
+            // Add to chat
+            chatMessages.appendChild(messageGroup);
             scrollToBottom();
         }
         
-        // Send message
-        chatForm.addEventListener('submit', function(e) {
-            e.preventDefault();
-            
+        // Send message function
+        function sendMessage() {
             const message = messageInput.value.trim();
             if (!message) return;
+            
+            console.log("Sending message:", message); // Debug log
             
             // Add user message to chat
             addMessage(message, true);
             
-            // Clear input
+            // Clear input and adjust height
             messageInput.value = '';
+            messageInput.style.height = 'auto';
             
-            // Show loading indicator
-            const loadingDiv = document.createElement('div');
-            loadingDiv.className = 'message message-ai';
-            loadingDiv.innerHTML = '<div class="message-content"><div class="spinner-border spinner-border-sm text-secondary" role="status"></div> Thinking...</div>';
-            chatMessages.appendChild(loadingDiv);
+            // Create loading message group
+            const loadingGroup = document.createElement('div');
+            loadingGroup.className = 'message-group';
+            
+            // Create AI avatar for loading
+            const loadingAvatar = document.createElement('div');
+            loadingAvatar.className = 'message-avatar ai-avatar';
+            
+            if (hasAiImage) {
+                loadingAvatar.innerHTML = '<img src="' + aiImageUrl + '" alt="' + aiName + '">';
+            } else {
+                loadingAvatar.innerHTML = '<i class="bi bi-robot"></i>';
+                loadingAvatar.style.display = 'flex';
+                loadingAvatar.style.alignItems = 'center';
+                loadingAvatar.style.justifyContent = 'center';
+            }
+            
+            // Create content wrapper
+            const loadingWrapper = document.createElement('div');
+            loadingWrapper.className = 'message-content-wrapper';
+            
+            // Create sender
+            const loadingSender = document.createElement('div');
+            loadingSender.className = 'message-sender';
+            loadingSender.textContent = aiName;
+            
+            // Create bubbles container
+            const loadingBubbles = document.createElement('div');
+            loadingBubbles.className = 'message-bubbles';
+            
+            // Create message
+            const loadingMessage = document.createElement('div');
+            loadingMessage.className = 'message message-ai';
+            
+            // Create bubble with typing indicator
+            const loadingBubble = document.createElement('div');
+            loadingBubble.className = 'message-bubble';
+            loadingBubble.innerHTML = '<div class="typing-indicator"><span></span><span></span><span></span></div>';
+            
+            // Assemble loading message
+            loadingMessage.appendChild(loadingBubble);
+            loadingBubbles.appendChild(loadingMessage);
+            loadingWrapper.appendChild(loadingSender);
+            loadingWrapper.appendChild(loadingBubbles);
+            loadingGroup.appendChild(loadingAvatar);
+            loadingGroup.appendChild(loadingWrapper);
+            
+            // Add to chat
+            chatMessages.appendChild(loadingGroup);
             scrollToBottom();
             
             // Send to server
@@ -293,31 +409,110 @@
                 },
                 body: JSON.stringify({ message: message })
             })
-            .then(response => response.json())
-            .then(data => {
-                // Remove loading indicator
-                chatMessages.removeChild(loadingDiv);
+            .then(function(response) {
+                console.log("Response status:", response.status); // Debug log
+                if (!response.ok) {
+                    // If the response is not OK, throw an error with the status
+                    return response.json().then(function(data) {
+                        throw new Error('Server responded with status ' + response.status + ': ' + (data.error || 'Unknown error'));
+                    });
+                }
+                return response.json();
+            })
+            .then(function(data) {
+                console.log("Response data:", data); // Debug log
+                
+                // Remove loading message
+                chatMessages.removeChild(loadingGroup);
                 
                 // Add AI response
                 addMessage(data.message, false);
             })
-            .catch(error => {
-                // Remove loading indicator
-                chatMessages.removeChild(loadingDiv);
+            .catch(function(error) {
+                console.error('Error details:', error); // Enhanced error logging
+                
+                // Remove loading message
+                if (loadingGroup.parentNode === chatMessages) {
+                    chatMessages.removeChild(loadingGroup);
+                }
                 
                 // Show error
-                addMessage('Error: Could not get a response. Please try again.', false);
-                console.error('Error:', error);
+                addMessage('Error: Could not get a response. Please try again. Details: ' + error.message, false);
+            });
+        }
+        
+        // Handle send button click
+        sendBtn.addEventListener('click', sendMessage);
+        
+        // Handle enter key in textarea (send on Enter, new line on Shift+Enter)
+        messageInput.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                sendMessage();
+            }
+        });
+        
+        // Auto-resize textarea
+        messageInput.addEventListener('input', function() {
+            this.style.height = 'auto';
+            this.style.height = (this.scrollHeight) + 'px';
+        });
+        
+        // Handle sidebar tabs
+        sidebarTabs.forEach(tab => {
+            tab.addEventListener('click', function() {
+                console.log("Tab clicked:", this.getAttribute('data-tab')); // Debug log
+                
+                // Remove active class from all tabs
+                sidebarTabs.forEach(t => t.classList.remove('active'));
+                
+                // Add active class to clicked tab
+                this.classList.add('active');
+                
+                // Hide all content sections
+                sidebarContents.forEach(content => {
+                    content.style.display = 'none';
+                });
+                
+                // Show the selected content
+                const tabName = this.getAttribute('data-tab');
+                const tabContent = document.getElementById(`${tabName}-tab-content`);
+                console.log("Showing tab content:", tabName, tabContent); // Debug log
+                if (tabContent) {
+                    tabContent.style.display = 'block';
+                }
             });
         });
         
-        // Use prompt
-        document.querySelectorAll('.use-prompt').forEach(button => {
-            button.addEventListener('click', function() {
-                const prompt = this.getAttribute('data-prompt');
+        // Use prompt buttons
+        document.addEventListener('click', function(e) {
+            if (e.target && e.target.classList.contains('use-prompt-btn')) {
+                const prompt = e.target.getAttribute('data-prompt');
                 messageInput.value = prompt;
                 messageInput.focus();
-            });
+                
+                // Trigger auto resize
+                const event = new Event('input');
+                messageInput.dispatchEvent(event);
+            }
+        });
+        
+        // Clear chat button
+        clearChatBtn.addEventListener('click', function() {
+            if (confirm('Are you sure you want to clear the chat? This will delete all messages.')) {
+                // Create empty state
+                const emptyState = `
+                    <div class="chat-empty-state">
+                        <div class="chat-empty-state-icon">
+                            <i class="bi bi-chat-dots" style="font-size: 3rem;"></i>
+                        </div>
+                        <h3>Start a new conversation</h3>
+                        <p>Ask {{ ai_tool.name }} anything or use the prompts in the sidebar to get started quickly.</p>
+                    </div>
+                `;
+                
+                chatMessages.innerHTML = emptyState;
+            }
         });
         
         // Save prompt
@@ -359,8 +554,8 @@
             });
         });
         
-        // Initial scroll to bottom
+        // Initial actions
         scrollToBottom();
     });
 </script>
-{% endblock %} 
+{% endblock %}

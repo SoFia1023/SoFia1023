@@ -71,6 +71,7 @@ Thumbs.db
 staticfiles/
 logs/*.log
 !logs/.gitkeep
+CODEBASE_INDEX.md
 
 # AI Tools export files
 ai_tools_export.json

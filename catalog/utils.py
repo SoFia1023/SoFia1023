@@ -133,7 +133,7 @@ class AIService:
             dict: Simulated response with success status and data
         """
         # Add a slight delay to simulate API call
-        time.sleep(1)
+        time.sleep(0.5)
         
         # Generic responses based on prompt keywords
         responses = [
@@ -145,23 +145,49 @@ class AIService:
         ]
         
         # Try to make responses slightly contextual based on prompt
-        if "hello" in prompt.lower() or "hi" in prompt.lower():
+        prompt_lower = prompt.lower()
+        
+        # Greetings
+        if any(word in prompt_lower for word in ["hello", "hi", "hey", "greetings"]):
             response = "Hello! I'm a simulated AI response. How can I help you today?"
-        elif "help" in prompt.lower():
-            response = "I'd be happy to help! However, I'm currently running in simulation mode without API access."
-        elif "weather" in prompt.lower():
-            response = "I can't check the weather right now as I'm running in simulation mode."
-        elif "code" in prompt.lower() or "programming" in prompt.lower():
-            response = "Here's a simulated response about coding. In production, I could help with actual programming questions."
+        
+        # Help requests
+        elif "help" in prompt_lower:
+            response = "I'd be happy to help! However, I'm currently running in simulation mode without API access. Once API keys are configured, I'll be able to provide more specific assistance."
+        
+        # Questions about the weather
+        elif any(word in prompt_lower for word in ["weather", "temperature", "forecast"]):
+            response = "I can't check the weather right now as I'm running in simulation mode. Once API keys are configured, I'll be able to provide weather information."
+        
+        # Programming related
+        elif any(word in prompt_lower for word in ["code", "programming", "javascript", "python", "java", "html", "css"]):
+            response = "Here's a simulated response about coding. In production with API keys configured, I could help with actual programming questions, provide code examples, and debug issues."
+        
+        # General questions
         elif "?" in prompt:
-            response = "That's an interesting question! In production mode with API keys configured, I could provide a real answer."
+            response = "That's an interesting question! In production mode with API keys configured, I could provide a detailed answer. For now, I'm just a simulated response."
+        
+        # AI or model related
+        elif any(word in prompt_lower for word in ["ai", "artificial intelligence", "model", "gpt", "llm"]):
+            response = "I'm a simulated AI response. In production with API keys configured, I would be powered by advanced language models like those from OpenAI or Hugging Face."
+        
+        # Data or information requests
+        elif any(word in prompt_lower for word in ["data", "information", "tell me", "explain"]):
+            response = "I would normally provide detailed information on this topic. However, I'm currently running in simulation mode. Once API keys are configured, I'll be able to access and process information to answer your questions."
+        
+        # Thank you messages
+        elif any(word in prompt_lower for word in ["thanks", "thank you", "appreciate"]):
+            response = "You're welcome! I'm happy to help, even in simulation mode. Once API keys are configured, I'll be able to provide even more assistance."
+        
+        # Default response
         else:
             # Pick a random generic response
             response = random.choice(responses)
-            
+        
+        # Add a note about the simulation mode
         return {
             "success": True,
-            "data": response + f"\n\n[Note: This is a simulated {service_type} response]"
+            "data": response + f"\n\n[Note: This is a simulated {service_type} response. Configure API keys for real AI responses.]"
         }
     
     @staticmethod
@@ -177,6 +203,12 @@ class AIService:
             dict: Response with success status and data/error
         """
         service_type = service_config.get('api_type', 'none')
+        
+        # Always use simulated responses while API keys are being implemented
+        return AIService.simulate_ai_response(service_type, prompt)
+        
+        # The following code is commented out until API keys are implemented
+        """
         model = service_config.get('api_model', '')
         
         if service_type == 'openai':
@@ -198,10 +230,7 @@ class AIService:
                 "success": False,
                 "error": "Custom integrations are not yet implemented"
             }
-            
-        else:
-            # For 'none' or any other type, return simulated response
-            return AIService.simulate_ai_response("generic", prompt)
+        """
 
 # Legacy function wrappers for backward compatibility
 def call_openai_api(prompt, model="gpt-3.5-turbo"):
