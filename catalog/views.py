@@ -40,7 +40,7 @@ def presentationAI(request, id):
 
 
 # Available categories for AI tools
-CATEGORIES = ["Transcription", "Image Generator", "Word Processor"]
+CATEGORIES = ["Text Generator", "Image Generator", "Video Generator", "Transcription", "Word Processor", "Code Generator", "AI Platform"]
 
 def catalog_view(request):
     """

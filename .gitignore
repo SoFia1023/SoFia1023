@@ -71,3 +71,7 @@ Thumbs.db
 staticfiles/
 logs/*.log
 !logs/.gitkeep
+
+# AI Tools export files
+ai_tools_export.json
+*.json
