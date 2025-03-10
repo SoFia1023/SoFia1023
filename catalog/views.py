@@ -8,9 +8,13 @@ from django.contrib.auth.decorators import login_required
 from django.http import JsonResponse, HttpResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
+from django.views.generic import ListView, DetailView
+from django.contrib.auth.mixins import LoginRequiredMixin
+from django.urls import reverse_lazy
 import json
 import time
 from . import utils
+from .mixins import PaginationMixin
 
 User = get_user_model()
 
@@ -24,78 +28,103 @@ def home(request):
     })
 
 
-def presentationAI(request, id):
+class AIToolDetailView(DetailView):
     """Display detailed information about a specific AI tool."""
-    ai_tool = get_object_or_404(AITool, id=id)
+    model = AITool
+    template_name = 'catalog/presentationAI.html'
+    context_object_name = 'ai_tool'
+    pk_url_kwarg = 'id'
     
-    # Get related AIs in the same category (limited to 3)
-    related_ais = AITool.objects.filter(
-        category=ai_tool.category
-    ).exclude(id=id).order_by('-popularity')[:3]
-    
-    return render(request, 'catalog/presentationAI.html', {
-        'ai_tool': ai_tool,
-        'related_ais': related_ais
-    })
+    def get_context_data(self, **kwargs):
+        """Add related AI tools to the context."""
+        context = super().get_context_data(**kwargs)
+        
+        # Get related AIs in the same category (limited to 3)
+        ai_tool = self.get_object()
+        related_ais = AITool.objects.filter(
+            category=ai_tool.category
+        ).exclude(id=ai_tool.id).order_by('-popularity')[:3]
+        
+        context['related_ais'] = related_ais
+        
+        # Add favorite status if user is authenticated
+        if self.request.user.is_authenticated:
+            context['is_favorite'] = UserFavorite.objects.filter(
+                user=self.request.user,
+                ai_tool=ai_tool
+            ).exists()
+        
+        return context
 
 
 # Available categories for AI tools
 CATEGORIES = ["Text Generator", "Image Generator", "Video Generator", "Transcription", "Word Processor", "Code Generator", "AI Platform"]
 
-def catalog_view(request):
+class CatalogView(PaginationMixin, ListView):
     """
     Display the catalog of AI tools with filtering, sorting, and search capabilities.
-    
-    Filters:
-    - searchAITool: Search by name, provider, or description
-    - category: Filter by specific category
-    - sort: Sort results by popularity or name
     """
-    # Get filter parameters from request
-    searchTerm = request.GET.get('searchAITool', '')
-    category = request.GET.get('category', '')
-    sort = request.GET.get('sort', '')
+    model = AITool
+    template_name = 'catalog/catalog.html'
+    context_object_name = 'ai_tools'
+    paginate_by = 12  # Show 12 AI tools per page
     
-    # Start with all AI tools
-    ai_tools = AITool.objects.all()
+    def get_queryset(self):
+        """
+        Filter and sort the queryset based on request parameters.
+        """
+        queryset = AITool.objects.all()
+        
+        # Apply search filter if provided
+        search_query = self.request.GET.get('searchAITool', '')
+        if search_query:
+            queryset = queryset.filter(
+                Q(name__icontains=search_query) | 
+                Q(provider__icontains=search_query) | 
+                Q(description__icontains=search_query)
+            )
+        
+        # Apply category filter if provided
+        category = self.request.GET.get('category', '')
+        if category and category != 'All':
+            queryset = queryset.filter(category=category)
+        
+        # Apply sorting if provided
+        sort_by = self.request.GET.get('sort', 'popularity')
+        if sort_by == 'name':
+            queryset = queryset.order_by('name')
+        elif sort_by == 'provider':
+            queryset = queryset.order_by('provider')
+        else:  # Default to popularity
+            queryset = queryset.order_by('-popularity')
+        
+        return queryset
+    
+    def get_context_data(self, **kwargs):
+        """
+        Add additional context data for the template.
+        """
+        context = super().get_context_data(**kwargs)
+        
+        # Add filter parameters to context for maintaining state
+        context['search_query'] = self.request.GET.get('searchAITool', '')
+        context['selected_category'] = self.request.GET.get('category', 'All')
+        context['sort_by'] = self.request.GET.get('sort', 'popularity')
+        context['categories'] = CATEGORIES
+        
+        # Add user favorites if user is authenticated
+        if self.request.user.is_authenticated:
+            user_favorites = UserFavorite.objects.filter(
+                user=self.request.user
+            ).values_list('ai_tool_id', flat=True)
+            context['user_favorites'] = user_favorites
+        
+        return context
 
-    # Apply category filter if provided and valid
-    if category in CATEGORIES:
-        ai_tools = ai_tools.filter(category=category)
-    
-    # Apply search filter if provided (search in name, provider, and description)
-    if searchTerm:
-        ai_tools = ai_tools.filter(
-            Q(name__icontains=searchTerm) | 
-            Q(provider__icontains=searchTerm) | 
-            Q(description__icontains=searchTerm)
-        )
-    
-    # Apply sorting if provided
-    if sort:
-        if sort == 'popularity_desc':
-            ai_tools = ai_tools.order_by('-popularity')
-        elif sort == 'popularity_asc':
-            ai_tools = ai_tools.order_by('popularity')
-        elif sort == 'name_asc':
-            ai_tools = ai_tools.order_by('name')
-        elif sort == 'name_desc':
-            ai_tools = ai_tools.order_by('-name')
-    else:
-        # Default sorting by popularity (highest first)
-        ai_tools = ai_tools.order_by('-popularity')
-    
-    # Get the featured AI (highest popularity)
-    featured_ai = AITool.objects.all().order_by('-popularity').first()
-
-    return render(request, 'catalog/catalog.html', {
-        'ai_tools': ai_tools,
-        'categories': CATEGORIES,
-        'searchTerm': searchTerm,
-        'current_category': category,
-        'sort': sort,
-        'featured_ai': featured_ai,
-    })
+# Keep the function-based view for backward compatibility
+def catalog_view(request):
+    """Legacy function-based view that redirects to the class-based view."""
+    return CatalogView.as_view()(request)
 
 
 def register_view(request):
@@ -474,3 +503,8 @@ def compare_tools(request):
         'tool2': tool2,
         'all_tools': all_tools
     })
+
+# Keep the function-based view for backward compatibility
+def presentationAI(request, id):
+    """Legacy function-based view that redirects to the class-based view."""
+    return AIToolDetailView.as_view()(request, id=id)

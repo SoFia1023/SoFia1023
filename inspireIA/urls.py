@@ -18,8 +18,8 @@ urlpatterns = [
     
     # Main pages
     path('', catalog_views.home, name='home'),
-    path('catalog/', catalog_views.catalog_view, name='catalog'),
-    path('catalog/presentation/<uuid:id>/', catalog_views.presentationAI, name='presentationAI'),
+    path('catalog/', catalog_views.CatalogView.as_view(), name='catalog'),
+    path('catalog/presentation/<uuid:id>/', catalog_views.AIToolDetailView.as_view(), name='presentationAI'),
     path('catalog/compare/', catalog_views.compare_tools, name='compare'),
     
     # User authentication

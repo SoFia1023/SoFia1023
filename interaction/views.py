@@ -14,7 +14,8 @@ from django.db.models import Q
 
 from catalog.models import AITool
 from .models import Conversation, Message, FavoritePrompt, SharedChat
-from catalog.utils import call_openai_api, call_huggingface_api
+from catalog.utils import format_conversation_for_download
+from catalog.utils import AIService
 
 # Create your views here.
 
@@ -101,32 +102,24 @@ def send_message(request, conversation_id):
     
     # Process with appropriate API based on AI tool type
     ai_tool = conversation.ai_tool
-    ai_response = ""
     
-    if ai_tool.api_type == 'openai':
-        response = call_openai_api(user_message)
-        if response.get('success'):
-            ai_response = response['data']['choices'][0]['text'].strip()
-        else:
-            ai_response = f"Error: {response.get('error', 'Unknown error')}"
+    # Prepare service configuration
+    service_config = {
+        'api_type': ai_tool.api_type,
+        'api_model': ai_tool.api_model,
+        'api_endpoint': ai_tool.api_endpoint
+    }
     
-    elif ai_tool.api_type == 'huggingface':
-        model = ai_tool.api_model or "google/flan-t5-small"
-        response = call_huggingface_api(user_message, model)
-        if response.get('success'):
-            ai_response = response['data'][0]['generated_text'].strip()
-        else:
-            ai_response = f"Error: {response.get('error', 'Unknown error')}"
+    # Send message to AI service
+    response = AIService.send_to_ai_service(user_message, service_config)
     
-    elif ai_tool.api_type == 'custom':
-        # Placeholder for custom API integration
-        ai_response = "This is a placeholder response for custom API integration."
-    
+    if response.get('success'):
+        ai_response = response['data']
     else:
-        ai_response = "This AI tool does not have API integration configured."
+        ai_response = f"Error: {response.get('error', 'An error occurred while processing your request.')}"
     
     # Save AI response
-    Message.objects.create(
+    ai_message = Message.objects.create(
         conversation=conversation,
         content=ai_response,
         is_user=False
@@ -134,7 +127,7 @@ def send_message(request, conversation_id):
     
     return JsonResponse({
         'message': ai_response,
-        'timestamp': timezone.now().isoformat()
+        'timestamp': ai_message.timestamp.isoformat()
     })
 
 @login_required
@@ -167,7 +160,7 @@ def delete_conversation(request, conversation_id):
     })
 
 @login_required
-def download_conversation(request, conversation_id, format):
+def download_conversation(request, conversation_id, format='json'):
     """Download a conversation in various formats."""
     conversation = get_object_or_404(
         Conversation, 
@@ -175,30 +168,13 @@ def download_conversation(request, conversation_id, format):
         user=request.user
     )
     
-    if format == 'json':
-        response = HttpResponse(
-            conversation.to_json(),
-            content_type='application/json'
-        )
-        filename = f"conversation_{conversation.id}.json"
+    # Use the utility function to format the conversation
+    content, content_type, file_ext = format_conversation_for_download(conversation, format)
     
-    elif format == 'txt':
-        # Create plain text version
-        content = f"Conversation: {conversation.title}\n"
-        content += f"AI Tool: {conversation.ai_tool.name}\n"
-        content += f"Date: {conversation.created_at.strftime('%Y-%m-%d %H:%M')}\n\n"
-        
-        for msg in conversation.get_messages():
-            sender = "You" if msg.is_user else conversation.ai_tool.name
-            content += f"{sender} ({msg.timestamp.strftime('%H:%M')}): {msg.content}\n\n"
-        
-        response = HttpResponse(content, content_type='text/plain')
-        filename = f"conversation_{conversation.id}.txt"
+    # Create the response
+    response = HttpResponse(content, content_type=content_type)
+    response['Content-Disposition'] = f'attachment; filename="conversation_{conversation.id}.{file_ext}"'
     
-    else:
-        return JsonResponse({'error': 'Invalid format'}, status=400)
-    
-    response['Content-Disposition'] = f'attachment; filename="{filename}"'
     return response
 
 # Favorite prompts views
