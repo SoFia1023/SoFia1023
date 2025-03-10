@@ -28,15 +28,3 @@ class AITool(models.Model):
     
     def __str__(self):
         return self.name
-
-
-class UserFavorite(models.Model):
-    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
-    ai_tool = models.ForeignKey(AITool, on_delete=models.CASCADE)
-    created_at = models.DateTimeField(auto_now_add=True)
-    
-    class Meta:
-        unique_together = ('user', 'ai_tool')
-        
-    def __str__(self):
-        return f"{self.user.username} - {self.ai_tool.name}"

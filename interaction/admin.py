@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Conversation, Message, FavoritePrompt, SharedChat
+from .models import Conversation, Message, FavoritePrompt, SharedChat, UserFavorite
 from inspireIA.admin import admin_site
 from django.utils.html import format_html
 from django.urls import reverse
@@ -216,8 +216,21 @@ class SharedChatAdmin(admin.ModelAdmin):
     conversation_link.short_description = 'Conversation'
     conversation_link.admin_order_field = 'conversation__title'
 
+@admin.register(UserFavorite)
+class UserFavoriteAdmin(admin.ModelAdmin):
+    list_display = ('user', 'ai_tool', 'created_at')
+    list_filter = ('created_at', 'ai_tool__category')
+    search_fields = ('user__username', 'user__email', 'ai_tool__name')
+    date_hierarchy = 'created_at'
+    raw_id_fields = ('user', 'ai_tool')
+    
+    def get_queryset(self, request):
+        """Optimize query by prefetching related objects"""
+        return super().get_queryset(request).select_related('user', 'ai_tool')
+
 # Register with our custom admin site
 admin_site.register(Conversation, ConversationAdmin)
 admin_site.register(Message, MessageAdmin)
 admin_site.register(FavoritePrompt, FavoritePromptAdmin)
 admin_site.register(SharedChat, SharedChatAdmin)
+admin_site.register(UserFavorite, UserFavoriteAdmin)

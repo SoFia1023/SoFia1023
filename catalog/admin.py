@@ -1,21 +1,10 @@
 from django.contrib import admin
-from .models import AITool, UserFavorite
+from .models import AITool
 from inspireIA.admin import admin_site
 from django.utils.html import format_html
 from django.urls import reverse
 from django.contrib import messages
 from django.http import HttpResponseRedirect
-
-class UserFavoriteAdmin(admin.ModelAdmin):
-    list_display = ('user', 'ai_tool', 'created_at')
-    list_filter = ('created_at', 'ai_tool__category')
-    search_fields = ('user__username', 'user__email', 'ai_tool__name')
-    date_hierarchy = 'created_at'
-    raw_id_fields = ('user', 'ai_tool')
-    
-    def get_queryset(self, request):
-        """Optimize query by prefetching related objects"""
-        return super().get_queryset(request).select_related('user', 'ai_tool')
 
 class AIToolAdmin(admin.ModelAdmin):
     list_display = ('name', 'provider', 'category', 'popularity', 'api_type', 'is_featured', 'view_favorites_count', 'image_preview')
@@ -52,7 +41,7 @@ class AIToolAdmin(admin.ModelAdmin):
     def view_favorites_count(self, obj):
         """Display the number of users who have favorited this tool"""
         count = obj.userfavorite_set.count()
-        url = reverse('admin:catalog_userfavorite_changelist') + f'?ai_tool__id__exact={obj.id}'
+        url = reverse('admin:interaction_userfavorite_changelist') + f'?ai_tool__id__exact={obj.id}'
         return format_html('<a href="{}">{} users</a>', url, count)
     view_favorites_count.short_description = 'Favorited by'
     
@@ -140,8 +129,6 @@ class AIToolAdmin(admin.ModelAdmin):
 
 # Register models with our custom admin site
 admin_site.register(AITool, AIToolAdmin)
-admin_site.register(UserFavorite, UserFavoriteAdmin)
 
 # Also register with the default admin site for backward compatibility
 admin.site.register(AITool, AIToolAdmin)
-admin.site.register(UserFavorite, UserFavoriteAdmin)

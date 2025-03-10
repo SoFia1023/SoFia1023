@@ -99,3 +99,16 @@ class SharedChat(models.Model):
             return f"Shared by {self.shared_by.username} with {self.shared_with.username}"
         else:
             return f"Private share by {self.shared_by.username}"
+
+
+class UserFavorite(models.Model):
+    """Model for storing user's favorite AI tools."""
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    ai_tool = models.ForeignKey(AITool, on_delete=models.CASCADE)
+    created_at = models.DateTimeField(auto_now_add=True)
+    
+    class Meta:
+        unique_together = ('user', 'ai_tool')
+        
+    def __str__(self):
+        return f"{self.user.username} - {self.ai_tool.name}"
