@@ -24,7 +24,6 @@ Following these guidelines helps to communicate that you respect the time of the
   - [HTML/CSS Styleguide](#htmlcss-styleguide)
   - [Documentation Styleguide](#documentation-styleguide)
 - [Testing](#testing)
-- [Community](#community)
 
 ## Code of Conduct
 
