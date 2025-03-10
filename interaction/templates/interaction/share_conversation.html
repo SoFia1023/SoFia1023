@@ -1,0 +1,90 @@
+{% extends "base.html" %}
+
+{% block title %}Share Conversation - Inspire AI{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8 col-lg-6">
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">Share Conversation</h5>
+                </div>
+                <div class="card-body">
+                    <h6 class="card-subtitle mb-3 text-muted">Sharing "{{ conversation.title }}" with {{ conversation.ai_tool.name }}</h6>
+                    
+                    <form method="post">
+                        {% csrf_token %}
+                        
+                        <div class="mb-4">
+                            <label class="form-label">Sharing Options</label>
+                            <div class="form-check mb-2">
+                                <input class="form-check-input" type="radio" name="share_type" id="sharePublic" value="public" checked>
+                                <label class="form-check-label" for="sharePublic">
+                                    <i class="bi bi-globe me-2"></i> Public Link
+                                </label>
+                                <div class="form-text ms-4">Anyone with the link can view this conversation.</div>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" name="share_type" id="sharePrivate" value="private">
+                                <label class="form-check-label" for="sharePrivate">
+                                    <i class="bi bi-person-lock me-2"></i> Share with Specific User
+                                </label>
+                                <div class="form-text ms-4">Only the specified user can view this conversation.</div>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-4" id="userInputContainer" style="display: none;">
+                            <label for="shared_with" class="form-label">Username to share with</label>
+                            <input type="text" class="form-control" id="shared_with" name="shared_with" placeholder="Enter username">
+                            <div class="form-text">The user must have an account on Inspire AI.</div>
+                        </div>
+                        
+                        <div class="form-check mb-4">
+                            <input class="form-check-input" type="checkbox" name="is_public" id="isPublic">
+                            <label class="form-check-label" for="isPublic">
+                                Make this conversation publicly accessible
+                            </label>
+                            <div class="form-text">If checked, anyone with the link can view this conversation.</div>
+                        </div>
+                        
+                        <div class="d-flex justify-content-end mt-4">
+                            <a href="{% url 'continue_conversation' conversation_id=conversation.id %}" class="btn btn-outline-secondary me-2">Cancel</a>
+                            <button type="submit" class="btn btn-primary">Share Conversation</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const sharePublic = document.getElementById('sharePublic');
+        const sharePrivate = document.getElementById('sharePrivate');
+        const userInputContainer = document.getElementById('userInputContainer');
+        const isPublicCheckbox = document.getElementById('isPublic');
+        
+        // Toggle user input visibility based on share type
+        function updateFormState() {
+            if (sharePrivate.checked) {
+                userInputContainer.style.display = 'block';
+                isPublicCheckbox.checked = false;
+                isPublicCheckbox.disabled = true;
+            } else {
+                userInputContainer.style.display = 'none';
+                isPublicCheckbox.disabled = false;
+            }
+        }
+        
+        sharePublic.addEventListener('change', updateFormState);
+        sharePrivate.addEventListener('change', updateFormState);
+        
+        // Initial state
+        updateFormState();
+    });
+</script>
+{% endblock %} 

@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+
+{% block title %}Access Denied - Inspire AI{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8 col-lg-6 text-center">
+            <div class="card shadow">
+                <div class="card-header bg-danger text-white">
+                    <h5 class="mb-0">Access Denied</h5>
+                </div>
+                <div class="card-body py-5">
+                    <div class="mb-4">
+                        <i class="bi bi-shield-lock-fill text-danger" style="font-size: 4rem;"></i>
+                    </div>
+                    
+                    <h3 class="mb-3">You don't have permission to view this conversation</h3>
+                    <p class="text-muted mb-4">This conversation has been shared with a specific user, and you don't have access to it.</p>
+                    
+                    {% if user.is_authenticated %}
+                        <div class="alert alert-info">
+                            <p class="mb-0">You are currently logged in as <strong>{{ user.username }}</strong>.</p>
+                            <p class="mb-0">If you believe you should have access to this conversation, please contact the person who shared it with you.</p>
+                        </div>
+                        
+                        <div class="mt-4">
+                            <a href="{% url 'home' %}" class="btn btn-primary">
+                                <i class="bi bi-house me-2"></i>Go to Home
+                            </a>
+                        </div>
+                    {% else %}
+                        <div class="alert alert-info">
+                            <p class="mb-0">If this conversation was shared with you, please log in to view it.</p>
+                        </div>
+                        
+                        <div class="mt-4">
+                            <a href="{% url 'login' %}" class="btn btn-primary">
+                                <i class="bi bi-box-arrow-in-right me-2"></i>Log In
+                            </a>
+                            <a href="{% url 'home' %}" class="btn btn-outline-secondary ms-2">
+                                <i class="bi bi-house me-2"></i>Go to Home
+                            </a>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

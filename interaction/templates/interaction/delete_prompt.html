@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+
+{% block title %}Delete Prompt - Inspire AI{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8 col-lg-6">
+            <div class="card shadow">
+                <div class="card-header bg-danger text-white">
+                    <h5 class="mb-0">Delete Favorite Prompt</h5>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-warning">
+                        <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                        This action cannot be undone.
+                    </div>
+                    
+                    <p>Are you sure you want to delete the prompt <strong>"{{ prompt.title }}"</strong> for <strong>{{ prompt.ai_tool.name }}</strong>?</p>
+                    
+                    <div class="card bg-light mb-4">
+                        <div class="card-body">
+                            <h6 class="card-subtitle mb-2 text-muted">Prompt Content:</h6>
+                            <p class="card-text">{{ prompt.prompt_text }}</p>
+                        </div>
+                    </div>
+                    
+                    <form method="post">
+                        {% csrf_token %}
+                        <div class="d-flex justify-content-end mt-4">
+                            <a href="{% url 'favorite_prompts' %}" class="btn btn-outline-secondary me-2">Cancel</a>
+                            <button type="submit" class="btn btn-danger">Delete Prompt</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

@@ -1,0 +1,185 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Favorite Prompts - Inspire AI{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <h1 class="display-5 fw-bold text-primary">Favorite Prompts</h1>
+                <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addPromptModal">
+                    <i class="bi bi-plus-lg me-2"></i>Add Prompt
+                </button>
+            </div>
+            <p class="lead">Manage your collection of favorite prompts for AI tools.</p>
+        </div>
+    </div>
+
+    <!-- Filter by AI Tool -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <h5 class="card-title mb-3">Filter by AI Tool</h5>
+                    <div class="d-flex flex-wrap gap-2">
+                        <a href="{% url 'favorite_prompts' %}" class="btn {% if not selected_ai %}btn-primary{% else %}btn-outline-primary{% endif %}">
+                            All Tools
+                        </a>
+                        {% for tool in ai_tools %}
+                            <a href="{% url 'ai_favorite_prompts' ai_id=tool.id %}" class="btn {% if selected_ai.id == tool.id %}btn-primary{% else %}btn-outline-primary{% endif %}">
+                                {{ tool.name }}
+                            </a>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Prompts List -->
+    {% if prompts %}
+        <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+            {% for prompt in prompts %}
+                <div class="col">
+                    <div class="card h-100 shadow-sm">
+                        <div class="card-header bg-light">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <h5 class="card-title mb-0">{{ prompt.title }}</h5>
+                                <div class="dropdown">
+                                    <button class="btn btn-sm btn-outline-secondary" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                        <i class="bi bi-three-dots-vertical"></i>
+                                    </button>
+                                    <ul class="dropdown-menu dropdown-menu-end">
+                                        <li>
+                                            <a class="dropdown-item" href="{% url 'chat' ai_id=prompt.ai_tool.id %}?prompt={{ prompt.prompt_text|urlencode }}">
+                                                <i class="bi bi-chat-dots me-2"></i> Use in Chat
+                                            </a>
+                                        </li>
+                                        <li><hr class="dropdown-divider"></li>
+                                        <li>
+                                            <a class="dropdown-item text-danger" href="{% url 'delete_favorite_prompt' prompt_id=prompt.id %}">
+                                                <i class="bi bi-trash me-2"></i> Delete
+                                            </a>
+                                        </li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            <p class="card-text">{{ prompt.prompt_text }}</p>
+                        </div>
+                        <div class="card-footer bg-white">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <small class="text-muted">{{ prompt.created_at|date:"M d, Y" }}</small>
+                                <span class="badge bg-primary">{{ prompt.ai_tool.name }}</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="row">
+            <div class="col-12 text-center py-5">
+                <div class="py-5">
+                    <i class="bi bi-bookmark-star fs-1 text-muted mb-3"></i>
+                    <h3 class="h4 mb-3">No favorite prompts yet</h3>
+                    <p class="text-muted mb-4">
+                        {% if selected_ai %}
+                            You haven't saved any prompts for {{ selected_ai.name }} yet.
+                        {% else %}
+                            Save your favorite prompts to quickly reuse them in conversations.
+                        {% endif %}
+                    </p>
+                    <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addPromptModal">
+                        <i class="bi bi-plus-lg me-2"></i>Add Your First Prompt
+                    </button>
+                </div>
+            </div>
+        </div>
+    {% endif %}
+</div>
+
+<!-- Add Prompt Modal -->
+<div class="modal fade" id="addPromptModal" tabindex="-1" aria-labelledby="addPromptModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="addPromptModalLabel">Add Favorite Prompt</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="addPromptForm" method="post" action="{% url 'save_favorite_prompt' %}">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <label for="promptTitle" class="form-label">Title</label>
+                        <input type="text" class="form-control" id="promptTitle" name="title" required>
+                        <div class="form-text">A short, descriptive name for your prompt.</div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="aiTool" class="form-label">AI Tool</label>
+                        <select class="form-select" id="aiTool" name="ai_id" required>
+                            <option value="" selected disabled>Select an AI tool</option>
+                            {% for tool in ai_tools %}
+                                <option value="{{ tool.id }}" {% if selected_ai.id == tool.id %}selected{% endif %}>{{ tool.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="promptText" class="form-label">Prompt</label>
+                        <textarea class="form-control" id="promptText" name="prompt_text" rows="5" required></textarea>
+                        <div class="form-text">The prompt text you want to save for future use.</div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="submit" form="addPromptForm" class="btn btn-primary">Save Prompt</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Handle form submission via AJAX
+        const addPromptForm = document.getElementById('addPromptForm');
+        
+        addPromptForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const formData = {
+                title: document.getElementById('promptTitle').value.trim(),
+                ai_id: document.getElementById('aiTool').value,
+                prompt_text: document.getElementById('promptText').value.trim()
+            };
+            
+            fetch('{% url "save_favorite_prompt" %}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': '{{ csrf_token }}'
+                },
+                body: JSON.stringify(formData)
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Reload the page to show the new prompt
+                    window.location.reload();
+                } else {
+                    alert('Error: ' + data.error);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('An error occurred. Please try again.');
+            });
+        });
+    });
+</script>
+{% endblock %} 

@@ -1,0 +1,94 @@
+{% extends "base.html" %}
+
+{% block title %}Conversation Shared - Inspire AI{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8 col-lg-6">
+            <div class="card shadow">
+                <div class="card-header bg-success text-white">
+                    <h5 class="mb-0">Conversation Shared Successfully</h5>
+                </div>
+                <div class="card-body">
+                    <div class="text-center mb-4">
+                        <i class="bi bi-check-circle-fill text-success" style="font-size: 3rem;"></i>
+                    </div>
+                    
+                    <h6 class="card-subtitle mb-3">Your conversation "{{ conversation.title }}" has been shared.</h6>
+                    
+                    <div class="mb-4">
+                        <label class="form-label">Share Link</label>
+                        <div class="input-group">
+                            <input type="text" class="form-control" id="shareUrl" value="{{ share_url }}" readonly>
+                            <button class="btn btn-outline-primary" type="button" id="copyButton">
+                                <i class="bi bi-clipboard"></i>
+                            </button>
+                        </div>
+                        <div class="form-text" id="copyMessage">Click the button to copy the link.</div>
+                    </div>
+                    
+                    <div class="alert alert-info">
+                        <h6 class="alert-heading">Sharing Details</h6>
+                        <p class="mb-0">
+                            {% if is_public %}
+                                <i class="bi bi-globe me-2"></i> This conversation is publicly accessible to anyone with the link.
+                            {% elif shared_with %}
+                                <i class="bi bi-person-lock me-2"></i> This conversation is shared with <strong>{{ shared_with.username }}</strong>.
+                            {% else %}
+                                <i class="bi bi-link-45deg me-2"></i> This conversation is accessible only via the link above.
+                            {% endif %}
+                        </p>
+                    </div>
+                    
+                    <div class="d-flex justify-content-center mt-4">
+                        <a href="{% url 'conversation_history' %}" class="btn btn-outline-secondary me-2">
+                            <i class="bi bi-list-ul me-2"></i>Back to Conversations
+                        </a>
+                        <a href="{% url 'continue_conversation' conversation_id=conversation.id %}" class="btn btn-primary">
+                            <i class="bi bi-chat-dots me-2"></i>Return to Chat
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const copyButton = document.getElementById('copyButton');
+        const shareUrl = document.getElementById('shareUrl');
+        const copyMessage = document.getElementById('copyMessage');
+        
+        copyButton.addEventListener('click', function() {
+            // Select the text
+            shareUrl.select();
+            shareUrl.setSelectionRange(0, 99999); // For mobile devices
+            
+            // Copy the text
+            navigator.clipboard.writeText(shareUrl.value)
+                .then(() => {
+                    // Update button and message
+                    copyButton.innerHTML = '<i class="bi bi-check-lg"></i>';
+                    copyMessage.textContent = 'Link copied to clipboard!';
+                    copyMessage.classList.add('text-success');
+                    
+                    // Reset after 2 seconds
+                    setTimeout(() => {
+                        copyButton.innerHTML = '<i class="bi bi-clipboard"></i>';
+                        copyMessage.textContent = 'Click the button to copy the link.';
+                        copyMessage.classList.remove('text-success');
+                    }, 2000);
+                })
+                .catch(err => {
+                    console.error('Could not copy text: ', err);
+                    copyMessage.textContent = 'Failed to copy. Please select and copy manually.';
+                    copyMessage.classList.add('text-danger');
+                });
+        });
+    });
+</script>
+{% endblock %} 

@@ -1,0 +1,157 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Shared Conversation - Inspire AI{% endblock %}
+
+{% block extra_css %}
+<style>
+    .chat-container {
+        min-height: 400px;
+    }
+    
+    .chat-messages {
+        padding: 1rem;
+        background-color: #f8f9fa;
+        border-radius: 0.5rem;
+    }
+    
+    .message {
+        margin-bottom: 1rem;
+        max-width: 80%;
+    }
+    
+    .message-user {
+        margin-left: auto;
+        background-color: #007bff;
+        color: white;
+        border-radius: 1rem 1rem 0 1rem;
+    }
+    
+    .message-ai {
+        margin-right: auto;
+        background-color: #e9ecef;
+        color: #212529;
+        border-radius: 1rem 1rem 1rem 0;
+    }
+    
+    .message-content {
+        padding: 0.75rem 1rem;
+    }
+    
+    .message-time {
+        font-size: 0.75rem;
+        text-align: right;
+        margin-top: 0.25rem;
+        opacity: 0.8;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <h1 class="h3">
+                    <i class="bi bi-share me-2 text-primary"></i>
+                    Shared Conversation: {{ conversation.title }}
+                </h1>
+                <div>
+                    <a href="{% url 'home' %}" class="btn btn-outline-secondary">
+                        <i class="bi bi-house me-2"></i>Home
+                    </a>
+                </div>
+            </div>
+            <p class="text-muted">
+                Shared by {{ shared_by.username }} • 
+                {{ conversation.created_at|date:"M d, Y" }} • 
+                {{ messages|length }} messages
+            </p>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Chat Area -->
+        <div class="col-md-8">
+            <div class="chat-container">
+                <div class="chat-messages">
+                    {% if messages %}
+                        {% for message in messages %}
+                            <div class="message {% if message.is_user %}message-user{% else %}message-ai{% endif %}">
+                                <div class="message-content">{{ message.content|linebreaksbr }}</div>
+                                <div class="message-time">
+                                    {% if message.is_user %}
+                                        {{ shared_by.username }}
+                                    {% else %}
+                                        {{ conversation.ai_tool.name }}
+                                    {% endif %}
+                                    • {{ message.timestamp|time:"H:i" }}
+                                </div>
+                            </div>
+                        {% endfor %}
+                    {% else %}
+                        <div class="text-center text-muted py-5">
+                            <i class="bi bi-chat-dots fs-1"></i>
+                            <p class="mt-3">This conversation is empty.</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <div class="mt-4">
+                <div class="alert alert-info">
+                    <i class="bi bi-info-circle-fill me-2"></i>
+                    This is a read-only view of a shared conversation.
+                </div>
+            </div>
+        </div>
+        
+        <!-- Sidebar -->
+        <div class="col-md-4">
+            <div class="card mb-4">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">About this Conversation</h5>
+                </div>
+                <div class="card-body">
+                    <h5 class="card-title">{{ conversation.ai_tool.name }}</h5>
+                    <h6 class="card-subtitle mb-2 text-muted">{{ conversation.ai_tool.provider }}</h6>
+                    <p class="card-text">{{ conversation.ai_tool.description|truncatewords:30 }}</p>
+                    
+                    <hr>
+                    
+                    <div class="d-grid gap-2">
+                        <a href="{% url 'presentationAI' id=conversation.ai_tool.id %}" class="btn btn-outline-primary">
+                            <i class="bi bi-info-circle me-2"></i>Learn More About This AI
+                        </a>
+                        {% if user.is_authenticated %}
+                            <a href="{% url 'chat' ai_id=conversation.ai_tool.id %}" class="btn btn-primary">
+                                <i class="bi bi-chat-dots me-2"></i>Start Your Own Chat
+                            </a>
+                        {% else %}
+                            <a href="{% url 'login' %}" class="btn btn-primary">
+                                <i class="bi bi-box-arrow-in-right me-2"></i>Login to Chat
+                            </a>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0">Download Options</h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        <a href="{% url 'download_conversation' conversation_id=conversation.id format='txt' %}" class="btn btn-outline-secondary">
+                            <i class="bi bi-file-text me-2"></i>Download as Text
+                        </a>
+                        <a href="{% url 'download_conversation' conversation_id=conversation.id format='json' %}" class="btn btn-outline-secondary">
+                            <i class="bi bi-file-code me-2"></i>Download as JSON
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 
