@@ -12,7 +12,7 @@ import datetime
 class MessageInline(admin.TabularInline):
     model = Message
     extra = 0
-    readonly_fields = ('timestamp',)
+    readonly_fields = ('timestamp', 'content_preview')
     fields = ('is_user', 'content_preview', 'timestamp')
     
     def content_preview(self, obj):
