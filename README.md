@@ -81,6 +81,7 @@ ProyectoIntegrador1/
 │   ├── templates/      # HTML templates
 │   ├── management/     # Custom management commands
 │   ├── admin.py        # Admin panel configuration
+│   ├── mixins.py       # Reusable view mixins (pagination, filtering)
 │   ├── models.py       # AI tool data models
 │   ├── urls.py         # URL routing
 │   └── views.py        # View controllers
@@ -101,6 +102,7 @@ ProyectoIntegrador1/
 │   └── views.py        # User view controllers
 └── inspireIA/          # Project configuration
     ├── settings/       # Environment-specific settings
+    ├── middleware.py   # Custom middleware for request logging and tracking
     ├── urls.py         # Main URL configuration
     └── wsgi.py         # WSGI configuration for deployment
 ```
@@ -139,6 +141,22 @@ ProyectoIntegrador1/
 - Collaborative prompt editing with version history
 
 ## 🌟 Implemented Features
+
+### Recent Updates (July 2023)
+
+#### User Interaction Tracking
+- Added middleware for tracking user interactions with the platform
+- Implemented request logging with timing information
+- Tracks authenticated user activity for analytics
+- Logs request paths, methods, status codes, and processing times
+- Helps identify performance bottlenecks and popular features
+
+#### Enhanced Pagination
+- Added PaginationMixin for consistent pagination across the application
+- Improved navigation with smart page range display
+- Better handling of edge cases (invalid page numbers, empty pages)
+- Visual indicators for current page and total pages
+- Consistent pagination UI across all listing pages
 
 ### User Management
 
