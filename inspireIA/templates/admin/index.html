@@ -53,6 +53,7 @@
       display: flex;
       justify-content: space-between;
       margin-bottom: 20px;
+      flex-wrap: wrap;
     }
     
     .stat-box {
@@ -62,7 +63,9 @@
       padding: 15px;
       flex: 1;
       margin-right: 10px;
+      margin-bottom: 10px;
       text-align: center;
+      min-width: 120px;
     }
     
     .stat-box:last-child {
@@ -79,6 +82,132 @@
       font-size: 14px;
       opacity: 0.8;
     }
+
+    .chart-container {
+      height: 250px;
+      margin-top: 15px;
+    }
+
+    .tool-list {
+      margin-top: 15px;
+    }
+
+    .tool-item {
+      display: flex;
+      justify-content: space-between;
+      padding: 8px 0;
+      border-bottom: 1px solid #f5f5f5;
+    }
+
+    .tool-name {
+      font-weight: bold;
+    }
+
+    .tool-value {
+      color: #417690;
+    }
+
+    .stats-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 20px;
+      margin-bottom: 20px;
+    }
+
+    .stats-card {
+      flex: 1;
+      min-width: 250px;
+      background-color: #fff;
+      border-radius: 5px;
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+      padding: 15px;
+    }
+
+    .stats-card h3 {
+      margin-top: 0;
+      border-bottom: 1px solid #eee;
+      padding-bottom: 10px;
+      color: #417690;
+    }
+
+    .trend-indicator {
+      display: inline-block;
+      margin-left: 5px;
+      font-size: 14px;
+    }
+
+    .trend-up {
+      color: #4CAF50;
+    }
+
+    .trend-down {
+      color: #F44336;
+    }
+
+    .trend-neutral {
+      color: #9E9E9E;
+    }
+
+    .progress-bar-container {
+      width: 100%;
+      background-color: #f5f5f5;
+      border-radius: 4px;
+      margin-top: 5px;
+    }
+
+    .progress-bar {
+      height: 8px;
+      border-radius: 4px;
+      background-color: #417690;
+    }
+
+    .growth-chart {
+      display: flex;
+      align-items: flex-end;
+      height: 150px;
+      margin-top: 15px;
+    }
+
+    .growth-bar {
+      flex: 1;
+      background-color: #417690;
+      margin: 0 3px;
+      min-height: 1px;
+      position: relative;
+    }
+
+    .growth-bar-label {
+      position: absolute;
+      bottom: -25px;
+      left: 0;
+      right: 0;
+      text-align: center;
+      font-size: 12px;
+    }
+
+    .growth-bar-value {
+      position: absolute;
+      top: -20px;
+      left: 0;
+      right: 0;
+      text-align: center;
+      font-size: 12px;
+    }
+
+    .engagement-metric {
+      display: flex;
+      justify-content: space-between;
+      padding: 8px 0;
+      border-bottom: 1px solid #f5f5f5;
+    }
+
+    .engagement-label {
+      font-weight: bold;
+    }
+
+    .engagement-value {
+      color: #417690;
+    }
   </style>
 {% endblock %}
 
@@ -92,7 +221,15 @@
   <div class="stats">
     <div class="stat-box">
       <div class="stat-number">{{ user_count }}</div>
-      <div class="stat-label">{% trans "Users" %}</div>
+      <div class="stat-label">{% trans "Total Users" %}</div>
+    </div>
+    <div class="stat-box">
+      <div class="stat-number">{{ active_users }}</div>
+      <div class="stat-label">{% trans "Active Users" %}</div>
+    </div>
+    <div class="stat-box">
+      <div class="stat-number">{{ new_users }}</div>
+      <div class="stat-label">{% trans "New Users (7d)" %}</div>
     </div>
     <div class="stat-box">
       <div class="stat-number">{{ ai_tool_count }}</div>
@@ -103,8 +240,218 @@
       <div class="stat-label">{% trans "Conversations" %}</div>
     </div>
     <div class="stat-box">
+      <div class="stat-number">{{ new_conversations }}</div>
+      <div class="stat-label">{% trans "New Convs (7d)" %}</div>
+    </div>
+    <div class="stat-box">
       <div class="stat-number">{{ message_count }}</div>
       <div class="stat-label">{% trans "Messages" %}</div>
+    </div>
+    <div class="stat-box">
+      <div class="stat-number">{{ avg_messages_per_conversation }}</div>
+      <div class="stat-label">{% trans "Avg Msgs/Conv" %}</div>
+    </div>
+  </div>
+
+  <!-- User Growth Chart -->
+  <div class="stats-row">
+    <div class="stats-card">
+      <h3>{% trans "User Growth (Monthly)" %}</h3>
+      {% if user_growth %}
+      <div class="growth-chart">
+        {% with max_count=user_growth|last %}
+          {% for month in user_growth %}
+            <div class="growth-bar" style="height: {% widthratio month.count max_count.count 100 %}%">
+              <div class="growth-bar-value">{{ month.count }}</div>
+              <div class="growth-bar-label">{{ month.month_name }}</div>
+            </div>
+          {% endfor %}
+        {% endwith %}
+      </div>
+      {% else %}
+        <p>{% trans "No data available" %}</p>
+      {% endif %}
+    </div>
+
+    <div class="stats-card">
+      <h3>{% trans "AI Tool Usage Trend" %}</h3>
+      <div class="stat-number">
+        {{ usage_trend_percentage }}%
+        {% if usage_trend_percentage > 0 %}
+          <span class="trend-indicator trend-up">↑</span>
+        {% elif usage_trend_percentage < 0 %}
+          <span class="trend-indicator trend-down">↓</span>
+        {% else %}
+          <span class="trend-indicator trend-neutral">→</span>
+        {% endif %}
+      </div>
+      <div class="stat-label">{% trans "Last 30 days vs previous 30 days" %}</div>
+    </div>
+
+    <div class="stats-card">
+      <h3>{% trans "Shared Conversations" %}</h3>
+      <div class="tool-list">
+        <div class="tool-item">
+          <span class="tool-name">{% trans "Total Shared" %}</span>
+          <span class="tool-value">{{ total_shared }}</span>
+        </div>
+        <div class="tool-item">
+          <span class="tool-name">{% trans "Public Shares" %}</span>
+          <span class="tool-value">{{ public_shares }}</span>
+        </div>
+        <div class="tool-item">
+          <span class="tool-name">{% trans "Private Shares" %}</span>
+          <span class="tool-value">{{ private_shares }}</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="stats-row">
+    <div class="stats-card">
+      <h3>{% trans "Popular AI Tools" %}</h3>
+      <div class="tool-list">
+        {% for tool in popular_ai_tools %}
+          <div class="tool-item">
+            <span class="tool-name">{{ tool.name }}</span>
+            <span class="tool-value">{{ tool.popularity }}</span>
+          </div>
+        {% empty %}
+          <p>{% trans "No data available" %}</p>
+        {% endfor %}
+      </div>
+    </div>
+
+    <div class="stats-card">
+      <h3>{% trans "Most Used AI Tools" %}</h3>
+      <div class="tool-list">
+        {% for tool in most_used_tools %}
+          <div class="tool-item">
+            <span class="tool-name">{{ tool.name }}</span>
+            <span class="tool-value">{{ tool.usage_count }} {% trans "uses" %}</span>
+          </div>
+        {% empty %}
+          <p>{% trans "No data available" %}</p>
+        {% endfor %}
+      </div>
+    </div>
+
+    <div class="stats-card">
+      <h3>{% trans "Most Favorited AI Tools" %}</h3>
+      <div class="tool-list">
+        {% for tool in most_favorited %}
+          <div class="tool-item">
+            <span class="tool-name">{{ tool.name }}</span>
+            <span class="tool-value">{{ tool.favorite_count }} {% trans "favorites" %}</span>
+          </div>
+        {% empty %}
+          <p>{% trans "No data available" %}</p>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+
+  <div class="stats-row">
+    <div class="stats-card">
+      <h3>{% trans "Most Active Users" %}</h3>
+      <div class="tool-list">
+        {% for user in most_active_users %}
+          <div class="tool-item">
+            <span class="tool-name">{{ user.username }}</span>
+            <span class="tool-value">{{ user.conversation_count }} {% trans "conversations" %}</span>
+          </div>
+        {% empty %}
+          <p>{% trans "No data available" %}</p>
+        {% endfor %}
+      </div>
+    </div>
+
+    <div class="stats-card">
+      <h3>{% trans "Featured AI Tools" %}</h3>
+      <div class="tool-list">
+        {% for tool in featured_tools %}
+          <div class="tool-item">
+            <span class="tool-name">{{ tool.name }}</span>
+            <span class="tool-value">{{ tool.category }}</span>
+          </div>
+        {% empty %}
+          <p>{% trans "No data available" %}</p>
+        {% endfor %}
+      </div>
+    </div>
+
+    <div class="stats-card">
+      <h3>{% trans "Favorite Prompts" %}</h3>
+      <div class="tool-list">
+        <div class="tool-item">
+          <span class="tool-name">{% trans "Total Saved Prompts" %}</span>
+          <span class="tool-value">{{ favorite_prompts_count }}</span>
+        </div>
+        {% for prompt in prompts_per_tool %}
+          <div class="tool-item">
+            <span class="tool-name">{{ prompt.ai_tool__name }}</span>
+            <span class="tool-value">{{ prompt.count }} {% trans "prompts" %}</span>
+          </div>
+        {% empty %}
+          <p>{% trans "No data available" %}</p>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+
+  <div class="stats-row">
+    <div class="stats-card">
+      <h3>{% trans "User Engagement Metrics" %}</h3>
+      <div class="tool-list">
+        <div class="engagement-metric">
+          <span class="engagement-label">{% trans "Total Conversations" %}</span>
+          <span class="engagement-value">{{ user_engagement.total_conversations }}</span>
+        </div>
+        <div class="engagement-metric">
+          <span class="engagement-label">{% trans "Avg Messages/Conversation" %}</span>
+          <span class="engagement-value">{{ user_engagement.avg_messages_per_conversation }}</span>
+        </div>
+        <div class="engagement-metric">
+          <span class="engagement-label">{% trans "Total Messages" %}</span>
+          <span class="engagement-value">{{ user_engagement.total_messages }}</span>
+        </div>
+        <div class="engagement-metric">
+          <span class="engagement-label">{% trans "Conversations (Last 7d)" %}</span>
+          <span class="engagement-value">{{ user_engagement.conversations_last_7_days }}</span>
+        </div>
+        <div class="engagement-metric">
+          <span class="engagement-label">{% trans "Messages (Last 7d)" %}</span>
+          <span class="engagement-value">{{ user_engagement.messages_last_7_days }}</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="stats-card">
+      <h3>{% trans "Category Distribution" %}</h3>
+      <div class="tool-list">
+        {% for category in category_distribution %}
+          <div class="tool-item">
+            <span class="tool-name">{{ category.category }}</span>
+            <span class="tool-value">{{ category.count }}</span>
+          </div>
+        {% empty %}
+          <p>{% trans "No data available" %}</p>
+        {% endfor %}
+      </div>
+    </div>
+
+    <div class="stats-card">
+      <h3>{% trans "API Type Distribution" %}</h3>
+      <div class="tool-list">
+        {% for api_type in api_type_distribution %}
+          <div class="tool-item">
+            <span class="tool-name">{{ api_type.api_type }}</span>
+            <span class="tool-value">{{ api_type.count }}</span>
+          </div>
+        {% empty %}
+          <p>{% trans "No data available" %}</p>
+        {% endfor %}
+      </div>
     </div>
   </div>
   {% endif %}
