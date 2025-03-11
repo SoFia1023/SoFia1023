@@ -16,6 +16,17 @@ import time
 from . import utils
 from .mixins import PaginationMixin
 
+# Define categories for AI tools
+CATEGORIES = [
+    'Text Generator',
+    'Image Generator',
+    'Video Generator',
+    'Code Generator',
+    'Transcription',
+    'Word Processor',
+    'AI Platform'
+]
+
 User = get_user_model()
 
 
@@ -63,9 +74,10 @@ CATEGORIES = ["Text Generator", "Image Generator", "Video Generator", "Transcrip
 class CatalogView(PaginationMixin, ListView):
     """
     Display the catalog of AI tools with filtering, sorting, and search capabilities.
+    Using the OpenRouter-inspired design from models.html template.
     """
     model = AITool
-    template_name = 'catalog/catalog.html'
+    template_name = 'catalog/models.html'  # Using the new models.html template
     context_object_name = 'ai_tools'
     paginate_by = 12  # Show 12 AI tools per page
     
@@ -290,3 +302,76 @@ def compare_tools(request):
 def presentationAI(request, id):
     """Legacy function-based view that redirects to the class-based view."""
     return AIToolDetailView.as_view()(request, id=id)
+
+
+class ModelsView(PaginationMixin, ListView):
+    """
+    Display AI models in a grid layout with filtering and search capabilities.
+    This view is inspired by OpenRouter's models page design.
+    """
+    model = AITool
+    template_name = 'catalog/models.html'
+    context_object_name = 'ai_tools'
+    paginate_by = 12  # Show 12 AI tools per page
+    
+    def get_queryset(self):
+        """
+        Filter and sort the queryset based on request parameters.
+        """
+        queryset = AITool.objects.all()
+        
+        # Apply search filter if provided
+        search_query = self.request.GET.get('searchAITool', '')
+        if search_query:
+            queryset = queryset.filter(
+                Q(name__icontains=search_query) | 
+                Q(provider__icontains=search_query) | 
+                Q(description__icontains=search_query)
+            )
+        
+        # Apply category filter if provided
+        category = self.request.GET.get('category', '')
+        if category and category != 'All':
+            queryset = queryset.filter(category=category)
+        
+        # Apply sorting if provided
+        sort_by = self.request.GET.get('sort', 'popularity_desc')
+        if sort_by == 'name_asc':
+            queryset = queryset.order_by('name')
+        elif sort_by == 'name_desc':
+            queryset = queryset.order_by('-name')
+        elif sort_by == 'popularity_asc':
+            queryset = queryset.order_by('popularity')
+        elif sort_by == 'provider':
+            queryset = queryset.order_by('provider')
+        else:  # Default to popularity (highest first)
+            queryset = queryset.order_by('-popularity')
+        
+        return queryset
+    
+    def get_context_data(self, **kwargs):
+        """
+        Add additional context data for the template.
+        """
+        context = super().get_context_data(**kwargs)
+        
+        # Add filter parameters to context for maintaining state
+        context['searchTerm'] = self.request.GET.get('searchAITool', '')
+        context['current_category'] = self.request.GET.get('category', 'All')
+        context['sort'] = self.request.GET.get('sort', 'popularity')
+        context['categories'] = CATEGORIES
+        
+        # Add user favorites if user is authenticated
+        if self.request.user.is_authenticated:
+            user_favorites = UserFavorite.objects.filter(
+                user=self.request.user
+            ).values_list('ai_tool_id', flat=True)
+            context['user_favorites'] = user_favorites
+        
+        return context
+
+
+# Function-based view for models page for backward compatibility
+def models_view(request):
+    """Legacy function-based view that redirects to the class-based view."""
+    return ModelsView.as_view()(request)

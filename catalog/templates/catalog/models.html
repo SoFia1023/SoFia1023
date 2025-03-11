@@ -1,0 +1,730 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load catalog_extras %}
+
+{% block title %}AI Models | InspireAI{% endblock %}
+
+{% block extra_css %}
+<style>
+  /* OpenRouter-inspired styles */
+  :root {
+    --primary-color: #5B46F4;
+    --secondary-color: #8B5CF6;
+    --background-color: #f9fafb;
+    --card-background: #ffffff;
+    --text-primary: #111827;
+    --text-secondary: #6B7280;
+    --border-color: #E5E7EB;
+    --hover-color: #F3F4F6;
+    --tag-background: rgba(91, 70, 244, 0.1);
+    --tag-color: #5B46F4;
+  }
+
+  body {
+    background-color: var(--background-color);
+  }
+
+  /* Header styles */
+  .models-header {
+    padding: 2rem 0;
+    background-color: var(--card-background);
+    border-bottom: 1px solid var(--border-color);
+    margin-bottom: 2rem;
+  }
+
+  .header-title {
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: 0.5rem;
+  }
+
+  .header-subtitle {
+    font-size: 1.125rem;
+    color: var(--text-secondary);
+    max-width: 600px;
+  }
+
+  /* Search and filters */
+  .search-container {
+    position: relative;
+    margin-bottom: 1.5rem;
+  }
+
+  .search-input {
+    width: 100%;
+    padding: 0.75rem 1rem 0.75rem 3rem;
+    border: 1px solid var(--border-color);
+    border-radius: 0.5rem;
+    font-size: 1rem;
+    background-color: var(--card-background);
+    transition: all 0.2s ease;
+  }
+
+  .search-input:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(91, 70, 244, 0.1);
+  }
+
+  .search-icon {
+    position: absolute;
+    left: 1rem;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--text-secondary);
+  }
+
+  .filters-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .filter-tag {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.5rem 1rem;
+    border-radius: 9999px;
+    font-size: 0.875rem;
+    font-weight: 500;
+    background-color: var(--card-background);
+    color: var(--text-secondary);
+    border: 1px solid var(--border-color);
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+
+  .filter-tag:hover {
+    background-color: var(--hover-color);
+  }
+
+  .filter-tag.active {
+    background-color: var(--primary-color);
+    color: white;
+    border-color: var(--primary-color);
+  }
+
+  .filter-tag.active:hover {
+    background-color: #4935c8;
+  }
+
+  /* Models grid */
+  .models-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 2rem;
+    margin-bottom: 2.5rem;
+  }
+
+  .model-card {
+    background-color: var(--card-background);
+    border-radius: 1rem;
+    overflow: hidden;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+    transition: all 0.2s ease;
+    cursor: pointer;
+    position: relative;
+    border: 1px solid var(--border-color);
+  }
+
+  .model-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    border-color: var(--primary-color);
+  }
+
+  .model-card-header {
+    padding: 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    border-bottom: 1px solid var(--border-color);
+  }
+
+  .model-logo {
+    width: 48px;
+    height: 48px;
+    border-radius: 8px;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+    box-shadow: 0 2px 4px rgba(91, 70, 244, 0.25);
+    flex-shrink: 0;
+  }
+
+  .model-logo img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .model-info {
+    flex-grow: 1;
+  }
+
+  .model-name {
+    font-weight: 600;
+    font-size: 1.125rem;
+    color: var(--text-primary);
+    margin-bottom: 0.25rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .model-provider {
+    color: var(--text-secondary);
+    font-size: 0.875rem;
+  }
+
+  .model-card-body {
+    padding: 1.75rem 1.5rem;
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+    min-height: 220px;
+  }
+
+  .model-description {
+    color: var(--text-secondary);
+    font-size: 0.875rem;
+    margin-bottom: 1.75rem;
+    line-height: 1.6;
+    display: -webkit-box;
+    -webkit-line-clamp: 4;
+    line-clamp: 4;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    min-height: 5.5rem;
+  }
+
+  .model-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .model-tag {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.25rem 0.75rem;
+    border-radius: 9999px;
+    font-size: 0.75rem;
+    font-weight: 500;
+    background-color: var(--tag-background);
+    color: var(--tag-color);
+  }
+
+  .model-metrics {
+    display: flex;
+    justify-content: flex-start;
+    margin-top: auto;
+    padding-top: 1.25rem;
+  }
+
+  .metric-item {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .metric-value {
+    font-weight: 600;
+    font-size: 1.125rem;
+    color: var(--text-primary);
+  }
+
+  .metric-label {
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+  }
+
+  .model-card-footer {
+    padding: 1.25rem 1.5rem;
+    border-top: 1px solid var(--border-color);
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    background-color: rgba(249, 250, 251, 0.5);
+  }
+
+  .model-rating {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .rating-stars {
+    color: #FBBF24;
+  }
+
+  .rating-value {
+    font-weight: 600;
+    color: var(--text-primary);
+  }
+
+  .model-actions {
+    display: flex;
+    gap: 0.75rem;
+  }
+
+  .model-btn {
+    padding: 0.5rem 1rem;
+    border-radius: 9999px;
+    font-weight: 500;
+    font-size: 0.875rem;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+  }
+
+  .try-btn {
+    background: linear-gradient(90deg, var(--primary-color), var(--secondary-color));
+    color: white !important;
+    border: none;
+    box-shadow: 0 2px 4px rgba(91, 70, 244, 0.25);
+  }
+
+  .try-btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(91, 70, 244, 0.3);
+  }
+
+  .view-btn {
+    color: var(--text-secondary) !important;
+    border: 1px solid var(--border-color);
+    background-color: var(--card-background);
+  }
+
+  .view-btn:hover {
+    background-color: var(--hover-color);
+    color: var(--text-primary) !important;
+  }
+
+  .badge-api {
+    display: inline-flex;
+    align-items: center;
+    background-color: #10B981;
+    color: white;
+    font-size: 0.75rem;
+    font-weight: 500;
+    padding: 0.25rem 0.5rem;
+    border-radius: 9999px;
+    margin-left: 0.5rem;
+  }
+
+  .badge-featured {
+    display: inline-flex;
+    align-items: center;
+    background-color: #F59E0B;
+    color: white;
+    font-size: 0.75rem;
+    font-weight: 500;
+    padding: 0.25rem 0.5rem;
+    border-radius: 9999px;
+    margin-left: 0.5rem;
+  }
+
+  .favorite-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background-color: var(--card-background);
+    border: 1px solid var(--border-color);
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+
+  .favorite-btn:hover {
+    background-color: var(--hover-color);
+    color: #F43F5E;
+  }
+
+  .favorite-btn.active {
+    color: #F43F5E;
+    border-color: #F43F5E;
+  }
+
+  /* Empty state */
+  .empty-state {
+    background-color: var(--card-background);
+    border-radius: 1rem;
+    padding: 3rem;
+    text-align: center;
+    margin-bottom: 2rem;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  }
+
+  .empty-icon {
+    width: 80px;
+    height: 80px;
+    background-color: var(--hover-color);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 1.5rem;
+    color: var(--text-secondary);
+    font-size: 2rem;
+  }
+
+  /* Responsive adjustments */
+  @media (max-width: 768px) {
+    .models-grid {
+      grid-template-columns: 1fr;
+    }
+    
+    .model-metrics {
+      grid-template-columns: 1fr 1fr;
+    }
+    
+    .filters-container {
+      flex-wrap: nowrap;
+      overflow-x: auto;
+      padding-bottom: 0.5rem;
+      -webkit-overflow-scrolling: touch;
+    }
+    
+    .filter-tag {
+      flex-shrink: 0;
+    }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Models Header -->
+<div class="models-header">
+  <div class="container">
+    <h1 class="header-title">AI Models</h1>
+    <p class="header-subtitle">Explore our collection of AI models for various tasks. Find the perfect model for your needs.</p>
+  </div>
+</div>
+
+<!-- Search and Filters -->
+<div class="container">
+  <div class="search-container">
+    <i class="fas fa-search search-icon"></i>
+    <input type="text" class="search-input" placeholder="Search models by name, provider, or description..." 
+           value="{{ searchTerm }}" id="searchInput">
+  </div>
+  
+  <div class="filters-container">
+    <button class="filter-tag {% if current_category == 'All' or not current_category %}active{% endif %}" data-category="All">
+      All Models
+    </button>
+    {% for category in categories %}
+      <button class="filter-tag {% if current_category == category %}active{% endif %}" data-category="{{ category }}">
+        {{ category }}
+      </button>
+    {% endfor %}
+  </div>
+  
+  {% if searchTerm or current_category != 'All' and current_category %}
+  <div class="active-filters mb-4">
+    <div class="d-flex flex-wrap gap-2 align-items-center">
+      <span class="text-secondary small">Active filters:</span>
+      
+      {% if searchTerm %}
+        <div class="active-filter-tag">
+          <i class="fas fa-search me-1"></i> "{{ searchTerm }}"
+          <button class="clear-filter" data-filter="search"><i class="fas fa-times"></i></button>
+        </div>
+      {% endif %}
+      
+      {% if current_category != 'All' and current_category %}
+        <div class="active-filter-tag">
+          <i class="fas fa-tag me-1"></i> {{ current_category }}
+          <button class="clear-filter" data-filter="category"><i class="fas fa-times"></i></button>
+        </div>
+      {% endif %}
+      
+      <a href="{% url 'catalog' %}" class="filter-tag clear-all-tag">
+        Clear All
+      </a>
+    </div>
+  </div>
+  {% endif %}
+</div>
+
+<!-- Models Grid -->
+<div class="container">
+  {% if ai_tools %}
+    <div class="models-grid">
+      {% for ai in ai_tools %}
+        <div class="model-card fade-in model-card-delay-{{ forloop.counter0 }}"
+             data-url="{% url 'presentationAI' ai.id %}">
+          <div class="model-card-header">
+            <div class="model-logo">
+              {% if ai.image %}
+                <img src="{{ ai.image.url }}" alt="{{ ai.name }}">
+              {% else %}
+                <span class="text-white fw-bold">{{ ai.name.0|upper }}</span>
+              {% endif %}
+            </div>
+            <div class="model-info">
+              <div class="model-name">
+                {{ ai.name }}
+                {% if ai.api_type != 'none' %}
+                  <span class="badge-api">
+                    <i class="fas fa-plug me-1"></i>API
+                  </span>
+                {% endif %}
+                {% if ai.is_featured %}
+                  <span class="badge-featured">
+                    <i class="fas fa-award me-1"></i>Featured
+                  </span>
+                {% endif %}
+              </div>
+              <div class="model-provider">{{ ai.provider }}</div>
+            </div>
+          </div>
+          
+          <div class="model-card-body">
+            <div class="model-description">
+              {{ ai.description }}
+            </div>
+            
+            <div class="model-tags">
+              <div class="model-tag">
+                <i class="fas fa-tag me-1"></i> {{ ai.category }}
+              </div>
+              {% if ai.api_model %}
+                <div class="model-tag">
+                  <i class="fas fa-code me-1"></i> {{ ai.api_model }}
+                </div>
+              {% endif %}
+            </div>
+            
+            <div class="model-metrics">
+              <div class="metric-item">
+                <div class="metric-value">
+                  {% if ai.api_type != 'none' %}
+                    <i class="fas fa-check-circle text-success"></i> Available
+                  {% else %}
+                    <i class="fas fa-minus-circle text-muted"></i> External
+                  {% endif %}
+                </div>
+                <div class="metric-label">API Status</div>
+              </div>
+            </div>
+          </div>
+          
+          <div class="model-card-footer">
+            <div class="model-actions">
+              <button class="favorite-btn {% if ai.id in user_favorites %}active{% endif %}" 
+                      data-ai-id="{{ ai.id }}" 
+                      onclick="event.stopPropagation(); toggleFavorite(event, '{{ ai.id }}')">
+                <i class="{% if ai.id in user_favorites %}fas{% else %}far{% endif %} fa-heart"></i>
+              </button>
+              <a href="{% url 'chat' ai_id=ai.id %}" class="model-btn try-btn" onclick="event.stopPropagation();">
+                <i class="fas fa-comment-alt me-1"></i> Try
+              </a>
+              <a href="{% url 'presentationAI' ai.id %}" class="model-btn view-btn" onclick="event.stopPropagation();">
+                <i class="fas fa-info-circle me-1"></i> Details
+              </a>
+            </div>
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+    
+    <!-- Pagination -->
+    {% if is_paginated %}
+    <nav aria-label="Page navigation" class="d-flex justify-content-center mb-5">
+      <ul class="pagination">
+        <!-- Previous page link -->
+        {% if page_obj.has_previous %}
+          <li class="page-item">
+            <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if searchTerm %}&searchAITool={{ searchTerm }}{% endif %}{% if current_category %}&category={{ current_category }}{% endif %}{% if sort %}&sort={{ sort }}{% endif %}" aria-label="Previous">
+              <i class="fas fa-chevron-left me-1"></i> Previous
+            </a>
+          </li>
+        {% else %}
+          <li class="page-item disabled">
+            <a class="page-link" href="#" tabindex="-1" aria-disabled="true">
+              <i class="fas fa-chevron-left me-1"></i> Previous
+            </a>
+          </li>
+        {% endif %}
+
+        <!-- Page number links -->
+        {% for i in page_range %}
+          {% if page_obj.number == i %}
+            <li class="page-item active">
+              <a class="page-link" href="#">{{ i }}</a>
+            </li>
+          {% else %}
+            <li class="page-item">
+              <a class="page-link" href="?page={{ i }}{% if searchTerm %}&searchAITool={{ searchTerm }}{% endif %}{% if current_category %}&category={{ current_category }}{% endif %}{% if sort %}&sort={{ sort }}{% endif %}">{{ i }}</a>
+            </li>
+          {% endif %}
+        {% endfor %}
+
+        <!-- Next page link -->
+        {% if page_obj.has_next %}
+          <li class="page-item">
+            <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if searchTerm %}&searchAITool={{ searchTerm }}{% endif %}{% if current_category %}&category={{ current_category }}{% endif %}{% if sort %}&sort={{ sort }}{% endif %}" aria-label="Next">
+              Next <i class="fas fa-chevron-right ms-1"></i>
+            </a>
+          </li>
+        {% else %}
+          <li class="page-item disabled">
+            <a class="page-link" href="#" tabindex="-1" aria-disabled="true">
+              Next <i class="fas fa-chevron-right ms-1"></i>
+            </a>
+          </li>
+        {% endif %}
+      </ul>
+    </nav>
+    {% endif %}
+    
+  {% else %}
+    <!-- Empty state -->
+    <div class="empty-state">
+      <div class="empty-icon">
+        <i class="fas fa-search"></i>
+      </div>
+      <h3 class="fw-bold mb-3">No models found</h3>
+      <p class="text-muted mb-4">We couldn't find any models matching your search criteria. Try adjusting your filters or search terms.</p>
+      <a href="{% url 'catalog' %}" class="model-btn try-btn">
+        Clear All Filters
+      </a>
+    </div>
+  {% endif %}
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    // Model card click functionality
+    const modelCards = document.querySelectorAll('.model-card');
+    modelCards.forEach(card => {
+      card.addEventListener('click', function() {
+        const url = this.getAttribute('data-url');
+        if (url) {
+          window.location = url;
+        }
+      });
+    });
+    
+    // Search functionality
+    const searchInput = document.getElementById('searchInput');
+    searchInput.addEventListener('keypress', function(e) {
+      if (e.key === 'Enter') {
+        const searchValue = this.value.trim();
+        let url = new URL(window.location.href);
+        
+        if (searchValue) {
+          url.searchParams.set('searchAITool', searchValue);
+        } else {
+          url.searchParams.delete('searchAITool');
+        }
+        
+        url.searchParams.delete('page'); // Reset to first page on new search
+        window.location.href = url.toString();
+      }
+    });
+    
+    // Category filter functionality
+    const categoryButtons = document.querySelectorAll('.filter-tag[data-category]');
+    categoryButtons.forEach(button => {
+      button.addEventListener('click', function() {
+        const category = this.dataset.category;
+        let url = new URL(window.location.href);
+        
+        if (category && category !== 'All') {
+          url.searchParams.set('category', category);
+        } else {
+          url.searchParams.delete('category');
+        }
+        
+        url.searchParams.delete('page'); // Reset to first page on filter change
+        window.location.href = url.toString();
+      });
+    });
+    
+    // Clear individual filters
+    const clearFilterButtons = document.querySelectorAll('.clear-filter');
+    clearFilterButtons.forEach(button => {
+      button.addEventListener('click', function(e) {
+        e.stopPropagation();
+        const filterType = this.dataset.filter;
+        let url = new URL(window.location.href);
+        
+        if (filterType === 'search') {
+          url.searchParams.delete('searchAITool');
+        } else if (filterType === 'category') {
+          url.searchParams.delete('category');
+        }
+        
+        url.searchParams.delete('page'); // Reset to first page on filter change
+        window.location.href = url.toString();
+      });
+    });
+  });
+  
+  // Toggle favorite function
+  async function toggleFavorite(event, aiId) {
+    event.preventDefault();
+    event.stopPropagation();
+    
+    const button = event.currentTarget;
+    const icon = button.querySelector('i');
+    
+    try {
+      // Make AJAX request to toggle favorite
+      const response = await fetch(`/toggle-favorite/${aiId}/`, {
+        method: 'POST',
+        headers: {
+          'X-CSRFToken': getCookie('csrftoken'),
+          'Content-Type': 'application/json'
+        }
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        
+        // Update UI based on response
+        if (data.is_favorite) {
+          icon.classList.remove('far');
+          icon.classList.add('fas');
+          button.classList.add('active');
+        } else {
+          icon.classList.remove('fas');
+          icon.classList.add('far');
+          button.classList.remove('active');
+        }
+      } else {
+        console.error('Error toggling favorite');
+      }
+    } catch (error) {
+      console.error('Error:', error);
+    }
+  }
+  
+  // Helper function to get CSRF token
+  function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+      const cookies = document.cookie.split(';');
+      for (let i = 0; i < cookies.length; i++) {
+        const cookie = cookies[i].trim();
+        if (cookie.substring(0, name.length + 1) === (name + '=')) {
+          cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+          break;
+        }
+      }
+    }
+    return cookieValue;
+  }
+</script>
+{% endblock %}
