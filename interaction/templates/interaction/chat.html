@@ -6,45 +6,49 @@
 {% block extra_css %}
 <link rel="stylesheet" href="{% static 'interaction/css/chat.css' %}">
 <style>
-    /* Message Display Fix */
+    /* Additional OpenRouter-style overrides */
     .message-group {
         display: flex !important;
-        margin-bottom: 15px;
+        margin-bottom: 24px;
         align-items: flex-start;
-        width: 100%;
+        max-width: 90%;
+        margin-left: auto;
+        margin-right: auto;
     }
     
     .message-avatar {
-        width: 40px;
-        height: 40px;
-        border-radius: 50%;
+        width: 32px;
+        height: 32px;
+        border-radius: 6px;
         display: flex;
         align-items: center;
         justify-content: center;
-        margin-right: 10px;
+        margin-right: 12px;
         flex-shrink: 0;
     }
     
     .user-avatar {
-        background-color: #007bff;
+        background-color: #2563eb;
         color: white;
     }
     
     .ai-avatar {
-        background-color: #6c757d;
-        color: white;
+        background-color: white;
+        border: 1px solid #e5e7eb;
+        color: #4b5563;
     }
     
     .message-content-wrapper {
         flex: 1;
-        margin-left: 10px;
         display: flex;
         flex-direction: column;
     }
     
     .message-sender {
-        font-weight: bold;
-        margin-bottom: 5px;
+        font-size: 0.8125rem;
+        font-weight: 500;
+        margin-bottom: 4px;
+        color: #4b5563;
     }
     
     .message-bubbles {
@@ -53,9 +57,10 @@
     }
     
     .message {
-        margin-bottom: 5px;
+        margin-bottom: 8px;
         display: flex;
         flex-direction: column;
+        max-width: 100%;
     }
     
     .message-user {
@@ -67,30 +72,59 @@
     }
     
     .message-bubble {
-        padding: 10px 15px;
-        border-radius: 18px;
-        max-width: 80%;
+        padding: 12px 16px;
+        border-radius: 12px;
+        font-size: 0.9375rem;
+        line-height: 1.6;
         word-wrap: break-word;
-        display: inline-block;
+        overflow-wrap: break-word;
     }
     
     .message-user .message-bubble {
-        background-color: #007bff;
+        background-color: #2563eb;
         color: white;
-        border-bottom-right-radius: 5px;
     }
     
     .message-ai .message-bubble {
-        background-color: #f0f2f5;
-        color: #333;
-        border-bottom-left-radius: 5px;
+        background-color: #f9fafb;
+        color: #1a1a1a;
     }
     
     .message-time {
-        font-size: 0.75rem;
-        color: #6c757d;
-        margin-top: 2px;
+        font-size: 0.6875rem;
+        color: #6b7280;
+        margin-top: 4px;
         text-align: right;
+        opacity: 0.8;
+    }
+    
+    /* Code blocks styling */
+    .message-bubble pre {
+        background-color: rgba(0, 0, 0, 0.04);
+        border-radius: 8px;
+        padding: 12px;
+        margin: 8px 0;
+        overflow-x: auto;
+        font-family: 'Menlo', 'Monaco', 'Courier New', monospace;
+        font-size: 0.85rem;
+    }
+    
+    .message-user .message-bubble pre {
+        background-color: rgba(255, 255, 255, 0.1);
+        color: white;
+    }
+    
+    /* Chat input styling */
+    .chat-input-wrapper {
+        max-width: 90%;
+        margin-left: auto;
+        margin-right: auto;
+        border-radius: 8px;
+    }
+    
+    .chat-input {
+        min-height: 24px;
+        font-family: inherit;
     }
 </style>
 {% endblock %}
@@ -179,7 +213,7 @@
                                 </div>
                                 <div class="message-bubbles">
                                     <div class="message {% if message.is_user %}message-user{% else %}message-ai{% endif %}">
-                                        <div class="message-bubble">{{ message.content|linebreaksbr }}</div>
+                                                <div class="message-bubble">{{ message.content|linebreaksbr }}</div>
                                         <div class="message-time">
                                             <i class="bi bi-clock"></i> {{ message.timestamp|time:"H:i" }}
                                         </div>
@@ -226,9 +260,9 @@
                     </button>
                 </div>
                 <div class="chat-input-wrapper">
-                    <textarea id="messageInput" class="chat-input" placeholder="Type your message..." required></textarea>
-                    <button type="button" class="btn btn-primary" id="sendBtn" style="margin-left: 10px; height: 40px; display: flex; align-items: center; justify-content: center;">
-                        <i class="bi bi-send-fill me-1"></i> Send
+                    <textarea id="messageInput" class="chat-input" placeholder="Message {{ ai_tool.name }}..." required></textarea>
+                    <button type="button" class="btn btn-primary" id="sendBtn" style="margin-left: 10px; height: 40px; display: flex; align-items: center; justify-content: center; border-radius: 8px;">
+                        <i class="bi bi-send-fill"></i>
                     </button>
                 </div>
             </div>
@@ -977,7 +1011,7 @@
             });
         }
         
-        // Add message to UI
+        // Add message to UI - OpenRouter style
         function addMessageToUI(content, isUser, timestamp) {
             // Create message group container
             const messageGroup = document.createElement('div');
@@ -1008,7 +1042,9 @@
                     const img = document.createElement('img');
                     img.src = aiToolImage;
                     img.alt = aiToolName;
-                    img.className = 'message-avatar';
+                    img.style.width = '100%';
+                    img.style.height = '100%';
+                    img.style.objectFit = 'cover';
                     avatarDiv.appendChild(img);
                 } else {
                     const icon = document.createElement('i');
@@ -1082,18 +1118,35 @@
             scrollToBottom();
         }
         
-        // Process message content for better rendering
+        // Process message content for better rendering - OpenRouter style
         function processMessageContent(content) {
             if (!content) return '';
             
-            // Replace newlines with line breaks
-            let processed = content.replace(/\n/g, '<br>');
+            // First handle code blocks to prevent other formatting from affecting them
+            let processed = content;
             
-            // Convert URLs to clickable links
+            // Convert markdown code blocks with language specification
+            processed = processed.replace(/```([\w]*)\n([\s\S]*?)```/g, function(match, language, code) {
+                return '<pre><code class="language-' + (language || 'plaintext') + '">' + code + '</code></pre>';
+            });
+            
+            // Convert inline code
+            processed = processed.replace(/`([^`]+)`/g, '<code>$1</code>');
+            
+            // Replace newlines with line breaks (but not inside code blocks)
+            processed = processed.replace(/\n(?!<\/code><\/pre>)/g, '<br>');
+            
+            // Convert URLs to clickable links (but not inside code blocks)
             processed = processed.replace(
-                /(https?:\/\/[^\s]+)/g, 
+                /(?<!<code[^>]*>)(?<!<pre[^>]*>)(https?:\/\/[^\s<]+)(?![^<]*<\/code>)(?![^<]*<\/pre>)/g, 
                 '<a href="$1" target="_blank" rel="noopener noreferrer">$1</a>'
             );
+            
+            // Convert markdown bold
+            processed = processed.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+            
+            // Convert markdown italic
+            processed = processed.replace(/\*([^*]+)\*/g, '<em>$1</em>');
             
             return processed;
         }

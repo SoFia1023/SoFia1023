@@ -1,7 +1,10 @@
 from django.urls import path
 from . import views
 
-urlpatterns = [
+urlpatterns = [    
+    # Direct chat URLs
+    path('direct-chat/', views.direct_chat, name='direct_chat'),
+    path('direct-chat/message/', views.direct_chat_message, name='direct_chat_message'),
     # Chat URLs
     path('chat/', views.chat_selection, name='chat_selection'),
     # Important: Order matters! More specific patterns should come first

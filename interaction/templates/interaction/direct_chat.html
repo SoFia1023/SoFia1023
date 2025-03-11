@@ -1,0 +1,648 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Chat - Inspire AI{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'interaction/css/chat.css' %}">
+<style>
+    .message-group {
+        display: flex !important;
+        margin-bottom: 24px;
+        align-items: flex-start;
+        max-width: 90%;
+        margin-left: auto;
+        margin-right: auto;
+    }
+    
+    .message-avatar {
+        width: 32px;
+        height: 32px;
+        border-radius: 6px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-right: 12px;
+        flex-shrink: 0;
+    }
+    
+    .user-avatar {
+        background-color: #2563eb;
+        color: white;
+    }
+    
+    .ai-avatar {
+        background-color: white;
+        border: 1px solid #e5e7eb;
+        color: #4b5563;
+    }
+    
+    .message-content-wrapper {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+    }
+    
+    .message-sender {
+        font-size: 0.8125rem;
+        font-weight: 500;
+        margin-bottom: 4px;
+        color: #4b5563;
+    }
+    
+    .message-bubbles {
+        display: flex;
+        flex-direction: column;
+    }
+    
+    .message {
+        margin-bottom: 8px;
+        display: flex;
+        flex-direction: column;
+        max-width: 100%;
+    }
+    
+    .message-user {
+        align-self: flex-end;
+    }
+    
+    .message-ai {
+        align-self: flex-start;
+    }
+    
+    .message-bubble {
+        padding: 12px 16px;
+        border-radius: 12px;
+        font-size: 0.9375rem;
+        line-height: 1.6;
+        word-wrap: break-word;
+        overflow-wrap: break-word;
+    }
+    
+    .message-user .message-bubble {
+        background-color: #2563eb;
+        color: white;
+    }
+    
+    .message-ai .message-bubble {
+        background-color: #f9fafb;
+        color: #1a1a1a;
+    }
+    
+    .message-time {
+        font-size: 0.6875rem;
+        color: #6b7280;
+        margin-top: 4px;
+        text-align: right;
+        opacity: 0.8;
+    }
+    
+    .chat-input-container {
+        padding: 16px 24px 24px;
+        background-color: var(--neutral-50);
+        border-top: 1px solid var(--neutral-200);
+        z-index: 5;
+        position: relative;
+    }
+
+    .chat-input-wrapper {
+        display: flex;
+        align-items: flex-end;
+        background-color: white;
+        border: 1px solid var(--neutral-300);
+        border-radius: 12px;
+        padding: 10px 14px;
+        transition: all 0.2s ease;
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+        position: relative;
+        max-width: 90%;
+        margin-left: auto;
+        margin-right: auto;
+    }
+    
+    .chat-input-wrapper:focus-within {
+        border-color: var(--primary-color);
+        box-shadow: 0 0 0 2px rgba(91, 70, 244, 0.1);
+    }
+    
+    .chat-input-form {
+        width: 100%;
+    }
+    
+    .chat-input {
+        flex: 1;
+        border: none;
+        background: transparent;
+        font-size: 0.9375rem;
+        line-height: 1.5;
+        min-height: 24px;
+        max-height: 150px;
+        resize: none;
+        padding: 8px 0;
+        color: var(--neutral-900);
+        outline: none;
+        font-family: inherit;
+        width: 100%;
+    }
+    
+    .chat-send-btn {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        background-color: var(--primary-color);
+        color: white;
+        border: none;
+        margin-left: 8px;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        box-shadow: 0 2px 4px rgba(91, 70, 244, 0.2);
+        flex-shrink: 0;
+    }
+    
+    .chat-send-btn:hover {
+        background-color: var(--primary-light);
+        transform: translateY(-1px);
+    }
+    
+    .char-counter {
+        position: absolute;
+        bottom: -20px;
+        right: 16px;
+        font-size: 0.75rem;
+        color: var(--neutral-500);
+    }
+
+    .welcome-message {
+        text-align: center;
+        margin: 40px auto;
+        max-width: 600px;
+        padding: 20px;
+        background-color: #f9fafb;
+        border-radius: 12px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+    }
+
+    .welcome-message h2 {
+        color: #2563eb;
+        margin-bottom: 16px;
+    }
+
+    .welcome-message p {
+        color: #4b5563;
+        margin-bottom: 12px;
+        line-height: 1.6;
+    }
+
+    .welcome-examples {
+        margin-top: 24px;
+        text-align: left;
+    }
+
+    .welcome-examples h3 {
+        font-size: 1.1rem;
+        margin-bottom: 12px;
+        color: #374151;
+    }
+
+    .example-item {
+        background-color: #eef2ff;
+        border-left: 4px solid #2563eb;
+        padding: 10px 16px;
+        margin-bottom: 10px;
+        border-radius: 0 8px 8px 0;
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+
+    .example-item:hover {
+        background-color: #dbeafe;
+        transform: translateX(4px);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="chat-wrapper">
+    <!-- Main Chat Area -->
+    <div class="chat-main">
+        <!-- Chat Header -->
+        <div class="chat-header">
+            <div class="chat-header-info">
+                <div class="chat-header-avatar">
+                    <i class="bi bi-robot"></i>
+                </div>
+                <div>
+                    <div class="chat-header-title">Smart AI Assistant</div>
+                    <div class="chat-header-subtitle">
+                        <i class="bi bi-building"></i> Inspire AI
+                    </div>
+                </div>
+            </div>
+            <div class="chat-header-actions">
+                <div class="dropdown">
+                    <button class="chat-header-button tooltip" type="button" id="chatOptionsDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                        <i class="bi bi-three-dots-vertical"></i>
+                        <span class="tooltip-text">More options</span>
+                    </button>
+                    <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="chatOptionsDropdown">
+                        {% if conversation %}
+                        <li><a class="dropdown-item" href="{% url 'download_conversation' conversation_id=conversation.id format='txt' %}">
+                            <i class="bi bi-file-text me-2"></i> Download as Text
+                        </a></li>
+                        <li><a class="dropdown-item" href="{% url 'download_conversation' conversation_id=conversation.id format='json' %}">
+                            <i class="bi bi-file-code me-2"></i> Download as JSON
+                        </a></li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li><a class="dropdown-item" href="{% url 'share_conversation' conversation_id=conversation.id %}">
+                            <i class="bi bi-share me-2"></i> Share Conversation
+                        </a></li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li><a class="dropdown-item text-danger" href="{% url 'delete_conversation' conversation_id=conversation.id %}">
+                            <i class="bi bi-trash me-2"></i> Delete Conversation
+                        </a></li>
+                        {% endif %}
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- Chat Container -->
+        <div class="chat-container">
+            <div class="chat-messages" id="chatMessages">
+                {% if not messages %}
+                <div class="welcome-message">
+                    <h2>Welcome to Inspire AI Chat</h2>
+                    <p>Ask me anything and I'll route your request to the most appropriate AI tool. I can help with text generation, image creation, code assistance, and more.</p>
+                    
+                    <div class="welcome-examples">
+                        <h3>Try asking me:</h3>
+                        <div class="example-item" onclick="fillExample('Generate an image of a sunset over mountains')">
+                            "Generate an image of a sunset over mountains"
+                        </div>
+                        <div class="example-item" onclick="fillExample('Write a Python function to calculate Fibonacci numbers')">
+                            "Write a Python function to calculate Fibonacci numbers"
+                        </div>
+                        <div class="example-item" onclick="fillExample('Explain quantum computing in simple terms')">
+                            "Explain quantum computing in simple terms"
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+                
+                {% if messages %}
+                    <!-- User Groups Messages -->
+                    {% for message in messages %}
+                        <div class="message-group">
+                            {% if message.is_user %}
+                                <div class="message-avatar user-avatar">
+                                    <i class="bi bi-person-fill"></i>
+                                </div>
+                            {% else %}
+                                <div class="message-avatar ai-avatar">
+                                    <i class="bi bi-robot"></i>
+                                </div>
+                            {% endif %}
+                            
+                            <div class="message-content-wrapper">
+                                <div class="message-sender">
+                                    {% if message.is_user %}
+                                        You
+                                    {% else %}
+                                        {{ ai_tool_name|default:"AI Assistant" }}
+                                    {% endif %}
+                                </div>
+                                
+                                <div class="message-bubbles">
+                                    <div class="message {% if message.is_user %}message-user{% else %}message-ai{% endif %}">
+                                        <div class="message-bubble">
+                                            <div class="message-content">{{ message.content|linebreaksbr }}</div>
+                                        </div>
+                                        <div class="message-time">
+                                            {{ message.timestamp|date:"g:i A" }}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    {% endfor %}
+                {% endif %}
+            </div>
+        </div>
+        
+        <!-- Chat Input -->
+        <div class="chat-input-container">
+            <div class="chat-input-wrapper">
+                <form id="messageForm" class="chat-input-form">
+                    <div class="input-group">
+                        <textarea 
+                            id="messageInput" 
+                            class="chat-input" 
+                            placeholder="Type your message here..." 
+                            rows="1"
+                            maxlength="4000"
+                            required
+                        ></textarea>
+                        <button type="submit" class="chat-send-btn">
+                            <i class="bi bi-send-fill"></i>
+                        </button>
+                    </div>
+                    <div class="char-counter">
+                        <span id="charCount">0</span><span class="text-muted">/4000</span>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Scroll to Bottom Button -->
+<div class="scroll-to-bottom" id="scrollToBottomBtn">
+    <i class="bi bi-arrow-down"></i>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        console.log('DOM fully loaded - initializing chat interface');
+        
+        // DOM elements
+        const messageForm = document.getElementById('messageForm');
+        const messageInput = document.getElementById('messageInput');
+        const chatMessages = document.getElementById('chatMessages');
+        const charCount = document.getElementById('charCount');
+        const scrollToBottomBtn = document.getElementById('scrollToBottomBtn');
+        
+        // Auto-resize textarea as user types
+        messageInput.addEventListener('input', function() {
+            this.style.height = 'auto';
+            this.style.height = (this.scrollHeight) + 'px';
+            updateCharCount();
+        });
+        
+        // Update character count
+        function updateCharCount() {
+            const count = messageInput.value.length;
+            charCount.textContent = count;
+            
+            // Change color when approaching limit
+            if (count > 3500) {
+                charCount.style.color = '#ef4444';
+            } else if (count > 3000) {
+                charCount.style.color = '#f59e0b';
+            } else {
+                charCount.style.color = '';
+            }
+        }
+        
+        // Initial character count update
+        updateCharCount();
+        
+        // Scroll to bottom function
+        function scrollToBottom() {
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+        
+        // Scroll to bottom on page load
+        scrollToBottom();
+        
+        // Send message on Enter (but allow Shift+Enter for new lines)
+        messageInput.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                messageForm.dispatchEvent(new Event('submit'));
+            }
+        });
+        
+        // Show/hide scroll button based on scroll position
+        chatMessages.addEventListener('scroll', function() {
+            const isScrolledUp = chatMessages.scrollTop < chatMessages.scrollHeight - chatMessages.clientHeight - 100;
+            
+            if (isScrolledUp) {
+                scrollToBottomBtn.style.display = 'flex';
+            } else {
+                scrollToBottomBtn.style.display = 'none';
+            }
+        });
+        
+        // Scroll to bottom when button clicked
+        scrollToBottomBtn.addEventListener('click', scrollToBottom);
+        
+        // Send message function
+        messageForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const messageContent = messageInput.value.trim();
+            if (!messageContent) return;
+            
+            // Clear input and reset height
+            messageInput.value = '';
+            messageInput.style.height = 'auto';
+            updateCharCount();
+            
+            // Add user message to UI immediately
+            const now = new Date();
+            addMessageToUI(messageContent, true, now);
+            
+            // Scroll to bottom after adding message
+            scrollToBottom();
+            
+            // Get CSRF token
+            const csrftoken = getCookie('csrftoken');
+            
+            // Show loading indicator
+            const loadingIndicator = document.createElement('div');
+            loadingIndicator.className = 'message-group';
+            loadingIndicator.innerHTML = `
+                <div class="message-avatar ai-avatar">
+                    <i class="bi bi-robot"></i>
+                </div>
+                <div class="message-content-wrapper">
+                    <div class="message-sender">AI Assistant</div>
+                    <div class="message-bubbles">
+                        <div class="message message-ai">
+                            <div class="message-bubble">
+                                <div class="typing-indicator">
+                                    <span></span>
+                                    <span></span>
+                                    <span></span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            chatMessages.appendChild(loadingIndicator);
+            scrollToBottom();
+            
+            // Send message to server
+            fetch('{% url "direct_chat_message" %}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': csrftoken
+                },
+                body: JSON.stringify({
+                    message: messageContent,
+                    conversation_id: new URLSearchParams(window.location.search).get('conversation_id')
+                })
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                return response.json();
+            })
+            .then(data => {
+                // Remove loading indicator
+                chatMessages.removeChild(loadingIndicator);
+                
+                if (data.error) {
+                    // Show error message
+                    addErrorMessageToUI(data.error);
+                } else {
+                    // Add AI response to UI
+                    addMessageToUI(data.response, false, new Date());
+                    
+                    // Update conversation ID if provided
+                    if (data.conversation_id) {
+                        // Update URL without refreshing page
+                        const newUrl = window.location.pathname + '?conversation_id=' + data.conversation_id;
+                        window.history.pushState({path: newUrl}, '', newUrl);
+                    }
+                    
+                    // Update AI tool name if provided
+                    if (data.ai_tool_name) {
+                        // Update any AI tool name references in the UI
+                        const aiSenderElements = document.querySelectorAll('.message-sender:not(:contains("You"))');
+                        aiSenderElements.forEach(element => {
+                            element.textContent = data.ai_tool_name;
+                        });
+                    }
+                }
+                
+                // Scroll to bottom after adding response
+                scrollToBottom();
+            })
+            .catch(error => {
+                // Remove loading indicator
+                chatMessages.removeChild(loadingIndicator);
+                
+                // Show error message
+                addErrorMessageToUI('An error occurred while sending your message. Please try again.');
+                console.error('Error:', error);
+                
+                // Scroll to bottom after adding error
+                scrollToBottom();
+            });
+        });
+        
+        // Add message to UI - OpenRouter style
+        function addMessageToUI(content, isUser, timestamp) {
+            const messageGroup = document.createElement('div');
+            messageGroup.className = 'message-group';
+            
+            const formattedTime = formatTime(timestamp);
+            const processedContent = processMessageContent(content);
+            
+            messageGroup.innerHTML = `
+                <div class="message-avatar ${isUser ? 'user-avatar' : 'ai-avatar'}">
+                    <i class="bi bi-${isUser ? 'person-fill' : 'robot'}"></i>
+                </div>
+                <div class="message-content-wrapper">
+                    <div class="message-sender">${isUser ? 'You' : '{{ ai_tool_name|default:"AI Assistant" }}'}</div>
+                    <div class="message-bubbles">
+                        <div class="message ${isUser ? 'message-user' : 'message-ai'}">
+                            <div class="message-bubble">
+                                <div class="message-content">${processedContent}</div>
+                            </div>
+                            <div class="message-time">${formattedTime}</div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            chatMessages.appendChild(messageGroup);
+        }
+        
+        // Process message content for better rendering
+        function processMessageContent(content) {
+            // Convert newlines to <br> tags
+            let processed = content.replace(/\n/g, '<br>');
+            
+            // Simple markdown-like formatting
+            // Bold: **text** -> <strong>text</strong>
+            processed = processed.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+            
+            // Italic: *text* -> <em>text</em>
+            processed = processed.replace(/\*(.*?)\*/g, '<em>$1</em>');
+            
+            return processed;
+        }
+        
+        // Add error message to UI
+        function addErrorMessageToUI(errorMessage) {
+            const messageGroup = document.createElement('div');
+            messageGroup.className = 'message-group';
+            
+            const formattedTime = formatTime(new Date());
+            
+            messageGroup.innerHTML = `
+                <div class="message-avatar ai-avatar">
+                    <i class="bi bi-exclamation-triangle"></i>
+                </div>
+                <div class="message-content-wrapper">
+                    <div class="message-sender">System</div>
+                    <div class="message-bubbles">
+                        <div class="message message-ai">
+                            <div class="message-bubble" style="background-color: #fee2e2; color: #b91c1c;">
+                                <div class="message-content">
+                                    <i class="bi bi-exclamation-circle me-2"></i>
+                                    ${errorMessage}
+                                </div>
+                            </div>
+                            <div class="message-time">${formattedTime}</div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            chatMessages.appendChild(messageGroup);
+        }
+        
+        // Format time helper function
+        function formatTime(date) {
+            return date.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+        }
+        
+        // Get CSRF token
+        function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
+        
+        // Fill example function
+        window.fillExample = function(text) {
+            messageInput.value = text;
+            messageInput.style.height = 'auto';
+            messageInput.style.height = (messageInput.scrollHeight) + 'px';
+            updateCharCount();
+            messageInput.focus();
+        };
+    });
+</script>
+{% endblock %}

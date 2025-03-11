@@ -2,9 +2,93 @@
 Utility functions for the interaction app.
 """
 import json
+import re
 from io import StringIO
 import csv
 from django.utils import timezone
+from catalog.models import AITool
+
+def route_message_to_ai_tool(message_content):
+    """
+    Analyze message content and route to the most appropriate AI tool.
+    
+    Args:
+        message_content (str): The user's message content
+        
+    Returns:
+        AITool: The most appropriate AI tool for handling the message
+    """
+    # Convert to lowercase for case-insensitive matching
+    content_lower = message_content.lower()
+    
+    # Define patterns for different AI tool categories
+    patterns = {
+        'Image Generator': [
+            r'(create|generate|make|draw|design|produce) (a|an|some)? ?(image|picture|photo|illustration|artwork|drawing)',
+            r'(image|picture|photo) of',
+            r'(visualize|visualise|imagine|envision)',
+            r'(render|sketch|paint|illustrate)',
+            r'(image|picture|photo|visual) (generation|creation)'
+        ],
+        'Video Generator': [
+            r'(create|generate|make|produce) (a|an|some)? ?(video|animation|clip|movie)',
+            r'(video|animation) of',
+            r'(animate|animating)',
+            r'(video|animation|clip|movie) (generation|creation)'
+        ],
+        'Code Generator': [
+            r'(write|generate|create|code|program|implement|develop) (a|an|some)? ?(code|function|class|method|algorithm|program|script)',
+            r'(python|javascript|java|c\+\+|html|css|sql|php|ruby|swift|typescript|go|rust|kotlin)',
+            r'(programming|coding|development|software)',
+            r'(function|class|method|api|endpoint|algorithm)',
+            r'(debug|fix|solve) (this|my|the) (code|bug|error|issue|problem)'
+        ],
+        'Transcription': [
+            r'(transcribe|transcription|convert speech to text|speech-to-text)',
+            r'(audio|speech|voice) (to|into) (text|transcript)',
+            r'(extract|get|pull) text from (audio|speech|recording)'
+        ],
+        'Word Processor': [
+            r'(summarize|summarise|summary)',
+            r'(proofread|edit|revise|check|correct) (my|this|the) (text|document|essay|paper|article|content)',
+            r'(grammar|spelling|punctuation) (check|correction)',
+            r'(rewrite|rephrase|paraphrase)',
+            r'(translate|translation)'
+        ]
+    }
+    
+    # Default to Text Generator if no specific patterns match
+    best_category = 'Text Generator'
+    highest_score = 0
+    
+    # Check each category's patterns
+    for category, category_patterns in patterns.items():
+        score = 0
+        for pattern in category_patterns:
+            matches = re.findall(pattern, content_lower)
+            score += len(matches)
+        
+        # If this category has a higher score, update the best match
+        if score > highest_score:
+            highest_score = score
+            best_category = category
+    
+    # Get the most popular AI tool in the best matching category
+    ai_tool = AITool.objects.filter(
+        category=best_category
+    ).order_by('-popularity').first()
+    
+    # Fallback to the most popular Text Generator if no tool found in the matched category
+    if not ai_tool:
+        ai_tool = AITool.objects.filter(
+            category='Text Generator'
+        ).order_by('-popularity').first()
+    
+    # Ultimate fallback to any AI tool if still nothing found
+    if not ai_tool:
+        ai_tool = AITool.objects.all().order_by('-popularity').first()
+    
+    return ai_tool
 
 def format_conversation_for_download(conversation, format_type='json'):
     """

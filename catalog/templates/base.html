@@ -413,8 +413,8 @@
             </a>
           </li>
           <li class="nav-item mx-1">
-            <a class="nav-link d-flex align-items-center py-2 px-3 {% if '/interaction/chat/' in request.path %}active{% endif %}" 
-               style="border-radius: var(--radius-full);" href="{% url 'chat_selection' %}">
+            <a class="nav-link d-flex align-items-center py-2 px-3 {% if '/interaction/direct-chat/' in request.path or '/interaction/chat/' in request.path %}active{% endif %}" 
+               style="border-radius: var(--radius-full);" href="{% url 'direct_chat' %}">
               <i class="fas fa-comment-alt me-1"></i>
               <span>Chat</span>
             </a>
@@ -438,7 +438,7 @@
               </a>
             </li>
             <li class="nav-item mb-2">
-              <a class="nav-link d-flex align-items-center py-2 {% if '/interaction/chat/' in request.path %}active{% endif %}" href="{% url 'chat_selection' %}">
+              <a class="nav-link d-flex align-items-center py-2 {% if '/interaction/direct-chat/' in request.path or '/interaction/chat/' in request.path %}active{% endif %}" href="{% url 'direct_chat' %}">
                 <i class="fas fa-comment-alt me-2"></i>
                 <span>Chat</span>
               </a>

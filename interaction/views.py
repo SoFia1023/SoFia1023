@@ -14,13 +14,149 @@ from django.db.models import Q
 
 from catalog.models import AITool
 from .models import Conversation, Message, FavoritePrompt, SharedChat
-from .utils import format_conversation_for_download
+from .utils import format_conversation_for_download, route_message_to_ai_tool
 from catalog.utils import AIService
 
 # Create your views here.
 
 # Available categories for AI tools
 CATEGORIES = ["Text Generator", "Image Generator", "Video Generator", "Transcription", "Word Processor", "Code Generator", "AI Platform"]
+
+# Direct chat view
+@login_required
+def direct_chat(request):
+    """View for the smart chat interface that routes messages to appropriate AI tools."""
+    conversation_id = request.GET.get('conversation_id')
+    
+    if conversation_id:
+        # Load existing conversation if ID is provided
+        try:
+            conversation = get_object_or_404(
+                Conversation, 
+                id=conversation_id,
+                user=request.user
+            )
+            messages = list(conversation.get_messages())
+            
+            # Get the AI tool name for display
+            ai_tool_name = conversation.ai_tool.name
+        except:
+            # If conversation not found, start fresh
+            conversation = None
+            messages = []
+            ai_tool_name = "AI Assistant"
+    else:
+        # Start fresh with no conversation
+        conversation = None
+        messages = []
+        ai_tool_name = "AI Assistant"
+    
+    return render(request, 'interaction/direct_chat.html', {
+        'conversation': conversation,
+        'messages': messages,
+        'ai_tool_name': ai_tool_name
+    })
+
+@login_required
+@require_POST
+def direct_chat_message(request):
+    """Handle sending a message in the direct chat interface with smart routing."""
+    try:
+        # Parse the request data
+        data = json.loads(request.body)
+        user_message = data.get('message', '').strip()
+        conversation_id = data.get('conversation_id')
+        
+        if not user_message:
+            return JsonResponse({'error': 'Message cannot be empty'}, status=400)
+        
+        # If conversation_id is provided, use that conversation
+        if conversation_id:
+            try:
+                conversation = get_object_or_404(
+                    Conversation, 
+                    id=conversation_id,
+                    user=request.user
+                )
+                ai_tool = conversation.ai_tool
+            except:
+                # If conversation not found, route to a new AI tool
+                ai_tool = route_message_to_ai_tool(user_message)
+                conversation = Conversation.objects.create(
+                    user=request.user,
+                    ai_tool=ai_tool,
+                    title=f"Chat with {ai_tool.name}"
+                )
+        else:
+            # Route message to appropriate AI tool
+            ai_tool = route_message_to_ai_tool(user_message)
+            
+            # Create a new conversation with the selected AI tool
+            conversation = Conversation.objects.create(
+                user=request.user,
+                ai_tool=ai_tool,
+                title=f"Chat with {ai_tool.name}"
+            )
+        
+        # Save user message
+        Message.objects.create(
+            conversation=conversation,
+            content=user_message,
+            is_user=True
+        )
+        
+        # Update conversation timestamp
+        conversation.updated_at = timezone.now()
+        conversation.save()
+        
+        # Prepare service configuration
+        service_config = {
+            'api_type': ai_tool.api_type,
+            'api_model': ai_tool.api_model,
+            'api_endpoint': ai_tool.api_endpoint
+        }
+        
+        # Send message to AI service
+        try:
+            ai_response = AIService.send_to_ai_service(user_message, service_config)
+            
+            if ai_response.get('success'):
+                # Save AI response
+                ai_message = Message.objects.create(
+                    conversation=conversation,
+                    content=ai_response.get('data'),
+                    is_user=False
+                )
+                
+                # Update conversation timestamp again
+                conversation.updated_at = timezone.now()
+                conversation.save()
+                
+                # Increment AI tool popularity
+                ai_tool.popularity += 1
+                ai_tool.save()
+                
+                return JsonResponse({
+                    'response': ai_response.get('data'),
+                    'conversation_id': str(conversation.id),
+                    'ai_tool_name': ai_tool.name
+                })
+            else:
+                return JsonResponse({
+                    'error': ai_response.get('error', 'An error occurred with the AI service'),
+                    'conversation_id': str(conversation.id),
+                    'ai_tool_name': ai_tool.name
+                })
+        except Exception as e:
+            return JsonResponse({
+                'error': f"Error processing message: {str(e)}",
+                'conversation_id': str(conversation.id),
+                'ai_tool_name': ai_tool.name
+            })
+    except json.JSONDecodeError:
+        return JsonResponse({'error': 'Invalid JSON format'}, status=400)
+    except Exception as e:
+        return JsonResponse({'error': f"Unexpected error: {str(e)}"}, status=500)
 
 # Chat views
 @login_required
