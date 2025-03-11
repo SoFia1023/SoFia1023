@@ -106,7 +106,7 @@
       {% endfor %}
     {% endif %}
 
-    <form method="post" action="{% url 'login' %}" class="login-form">
+    <form method="post" action="{% url 'users:login' %}" class="login-form">
       {% csrf_token %}
       
       <div class="form-group">
@@ -144,7 +144,7 @@
 
     <div class="login-footer">
       <p>Don't have an account?</p>
-      <a href="{% url 'register' %}" class="register-link">Create Account</a>
+      <a href="{% url 'users:register' %}" class="register-link">Create Account</a>
     </div>
   </div>
 </div>

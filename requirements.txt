@@ -3,6 +3,7 @@ Django>=5.1.5
 Pillow>=10.0.0
 python-dotenv>=1.0.0
 requests>=2.31.0
+djangorestframework>=3.14.0
 
 # Database adapters
 dj-database-url>=2.1.0  # For database URL configuration

@@ -1,0 +1,24 @@
+{% comment %}
+This template is used by the render_recent_messages inclusion tag
+{% endcomment %}
+
+<div class="recent-messages">
+  {% if messages %}
+    <h5 class="mb-3">Recent Messages</h5>
+    <ul class="list-group">
+      {% for message in messages %}
+        <li class="list-group-item {% if message.is_user %}list-group-item-light{% else %}list-group-item-primary{% endif %}">
+          <div class="message-header d-flex justify-content-between">
+            <span class="message-sender">{{ message.is_user|yesno:"You,AI" }}</span>
+            <small class="text-muted">{{ message.timestamp|format_timestamp }}</small>
+          </div>
+          <div class="message-content">
+            {{ message.content|truncate_text:100 }}
+          </div>
+        </li>
+      {% endfor %}
+    </ul>
+  {% else %}
+    <p class="text-muted">No recent messages</p>
+  {% endif %}
+</div>

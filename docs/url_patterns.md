@@ -51,7 +51,7 @@ The main URL configuration is defined in `inspireIA/urls.py`:
 |------------|------|------|-------------|
 | `admin/` | `admin.site.urls` | N/A | Django's default admin interface |
 | `inspire-admin/` | `admin_site.urls` | `inspire_admin` | Custom admin interface with enhanced features |
-| `''` (root) | `catalog_views.home` | `home` | Project homepage |
+| `''` (root) | `home` | `home` | Project homepage (imported from catalog.views.home) |
 | `catalog/` | include `catalog.urls` | N/A | All catalog-related URLs |
 | `interaction/` | include `interaction.urls` | N/A | All interaction-related URLs |
 | `users/` | include `users.urls` | N/A | All user management URLs |
@@ -73,32 +73,33 @@ The catalog app URLs are defined in `catalog/urls.py`:
 
 ### View Details
 
-- `CatalogView`: Class-based view that displays the catalog of AI tools
-- `AIToolDetailView`: Class-based view for detailed information about a specific AI tool
-- `compare_tools`: Function-based view for comparing multiple AI tools
-- Authentication views (`register_view`, `login_view`, `logout_view`, `profile_view`): Handle user authentication
+- `CatalogView`: Class-based view that displays the catalog of AI tools (in catalog.views.catalog)
+- `AIToolDetailView`: Class-based view for detailed information about a specific AI tool (in catalog.views.catalog)
+- `compare_tools`: Function-based view for comparing multiple AI tools (in catalog.views.catalog)
+- `home`: Function-based view for the homepage (in catalog.views.home)
+- Authentication views (`register_view`, `login_view`, `logout_view`, `profile_view`): Handle user authentication (in catalog.views.auth)
 
 ## Interaction App URLs
 
-The interaction app URLs are defined in `interaction/urls.py`:
+The interaction app URLs are defined in `interaction/urls.py` and use a modular view structure:
 
-| URL Pattern | View | Name | Description |
-|------------|------|------|-------------|
-| `direct-chat/` | `direct_chat` | `direct_chat` | Smart chat interface with automatic tool routing |
-| `direct-chat/message/` | `direct_chat_message` | `direct_chat_message` | API endpoint for direct chat messages |
-| `chat/` | `chat_selection` | `chat_selection` | Select AI tool for chatting |
-| `chat/conversation/<uuid:conversation_id>/` | `chat_view` | `continue_conversation` | Continue an existing conversation |
-| `chat/conversation/<uuid:conversation_id>/send/` | `send_message` | `send_message` | Send message in an existing conversation |
-| `chat/<uuid:ai_id>/` | `chat_view` | `chat` | Start a new chat with specific AI tool |
-| `conversations/` | `conversation_history` | `conversation_history` | View conversation history |
-| `conversations/<uuid:conversation_id>/delete/` | `delete_conversation` | `delete_conversation` | Delete a conversation |
-| `conversations/<uuid:conversation_id>/download/<str:format>/` | `download_conversation` | `download_conversation` | Download conversation in specified format |
-| `prompts/` | `favorite_prompts` | `favorite_prompts` | View all favorite prompts |
-| `prompts/ai/<uuid:ai_id>/` | `favorite_prompts` | `ai_favorite_prompts` | View favorite prompts for specific AI tool |
-| `prompts/save/` | `save_favorite_prompt` | `save_favorite_prompt` | Save a new favorite prompt |
-| `prompts/<uuid:prompt_id>/delete/` | `delete_favorite_prompt` | `delete_favorite_prompt` | Delete a favorite prompt |
-| `share/<uuid:conversation_id>/` | `share_conversation` | `share_conversation` | Share a conversation |
-| `shared/<str:access_token>/` | `view_shared_chat` | `view_shared_chat` | View a shared conversation |
+| URL Pattern | View | Module | Name | Description |
+|------------|------|--------|------|-------------|
+| `direct-chat/` | `chat.direct_chat` | chat.py | `direct_chat` | Smart chat interface with automatic tool routing |
+| `direct-chat/message/` | `chat.direct_chat_message` | chat.py | `direct_chat_message` | API endpoint for direct chat messages |
+| `chat/` | `chat.chat_selection` | chat.py | `chat_selection` | Select AI tool for chatting |
+| `chat/conversation/<uuid:conversation_id>/` | `chat.chat_view` | chat.py | `continue_conversation` | Continue an existing conversation |
+| `chat/conversation/<uuid:conversation_id>/send/` | `chat.send_message` | chat.py | `send_message` | Send message in an existing conversation |
+| `chat/<uuid:ai_id>/` | `chat.chat_view` | chat.py | `chat` | Start a new chat with specific AI tool |
+| `conversations/` | `conversations.conversation_history` | conversations.py | `conversation_history` | View conversation history |
+| `conversations/<uuid:conversation_id>/delete/` | `conversations.delete_conversation` | conversations.py | `delete_conversation` | Delete a conversation |
+| `conversations/<uuid:conversation_id>/download/<str:format>/` | `conversations.download_conversation` | conversations.py | `download_conversation` | Download conversation in specified format |
+| `prompts/` | `favorites.favorite_prompts` | favorites.py | `favorite_prompts` | View all favorite prompts |
+| `prompts/ai/<uuid:ai_id>/` | `favorites.favorite_prompts` | favorites.py | `ai_favorite_prompts` | View favorite prompts for specific AI tool |
+| `prompts/save/` | `favorites.save_favorite_prompt` | favorites.py | `save_favorite_prompt` | Save a new favorite prompt |
+| `prompts/<uuid:prompt_id>/delete/` | `favorites.delete_favorite_prompt` | favorites.py | `delete_favorite_prompt` | Delete a favorite prompt |
+| `share/<uuid:conversation_id>/` | `sharing.share_conversation` | sharing.py | `share_conversation` | Share a conversation |
+| `shared/<str:access_token>/` | `sharing.view_shared_chat` | sharing.py | `view_shared_chat` | View a shared conversation |
 
 ### View Details
 
@@ -160,6 +161,32 @@ For a request to `/interaction/chat/conversation/123e4567-e89b-12d3-a456-4266141
 1. Main `urls.py` matches `interaction/` and includes `interaction.urls`
 2. `interaction/urls.py` matches `chat/conversation/<uuid:conversation_id>/` and routes to `chat_view`
 3. `chat_view` receives `conversation_id` as a parameter with value `123e4567-e89b-12d3-a456-426614174000`
+
+## Modular Code Structure
+
+The project follows a modular code organization pattern to improve maintainability and scalability:
+
+### View Organization
+
+- **Catalog App**: Views are organized in the `catalog/views/` directory:
+  - `__init__.py`: Exports all views for URL routing
+  - `catalog.py`: Contains the catalog listing views
+  - `home.py`: Contains the homepage view
+
+- **Interaction App**: Views are organized in the `interaction/views/` directory:
+  - `__init__.py`: Exports all views for URL routing
+  - `chat.py`: Contains chat-related views
+  - `conversations.py`: Contains conversation management views
+  - `favorites.py`: Contains favorite prompts views
+  - `sharing.py`: Contains conversation sharing views
+
+### Constants Management
+
+The project centralizes constants in dedicated files:
+
+- `catalog/constants.py`: Contains the `CATEGORIES` constant used across the application
+
+This approach ensures a single source of truth for important constants and prevents duplication.
 
 ## Best Practices
 

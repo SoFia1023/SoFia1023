@@ -431,7 +431,7 @@
         <hr class="my-4">
         
         <div class="d-grid gap-2">
-          <a href="{% url 'logout' %}" class="btn btn-outline-danger">
+          <a href="{% url 'users:logout' %}" class="btn btn-outline-danger">
             <i class="fas fa-sign-out-alt me-1"></i>Log Out
           </a>
         </div>
@@ -447,7 +447,7 @@
         <h2 class="profile-card-title h5">
           <i class="fas fa-heart"></i>Favorite AI Tools
         </h2>
-        <a href="{% url 'catalog' %}" class="btn btn-sm btn-primary">
+        <a href="{% url 'catalog:catalog' %}" class="btn btn-sm btn-primary">
           <i class="fas fa-plus me-1"></i>Add More
         </a>
       </div>
@@ -478,13 +478,13 @@
               </div>
               
               <div class="favorite-actions">
-                <a href="{% url 'presentationAI' favorite.ai_tool.id %}" class="btn btn-sm btn-outline-primary">
+                <a href="{% url 'catalog:presentationAI' favorite.ai_tool.id %}" class="btn btn-sm btn-outline-primary">
                   <i class="fas fa-eye"></i>
                 </a>
-                <a href="{% url 'chat' ai_id=favorite.ai_tool.id %}" class="btn btn-sm btn-outline-success">
+                <a href="{% url 'interaction:chat' ai_id=favorite.ai_tool.id %}" class="btn btn-sm btn-outline-success">
                   <i class="fas fa-comment-alt"></i>
                 </a>
-                <form method="post" action="{% url 'toggle_favorite' favorite.ai_tool.id %}" class="d-inline">
+                <form method="post" action="{% url 'interaction:toggle_favorite' favorite.ai_tool.id %}" class="d-inline">
                   {% csrf_token %}
                   <button type="submit" class="btn btn-sm btn-outline-danger">
                     <i class="fas fa-heart-broken"></i>
@@ -500,7 +500,7 @@
             </div>
             <h4 class="fw-bold mb-2">No favorites yet</h4>
             <p class="text-muted mb-4">Explore the catalog and mark AI tools as favorites to see them here</p>
-            <a href="{% url 'catalog' %}" class="btn btn-primary">
+            <a href="{% url 'catalog:catalog' %}" class="btn btn-primary">
               <i class="fas fa-search me-1"></i>Browse AI Tools
             </a>
           </div>
@@ -545,7 +545,7 @@
               </div>
               
               <div class="ms-auto d-flex align-items-center">
-                <a href="{% url 'continue_conversation' conversation_id=conversation.id %}" class="btn btn-sm btn-primary">
+                <a href="{% url 'interaction:continue_conversation' conversation_id=conversation.id %}" class="btn btn-sm btn-primary">
                   <i class="fas fa-arrow-right"></i>
                 </a>
               </div>
@@ -558,7 +558,7 @@
             </div>
             <h4 class="fw-bold mb-2">No conversations yet</h4>
             <p class="text-muted mb-4">Start chatting with AI tools to see your recent interactions here</p>
-            <a href="{% url 'catalog' %}" class="btn btn-primary">
+            <a href="{% url 'catalog:catalog' %}" class="btn btn-primary">
               <i class="fas fa-robot me-1"></i>Start a Chat
             </a>
           </div>

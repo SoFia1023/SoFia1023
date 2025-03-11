@@ -15,14 +15,12 @@ from typing import Dict, Any, List, Optional, Union, Type, TypeVar, cast, Tuple
 from django.db.models.query import QuerySet
 
 from catalog.models import AITool
+from catalog.constants import CATEGORIES
 from .models import Conversation, Message, FavoritePrompt, SharedChat
 from .utils import format_conversation_for_download, route_message_to_ai_tool
 from catalog.utils import AIService
 
 # Create your views here.
-
-# Available categories for AI tools
-CATEGORIES = ["Text Generator", "Image Generator", "Video Generator", "Transcription", "Word Processor", "Code Generator", "AI Platform"]
 
 # Direct chat view
 @login_required

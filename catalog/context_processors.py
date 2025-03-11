@@ -1,4 +1,4 @@
-from catalog.views import CATEGORIES
+from catalog.constants import CATEGORIES
 
 def ai_categories(request):
     """

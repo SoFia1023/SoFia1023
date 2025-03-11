@@ -7,7 +7,7 @@ The `urlpatterns` list routes URLs to views. For more information please see:
 from typing import List, Union, cast
 from django.contrib import admin
 from django.urls import path, include, URLPattern, URLResolver
-from catalog import views as catalog_views
+from catalog.views.home import home
 from django.conf import settings
 from django.conf.urls.static import static
 from .admin import admin_site
@@ -19,7 +19,7 @@ urlpatterns: List[Union[URLPattern, URLResolver]] = [
     path('inspire-admin/', admin_site.urls, name='inspire_admin'),  # Custom admin site
     
     # Home page
-    path('', catalog_views.home, name='home'),
+    path('', home, name='home'),
     
     # Catalog app - includes all catalog-related URLs
     path('catalog/', include('catalog.urls', namespace='catalog')),
@@ -29,6 +29,9 @@ urlpatterns: List[Union[URLPattern, URLResolver]] = [
     
     # Users app
     path('users/', include('users.urls')),
+    
+    # API app
+    path('api/', include('api.urls')),
     
 
 ]

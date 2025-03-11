@@ -27,6 +27,24 @@ Inspire AI is a web application designed to help students and teachers discover,
 - Enable users to save favorite tools and prompts
 - Provide conversation history, sharing, and export functionality
 
+## 📂 Modular Code Structure
+
+The project follows a modular code organization pattern to improve maintainability and scalability:
+
+### View Organization
+
+- **Modular Views**: Views are organized into separate modules based on functionality
+- **Clear Imports**: Each app's `__init__.py` file exports all necessary views for URL routing
+- **Centralized Constants**: Common constants like `CATEGORIES` are defined in dedicated files
+
+### Benefits of Modular Structure
+
+- **Improved Readability**: Smaller, focused files are easier to understand
+- **Better Maintainability**: Changes to one feature don't affect others
+- **Easier Collaboration**: Team members can work on different modules simultaneously
+- **Simplified Testing**: Isolated modules are easier to test
+- **Clearer Dependencies**: Import structure clearly shows dependencies between components
+
 ## 🚀 Features Highlight
 
 ## 🧭 URL Patterns and Routing
@@ -159,8 +177,13 @@ ProyectoIntegrador1/
 │   │   └── catalog/          # Catalog-specific templates
 │   ├── management/           # Custom management commands
 │   │   └── commands/         # Command implementations
+│   ├── views/                # Modular views
+│   │   ├── __init__.py      # View exports
+│   │   ├── catalog.py       # Catalog listing views
+│   │   └── home.py          # Homepage views
 │   ├── admin.py              # Admin panel configuration
 │   ├── apps.py               # App configuration
+│   ├── constants.py          # Centralized constants (CATEGORIES, etc.)
 │   ├── context_processors.py # Template context processors
 │   ├── mixins.py             # Reusable view mixins (pagination, filtering)
 │   ├── models.py             # AI tool data models
@@ -172,6 +195,12 @@ ProyectoIntegrador1/
 ├── interaction/              # User-AI interaction functionality
 │   ├── migrations/           # Database migrations
 │   ├── static/               # Static assets
+│   ├── views/                # Modular views
+│   │   ├── __init__.py      # View exports
+│   │   ├── chat.py          # Chat-related views
+│   │   ├── conversations.py # Conversation management views
+│   │   ├── favorites.py     # Favorite prompts views
+│   │   └── sharing.py       # Conversation sharing views
 │   │   └── interaction/
 │   │       └── css/          # Interaction-specific stylesheets
 │   ├── templates/            # HTML templates

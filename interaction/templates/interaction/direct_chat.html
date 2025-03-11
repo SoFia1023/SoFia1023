@@ -480,7 +480,7 @@
             scrollToBottom();
             
             // Send message to server
-            fetch('{% url "direct_chat_message" %}', {
+            fetch('{% url "interaction:direct_chat_message" %}', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
