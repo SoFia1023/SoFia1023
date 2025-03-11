@@ -37,7 +37,7 @@ def favorite_prompts(request: HttpRequest, ai_id: Optional[uuid.UUID] = None) ->
     
     # Filter by AI tool if specified
     if ai_tool_id:
-        queryset = queryset.filter(ai_tool_id=ai_tool_id)
+        queryset = queryset.filter(ai_tools__id=ai_tool_id)
     
     # Order by creation date
     prompts = queryset.order_by('-created_at')
@@ -96,9 +96,12 @@ def save_favorite_prompt(request: HttpRequest) -> JsonResponse:
     prompt = FavoritePrompt.objects.create(
         user=request.user,
         title=title,
-        content=content,
-        ai_tool=ai_tool
+        prompt_text=content
     )
+    
+    # Add the AI tool to the prompt's ai_tools if specified
+    if ai_tool:
+        prompt.ai_tools.add(ai_tool)
     
     return JsonResponse({
         'id': prompt.id,

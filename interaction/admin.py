@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Conversation, Message, FavoritePrompt, SharedChat, UserFavorite
+from .models import Conversation, Message, FavoritePrompt, SharedChat
 from inspireIA.admin import admin_site
 from django.utils.html import format_html
 from django.urls import reverse
@@ -182,21 +182,27 @@ class MessageAdmin(admin.ModelAdmin):
 
 @admin.register(FavoritePrompt)
 class FavoritePromptAdmin(admin.ModelAdmin):
-    list_display = ('title', 'user', 'ai_tool', 'prompt_preview', 'created_at')
-    list_filter = ('ai_tool', 'created_at')
+    list_display = ('title', 'user', 'ai_tools_list', 'prompt_preview', 'created_at')
+    list_filter = ('ai_tools', 'created_at')
     search_fields = ('title', 'prompt_text', 'user__username', 'user__email')
     readonly_fields = ('created_at', 'id')
     date_hierarchy = 'created_at'
-    raw_id_fields = ('user', 'ai_tool')
+    raw_id_fields = ('user',)
+    filter_horizontal = ('ai_tools',)
     
     def get_queryset(self, request):
         """Optimize query by prefetching related objects"""
-        return super().get_queryset(request).select_related('user', 'ai_tool')
+        return super().get_queryset(request).select_related('user').prefetch_related('ai_tools')
     
     def prompt_preview(self, obj):
         """Display a preview of the prompt text"""
         return obj.prompt_text[:50] + '...' if len(obj.prompt_text) > 50 else obj.prompt_text
     prompt_preview.short_description = 'Prompt Preview'
+    
+    def ai_tools_list(self, obj):
+        """Display a comma-separated list of AI tools"""
+        return ", ".join([tool.name for tool in obj.ai_tools.all()])
+    ai_tools_list.short_description = 'AI Tools'
 
 @admin.register(SharedChat)
 class SharedChatAdmin(admin.ModelAdmin):
@@ -218,21 +224,10 @@ class SharedChatAdmin(admin.ModelAdmin):
     conversation_link.short_description = 'Conversation'
     conversation_link.admin_order_field = 'conversation__title'
 
-@admin.register(UserFavorite)
-class UserFavoriteAdmin(admin.ModelAdmin):
-    list_display = ('user', 'ai_tool', 'created_at')
-    list_filter = ('created_at', 'ai_tool__category')
-    search_fields = ('user__username', 'user__email', 'ai_tool__name')
-    date_hierarchy = 'created_at'
-    raw_id_fields = ('user', 'ai_tool')
-    
-    def get_queryset(self, request):
-        """Optimize query by prefetching related objects"""
-        return super().get_queryset(request).select_related('user', 'ai_tool')
+# UserFavorite admin has been removed as we're now using the ManyToManyField in CustomUser
 
 # Register with our custom admin site
 admin_site.register(Conversation, ConversationAdmin)
 admin_site.register(Message, MessageAdmin)
 admin_site.register(FavoritePrompt, FavoritePromptAdmin)
 admin_site.register(SharedChat, SharedChatAdmin)
-admin_site.register(UserFavorite, UserFavoriteAdmin)

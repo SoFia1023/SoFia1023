@@ -13,7 +13,7 @@ from django.http import HttpRequest, HttpResponse
 from django.shortcuts import render, redirect
 from django.views.decorators.http import require_http_methods
 
-from interaction.models import Conversation, UserFavorite
+from interaction.models import Conversation
 from users.forms import UserProfileForm
 
 
@@ -69,9 +69,7 @@ def dashboard(request: HttpRequest) -> HttpResponse:
     ).order_by('-updated_at')[:5]
     
     # Get favorite AI tools
-    favorites = UserFavorite.objects.filter(
-        user=user
-    ).select_related('ai_tool')
+    favorites = user.favorites.all()
     
     # Get conversation statistics
     total_conversations = Conversation.objects.filter(user=user).count()

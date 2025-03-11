@@ -10,7 +10,7 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.views.decorators.http import require_http_methods
 
 from catalog.models import AITool
-from interaction.models import UserFavorite, Conversation
+from interaction.models import Conversation
 
 
 @login_required
@@ -29,7 +29,7 @@ def profile_view(request: HttpRequest) -> HttpResponse:
     user = request.user
     
     # Get user's favorites
-    favorites = UserFavorite.objects.filter(user=user).select_related('ai_tool')
+    favorites = user.favorites.all()
     
     # Get user's recent conversations
     recent_conversations = Conversation.objects.filter(user=user).order_by('-updated_at')[:10]
@@ -60,15 +60,15 @@ def toggle_favorite(request: HttpRequest, pk: int) -> JsonResponse:
     ai_tool = get_object_or_404(AITool, pk=pk)
     
     # Check if the AI tool is already a favorite
-    favorite = UserFavorite.objects.filter(user=user, ai_tool=ai_tool).first()
+    is_favorite = user.favorites.filter(id=ai_tool.id).exists()
     
-    if favorite:
+    if is_favorite:
         # Remove from favorites
-        favorite.delete()
+        user.favorites.remove(ai_tool)
         is_favorite = False
     else:
         # Add to favorites
-        UserFavorite.objects.create(user=user, ai_tool=ai_tool)
+        user.favorites.add(ai_tool)
         is_favorite = True
     
     return JsonResponse({

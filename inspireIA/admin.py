@@ -33,7 +33,7 @@ class InspireIAAdminSite(AdminSite):
         """
         from django.contrib.auth import get_user_model
         from catalog.models import AITool
-        from interaction.models import Conversation, Message, UserFavorite, SharedChat, FavoritePrompt
+        from interaction.models import Conversation, Message, SharedChat, FavoritePrompt
         
         User = get_user_model()
         
@@ -131,7 +131,7 @@ class InspireIAAdminSite(AdminSite):
         
         # Favorite prompts statistics
         favorite_prompts_count = FavoritePrompt.objects.count()
-        prompts_per_tool = list(FavoritePrompt.objects.values('ai_tool__name').annotate(
+        prompts_per_tool = list(FavoritePrompt.objects.values('ai_tools__name').annotate(
             count=Count('id')
         ).order_by('-count')[:5])
         

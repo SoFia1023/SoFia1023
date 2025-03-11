@@ -9,7 +9,7 @@ from django.shortcuts import render, get_object_or_404
 from django.views.generic import DetailView
 
 from catalog.models import AITool
-from interaction.models import UserFavorite
+# Using CustomUser.favorites directly
 
 
 class AIToolDetailView(DetailView):
@@ -36,10 +36,7 @@ class AIToolDetailView(DetailView):
         
         # Check if the user has favorited this AI tool
         if self.request.user.is_authenticated:
-            context['is_favorite'] = UserFavorite.objects.filter(
-                user=self.request.user,
-                ai_tool=self.object
-            ).exists()
+            context['is_favorite'] = self.request.user.favorites.filter(id=self.object.id).exists()
         else:
             context['is_favorite'] = False
         
@@ -71,10 +68,7 @@ def presentationAI(request: HttpRequest, pk: int) -> HttpResponse:
     # Check if the user has favorited this AI tool
     is_favorite = False
     if request.user.is_authenticated:
-        is_favorite = UserFavorite.objects.filter(
-            user=request.user,
-            ai_tool=ai_tool
-        ).exists()
+        is_favorite = request.user.favorites.filter(id=ai_tool.id).exists()
     
     # Get related AI tools in the same category
     related_tools = AITool.objects.filter(

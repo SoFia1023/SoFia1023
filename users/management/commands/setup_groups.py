@@ -2,7 +2,7 @@ from django.core.management.base import BaseCommand
 from django.contrib.auth.models import Group, Permission
 from django.contrib.contenttypes.models import ContentType
 from catalog.models import AITool
-from interaction.models import UserFavorite
+# UserFavorite model has been removed
 from interaction.models import Conversation, Message, FavoritePrompt, SharedChat
 from users.models import CustomUser
 
@@ -22,7 +22,7 @@ class Command(BaseCommand):
 
         # Get content types for our models
         aitool_ct = ContentType.objects.get_for_model(AITool)
-        userfavorite_ct = ContentType.objects.get_for_model(UserFavorite)
+        # UserFavorite model has been removed, now using CustomUser.favorites
         conversation_ct = ContentType.objects.get_for_model(Conversation)
         message_ct = ContentType.objects.get_for_model(Message)
         favoriteprompt_ct = ContentType.objects.get_for_model(FavoritePrompt)
@@ -45,13 +45,7 @@ class Command(BaseCommand):
             Permission.objects.filter(content_type=aitool_ct)
         )
         
-        # User Favorite permissions (view only)
-        content_manager_permissions.extend(
-            Permission.objects.filter(
-                content_type=userfavorite_ct, 
-                codename__in=['view_userfavorite']
-            )
-        )
+        # User Favorite permissions are now handled through CustomUser model
         
         # Conversation permissions (view only)
         content_manager_permissions.extend(
@@ -110,12 +104,7 @@ class Command(BaseCommand):
             )
         )
         
-        # User Favorite permissions (add, change, delete, view)
-        regular_user_permissions.extend(
-            Permission.objects.filter(
-                content_type=userfavorite_ct
-            )
-        )
+        # User Favorite permissions are now handled through CustomUser model
         
         # Conversation permissions (add, change, delete, view)
         regular_user_permissions.extend(

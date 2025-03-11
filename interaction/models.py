@@ -112,19 +112,24 @@ class FavoritePrompt(models.Model):
     """
     Model for storing user's favorite prompts.
     
-    This model allows users to save prompts they frequently use with specific AI tools.
+    This model allows users to save prompts they frequently use with multiple AI tools.
     
     Attributes:
         id (UUIDField): Unique identifier for the favorite prompt
         user (ForeignKey): Reference to the user who saved the prompt
-        ai_tool (ForeignKey): Reference to the AI tool the prompt is intended for
+        ai_tools (ManyToManyField): References to the AI tools the prompt can be used with
         prompt_text (TextField): The text of the saved prompt
         title (CharField): A descriptive title for the prompt
         created_at (DateTimeField): When the prompt was saved
     """
     id: models.UUIDField = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     user: models.ForeignKey = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
-    ai_tool: models.ForeignKey = models.ForeignKey(AITool, on_delete=models.CASCADE)
+    ai_tools: models.ManyToManyField = models.ManyToManyField(
+        AITool, 
+        related_name='favorite_prompts',
+        blank=True,
+        help_text="AI tools this prompt can be used with"
+    )
     prompt_text: models.TextField = models.TextField()
     title: models.CharField = models.CharField(max_length=255)
     created_at: models.DateTimeField = models.DateTimeField(auto_now_add=True)
@@ -175,25 +180,5 @@ class SharedChat(models.Model):
             return f"Private share by {shared_by_name}"
 
 
-class UserFavorite(models.Model):
-    """
-    Model for storing user's favorite AI tools.
-    
-    This model allows users to bookmark AI tools they frequently use for easier access.
-    
-    Attributes:
-        user (ForeignKey): Reference to the user who favorited the tool
-        ai_tool (ForeignKey): Reference to the favorited AI tool
-        created_at (DateTimeField): When the tool was favorited
-    """
-    user: models.ForeignKey = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
-    ai_tool: models.ForeignKey = models.ForeignKey(AITool, on_delete=models.CASCADE)
-    created_at: models.DateTimeField = models.DateTimeField(auto_now_add=True)
-    
-    class Meta:
-        unique_together = ('user', 'ai_tool')
-        
-    def __str__(self) -> str:
-        username = self.user.username if hasattr(self.user, 'username') else "Unknown User"
-        tool_name = self.ai_tool.name if hasattr(self.ai_tool, 'name') else "Unknown Tool"
-        return f"{username} - {tool_name}"
+# UserFavorite model has been removed in favor of using the ManyToManyField in CustomUser model
+# This ensures a single source of truth for user favorites

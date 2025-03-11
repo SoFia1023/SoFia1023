@@ -5,7 +5,11 @@ This module contains serializers for the interaction app models.
 """
 from typing import Any, Dict, List
 from rest_framework import serializers
-from interaction.models import Conversation, Message, UserFavorite, FavoritePrompt, SharedChat
+from interaction.models import Conversation, Message, FavoritePrompt, SharedChat
+from catalog.models import AITool
+from django.contrib.auth import get_user_model
+
+User = get_user_model()
 from api.serializers.catalog import AIToolSerializer
 
 
@@ -75,50 +79,54 @@ class ConversationDetailSerializer(ConversationSerializer):
 
 class UserFavoriteSerializer(serializers.ModelSerializer):
     """
-    Serializer for the UserFavorite model.
+    Serializer for user favorites (CustomUser.favorites M2M relationship).
     """
-    ai_tool_name = serializers.SerializerMethodField()
+    id = serializers.UUIDField(source='pk')
+    ai_tool_name = serializers.CharField(source='name')
+    user = serializers.PrimaryKeyRelatedField(read_only=True)
+    created_at = serializers.SerializerMethodField()
     
     class Meta:
-        model = UserFavorite
+        model = AITool
         fields = ['id', 'user', 'ai_tool', 'ai_tool_name', 'created_at']
         read_only_fields = ['id', 'created_at']
     
-    def get_ai_tool_name(self, obj: UserFavorite) -> str:
+    def get_created_at(self, obj: AITool) -> str:
         """
-        Get the name of the AI tool.
+        Get a placeholder created_at value for compatibility.
         
         Args:
-            obj: The UserFavorite instance
+            obj: The AITool instance
             
         Returns:
-            The name of the AI tool
+            The current timestamp
         """
-        return obj.ai_tool.name
+        from django.utils import timezone
+        return timezone.now()
 
 
 class FavoritePromptSerializer(serializers.ModelSerializer):
     """
     Serializer for the FavoritePrompt model.
     """
-    ai_tool_name = serializers.SerializerMethodField()
+    ai_tool_names = serializers.SerializerMethodField()
     
     class Meta:
         model = FavoritePrompt
-        fields = ['id', 'user', 'title', 'content', 'ai_tool', 'ai_tool_name', 'created_at']
+        fields = ['id', 'user', 'title', 'prompt_text', 'ai_tools', 'ai_tool_names', 'created_at']
         read_only_fields = ['id', 'created_at']
     
-    def get_ai_tool_name(self, obj: FavoritePrompt) -> str:
+    def get_ai_tool_names(self, obj: FavoritePrompt) -> List[str]:
         """
-        Get the name of the AI tool.
+        Get the names of the AI tools associated with this prompt.
         
         Args:
             obj: The FavoritePrompt instance
             
         Returns:
-            The name of the AI tool or None
+            List of AI tool names
         """
-        return obj.ai_tool.name if obj.ai_tool else None
+        return [tool.name for tool in obj.ai_tools.all()]
 
 
 class SharedChatSerializer(serializers.ModelSerializer):

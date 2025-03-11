@@ -16,7 +16,7 @@ from rest_framework.response import Response
 from rest_framework.request import Request
 
 from catalog.models import AITool
-from interaction.models import Conversation, Message, UserFavorite, FavoritePrompt, SharedChat
+from interaction.models import Conversation, Message, FavoritePrompt, SharedChat
 from interaction.utils import route_message_to_ai_tool
 from catalog.utils import AIService
 
@@ -100,7 +100,7 @@ class UserFavoriteViewSet(viewsets.ModelViewSet):
             Queryset of user's favorites
         """
         user = self.request.user
-        return UserFavorite.objects.filter(user=user)
+        return user.favorites.all()
 
 
 @api_view(['POST'])
@@ -357,17 +357,21 @@ def favorite_prompts(request: Request) -> Response:
         
         # Filter by AI tool if specified
         if ai_tool_id:
-            queryset = queryset.filter(ai_tool_id=ai_tool_id)
+            queryset = queryset.filter(ai_tools__id=ai_tool_id)
             
         # Convert to list of dictionaries
         prompts = []
         for prompt in queryset:
+            ai_tools_data = [{
+                'id': str(tool.id),
+                'name': tool.name
+            } for tool in prompt.ai_tools.all()]
+            
             prompts.append({
                 'id': prompt.id,
                 'title': prompt.title,
-                'content': prompt.content,
-                'ai_tool_id': str(prompt.ai_tool.id) if prompt.ai_tool else None,
-                'ai_tool_name': prompt.ai_tool.name if prompt.ai_tool else None,
+                'content': prompt.prompt_text,
+                'ai_tools': ai_tools_data,
                 'created_at': prompt.created_at.isoformat()
             })
             
@@ -407,15 +411,24 @@ def favorite_prompts(request: Request) -> Response:
         prompt = FavoritePrompt.objects.create(
             user=user,
             title=title,
-            content=content,
-            ai_tool=ai_tool
+            prompt_text=content
         )
         
+        # Add the AI tool to the prompt's ai_tools if specified
+        if ai_tool:
+            prompt.ai_tools.add(ai_tool)
+        
+        ai_tools_data = []
+        if ai_tool:
+            ai_tools_data = [{
+                'id': str(ai_tool.id),
+                'name': ai_tool.name
+            }]
+            
         return Response({
             'id': prompt.id,
             'title': prompt.title,
-            'content': prompt.content,
-            'ai_tool_id': str(prompt.ai_tool.id) if prompt.ai_tool else None,
-            'ai_tool_name': prompt.ai_tool.name if prompt.ai_tool else None,
+            'content': prompt.prompt_text,
+            'ai_tools': ai_tools_data,
             'created_at': prompt.created_at.isoformat()
         }, status=status.HTTP_201_CREATED)

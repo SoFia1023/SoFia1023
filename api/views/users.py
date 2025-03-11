@@ -12,7 +12,7 @@ from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
 from rest_framework.request import Request
 
-from interaction.models import Conversation, UserFavorite
+from interaction.models import Conversation
 
 User = get_user_model()
 
@@ -32,8 +32,8 @@ def user_profile(request: Request) -> Response:
     user = request.user
     
     # Get user's favorite AI tools
-    favorites = UserFavorite.objects.filter(user=user)
-    favorite_ids = [str(fav.ai_tool.id) for fav in favorites]
+    favorites = user.favorites.all()
+    favorite_ids = [str(fav.id) for fav in favorites]
     
     # Get user's recent conversations
     recent_conversations = Conversation.objects.filter(user=user).order_by('-updated_at')[:5]
