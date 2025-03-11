@@ -4,9 +4,10 @@ from . import views
 urlpatterns = [
     # Chat URLs
     path('chat/', views.chat_selection, name='chat_selection'),
-    path('chat/<uuid:ai_id>/', views.chat_view, name='chat'),
+    # Important: Order matters! More specific patterns should come first
     path('chat/conversation/<uuid:conversation_id>/', views.chat_view, name='continue_conversation'),
     path('chat/conversation/<uuid:conversation_id>/send/', views.send_message, name='send_message'),
+    path('chat/<uuid:ai_id>/', views.chat_view, name='chat'),
     path('conversations/', views.conversation_history, name='conversation_history'),
     path('conversations/<uuid:conversation_id>/delete/', views.delete_conversation, name='delete_conversation'),
     path('conversations/<uuid:conversation_id>/download/<str:format>/', views.download_conversation, name='download_conversation'),

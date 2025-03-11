@@ -14,18 +14,58 @@ from django.db.models import Q
 
 from catalog.models import AITool
 from .models import Conversation, Message, FavoritePrompt, SharedChat
-from catalog.utils import format_conversation_for_download
+from .utils import format_conversation_for_download
 from catalog.utils import AIService
 
 # Create your views here.
+
+# Available categories for AI tools
+CATEGORIES = ["Text Generator", "Image Generator", "Video Generator", "Transcription", "Word Processor", "Code Generator", "AI Platform"]
 
 # Chat views
 @login_required
 def chat_selection(request):
     """View to select an AI tool to chat with."""
+    # Get filter parameters from request
+    searchTerm = request.GET.get('searchAITool', '')
+    category = request.GET.get('category', '')
+    sort = request.GET.get('sort', '')
+    
+    # Start with AI tools that have API integration
     ai_tools = AITool.objects.filter(
         Q(api_type='openai') | Q(api_type='huggingface') | Q(api_type='custom')
-    ).order_by('name')
+    )
+    
+    # Apply category filter if provided and valid
+    if category in CATEGORIES:
+        ai_tools = ai_tools.filter(category=category)
+    
+    # Apply search filter if provided (search in name, provider, and description)
+    if searchTerm:
+        ai_tools = ai_tools.filter(
+            Q(name__icontains=searchTerm) | 
+            Q(provider__icontains=searchTerm) | 
+            Q(description__icontains=searchTerm)
+        )
+    
+    # Apply sorting if provided
+    if sort:
+        if sort == 'popularity_desc':
+            ai_tools = ai_tools.order_by('-popularity')
+        elif sort == 'popularity_asc':
+            ai_tools = ai_tools.order_by('popularity')
+        elif sort == 'name_asc':
+            ai_tools = ai_tools.order_by('name')
+        elif sort == 'name_desc':
+            ai_tools = ai_tools.order_by('-name')
+    else:
+        # Default sorting by popularity (highest first)
+        ai_tools = ai_tools.order_by('-popularity')
+    
+    # Get the featured AI (highest popularity)
+    featured_ai = AITool.objects.filter(
+        Q(api_type='openai') | Q(api_type='huggingface') | Q(api_type='custom')
+    ).order_by('-popularity').first()
     
     # Get user's recent conversations
     recent_conversations = Conversation.objects.filter(
@@ -34,29 +74,54 @@ def chat_selection(request):
     
     return render(request, 'interaction/chat_selection.html', {
         'ai_tools': ai_tools,
+        'categories': CATEGORIES,
+        'searchTerm': searchTerm,
+        'current_category': category,
+        'sort': sort,
+        'featured_ai': featured_ai,
         'recent_conversations': recent_conversations
     })
 
 @login_required
 def chat_view(request, ai_id=None, conversation_id=None):
     """View for chatting with an AI tool."""
+    # Debug logging
+    print(f"[CHAT] chat_view called with ai_id={ai_id}, conversation_id={conversation_id}")
+    
     # If conversation_id is provided, load that conversation
     if conversation_id:
+        print(f"[CHAT] Loading existing conversation with ID: {conversation_id}")
+        
+        # Get the conversation
         conversation = get_object_or_404(
             Conversation, 
             id=conversation_id,
             user=request.user
         )
+        
+        # Get associated AI tool
         ai_tool = conversation.ai_tool
-        messages = conversation.get_messages()
+        
+        # Get messages
+        messages = list(conversation.get_messages())
+        print(f"[CHAT] Loaded {len(messages)} messages from conversation")
+        for i, msg in enumerate(messages):
+            print(f"[CHAT] Message {i+1}: {msg.content[:30]}... (User: {msg.is_user})")
     else:
         # Otherwise, start a new conversation with the specified AI
+        print(f"[CHAT] Starting new conversation with AI tool ID: {ai_id}")
+        
+        # Get the AI tool
         ai_tool = get_object_or_404(AITool, id=ai_id)
+        
+        # Create a new conversation
         conversation = Conversation.objects.create(
             user=request.user,
             ai_tool=ai_tool,
             title=f"Chat with {ai_tool.name}"
         )
+        
+        print(f"[CHAT] Created new conversation with ID: {conversation.id}")
         messages = []
     
     # Get user's favorite prompts for this AI tool
@@ -65,19 +130,24 @@ def chat_view(request, ai_id=None, conversation_id=None):
         ai_tool=ai_tool
     ).order_by('-created_at')
     
-    return render(request, 'interaction/chat.html', {
+    # Ensure conversation ID is properly passed to the template
+    context = {
         'ai_tool': ai_tool,
         'conversation': conversation,
         'messages': messages,
-        'favorite_prompts': favorite_prompts
-    })
+        'favorite_prompts': favorite_prompts,
+        'conversation_id': str(conversation.id)  # Explicitly pass conversation ID as string
+    }
+    
+    print(f"[CHAT] Rendering chat.html with conversation_id={context['conversation_id']} and {len(messages)} messages")
+    return render(request, 'interaction/chat.html', context)
 
 @login_required
 @require_POST
 def send_message(request, conversation_id):
     """Handle sending a message in a conversation."""
     # Add debug logging
-    print(f"Received message request for conversation {conversation_id}")
+    print(f"[CHAT] Received message request for conversation {conversation_id}")
     
     try:
         conversation = get_object_or_404(
@@ -87,25 +157,34 @@ def send_message(request, conversation_id):
         )
         
         # Get message from request
-        data = json.loads(request.body)
-        user_message = data.get('message', '').strip()
-        
-        print(f"Message content: {user_message}")
-        
-        if not user_message:
-            print("Error: Empty message")
-            return JsonResponse({'error': 'Message cannot be empty'}, status=400)
+        try:
+            data = json.loads(request.body)
+            user_message = data.get('message', '').strip()
+            
+            print(f"[CHAT] Message content: {user_message}")
+            
+            if not user_message:
+                print("[CHAT] Error: Empty message")
+                return JsonResponse({'error': 'Message cannot be empty'}, status=400)
+        except json.JSONDecodeError as e:
+            print(f"[CHAT] Error decoding JSON: {str(e)}")
+            return JsonResponse({'error': f'Invalid JSON format: {str(e)}'}, status=400)
         
         # Save user message
-        Message.objects.create(
-            conversation=conversation,
-            content=user_message,
-            is_user=True
-        )
-        
-        # Update conversation timestamp
-        conversation.updated_at = timezone.now()
-        conversation.save()
+        try:
+            Message.objects.create(
+                conversation=conversation,
+                content=user_message,
+                is_user=True
+            )
+            
+            # Update conversation timestamp
+            conversation.updated_at = timezone.now()
+            conversation.save()
+            print(f"[CHAT] User message saved successfully")
+        except Exception as e:
+            print(f"[CHAT] Error saving user message: {str(e)}")
+            return JsonResponse({'error': f'Error saving message: {str(e)}'}, status=500)
         
         # Process with appropriate API based on AI tool type
         ai_tool = conversation.ai_tool
@@ -117,32 +196,50 @@ def send_message(request, conversation_id):
             'api_endpoint': ai_tool.api_endpoint
         }
         
-        print(f"Using service config: {service_config}")
+        print(f"[CHAT] Using service config: {service_config}")
         
         # Send message to AI service
-        response = AIService.send_to_ai_service(user_message, service_config)
-        
-        print(f"AI service response: {response}")
+        try:
+            print(f"[CHAT] Sending message to AI service")
+            response = AIService.send_to_ai_service(user_message, service_config)
+            print(f"[CHAT] AI service response received")
+        except Exception as e:
+            print(f"[CHAT] Error calling AI service: {str(e)}")
+            return JsonResponse({'error': f'Error calling AI service: {str(e)}'}, status=500)
         
         if response.get('success'):
-            ai_response = response['data']
+            ai_response = response.get('data', '')
+            print(f"[CHAT] Successfully got AI response with {len(ai_response)} characters")
         else:
-            ai_response = f"Error: {response.get('error', 'An error occurred while processing your request.')}"
+            error_msg = response.get('error', 'An error occurred while processing your request.')
+            print(f"[CHAT] AI service error: {error_msg}")
+            ai_response = f"Error: {error_msg}"
         
         # Save AI response
-        ai_message = Message.objects.create(
-            conversation=conversation,
-            content=ai_response,
-            is_user=False
-        )
+        try:
+            ai_message = Message.objects.create(
+                conversation=conversation,
+                content=ai_response,
+                is_user=False
+            )
+            print(f"[CHAT] AI response saved to database")
+        except Exception as e:
+            print(f"[CHAT] Error saving AI response: {str(e)}")
+            return JsonResponse({'error': f'Error saving AI response: {str(e)}'}, status=500)
+        
+        # Format the timestamp for display
+        timestamp = ai_message.timestamp.strftime('%H:%M')
         
         return JsonResponse({
+            'success': True,
             'message': ai_response,
-            'timestamp': ai_message.timestamp.isoformat()
+            'timestamp': timestamp
         })
     except Exception as e:
-        print(f"Error in send_message: {str(e)}")
-        return JsonResponse({'error': f'An error occurred: {str(e)}'}, status=500)
+        print(f"[CHAT] Unexpected error in send_message: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        return JsonResponse({'error': f'An unexpected error occurred: {str(e)}'}, status=500)
 
 @login_required
 def conversation_history(request):

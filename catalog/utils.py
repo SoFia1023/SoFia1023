@@ -133,7 +133,7 @@ class AIService:
             dict: Simulated response with success status and data
         """
         # Add a slight delay to simulate API call
-        time.sleep(0.5)
+        time.sleep(1)
         
         # Generic responses based on prompt keywords
         responses = [
@@ -149,45 +149,81 @@ class AIService:
         
         # Greetings
         if any(word in prompt_lower for word in ["hello", "hi", "hey", "greetings"]):
-            response = "Hello! I'm a simulated AI response. How can I help you today?"
+            response = "Hello! I'm a simulated AI assistant. How can I help you today? I can provide information on various topics, answer questions, or just chat with you."
         
         # Help requests
         elif "help" in prompt_lower:
-            response = "I'd be happy to help! However, I'm currently running in simulation mode without API access. Once API keys are configured, I'll be able to provide more specific assistance."
+            response = "I'd be happy to help! I can provide information on various topics, answer questions, or assist with tasks. What specifically do you need help with? (Note: I'm currently running in simulation mode without API access, but I'll do my best to assist you.)"
         
         # Questions about the weather
         elif any(word in prompt_lower for word in ["weather", "temperature", "forecast"]):
-            response = "I can't check the weather right now as I'm running in simulation mode. Once API keys are configured, I'll be able to provide weather information."
+            response = "I can't check the real-time weather as I'm running in simulation mode, but I can tell you that weather forecasting involves collecting data from satellites, weather stations, and other sources. This data is then analyzed using complex mathematical models to predict future weather conditions."
         
         # Programming related
         elif any(word in prompt_lower for word in ["code", "programming", "javascript", "python", "java", "html", "css"]):
-            response = "Here's a simulated response about coding. In production with API keys configured, I could help with actual programming questions, provide code examples, and debug issues."
-        
-        # General questions
-        elif "?" in prompt:
-            response = "That's an interesting question! In production mode with API keys configured, I could provide a detailed answer. For now, I'm just a simulated response."
+            response = "Programming is a fascinating field! Here's a simulated response about coding:\n\nPython is known for its readability and simplicity, making it great for beginners. JavaScript is essential for web development. HTML and CSS are the building blocks of web pages. Java is widely used in enterprise applications.\n\nIf you have a specific programming question, feel free to ask, and I'll provide a simulated response based on common knowledge."
         
         # AI or model related
         elif any(word in prompt_lower for word in ["ai", "artificial intelligence", "model", "gpt", "llm"]):
-            response = "I'm a simulated AI response. In production with API keys configured, I would be powered by advanced language models like those from OpenAI or Hugging Face."
+            response = "Artificial Intelligence (AI) refers to systems that can perform tasks that typically require human intelligence. Machine Learning is a subset of AI where systems learn from data. Large Language Models (LLMs) like GPT are trained on vast amounts of text data to generate human-like responses. These models have revolutionized natural language processing but also raise important ethical considerations around bias, privacy, and misinformation."
         
         # Data or information requests
         elif any(word in prompt_lower for word in ["data", "information", "tell me", "explain"]):
-            response = "I would normally provide detailed information on this topic. However, I'm currently running in simulation mode. Once API keys are configured, I'll be able to access and process information to answer your questions."
+            response = "I would normally provide detailed information on this topic based on my training data. Since I'm in simulation mode, I can offer a general response: Information and data are fundamental to understanding our world. Data becomes information when it's organized and presented in a meaningful context. Knowledge is derived from information when patterns and insights are extracted. If you have a specific topic you'd like explained, please let me know."
         
         # Thank you messages
         elif any(word in prompt_lower for word in ["thanks", "thank you", "appreciate"]):
-            response = "You're welcome! I'm happy to help, even in simulation mode. Once API keys are configured, I'll be able to provide even more assistance."
+            response = "You're welcome! I'm happy to help, even in simulation mode. If you have any other questions or need assistance with anything else, feel free to ask. I'm here to make your experience as helpful as possible."
+        
+        # Questions about the app or platform
+        elif any(word in prompt_lower for word in ["app", "platform", "website", "tool", "inspire"]):
+            response = "This platform is designed to provide access to various AI tools and models. You can chat with different AI assistants, save your favorite prompts, and explore various capabilities. Currently, I'm running in simulation mode, but once API keys are configured, you'll be able to access more advanced AI features and capabilities."
+        
+        # Questions about capabilities
+        elif any(word in prompt_lower for word in ["can you", "are you able", "capability", "function"]):
+            response = "In simulation mode, I can provide pre-defined responses to common questions. I can simulate conversations on various topics including technology, general knowledge, and casual chat. Once API keys are configured, I'll be able to generate more dynamic and personalized responses, process complex queries, and provide more accurate and up-to-date information."
+        
+        # Science related
+        elif any(word in prompt_lower for word in ["science", "physics", "chemistry", "biology", "astronomy"]):
+            response = "Science is the systematic study of the structure and behavior of the physical and natural world through observation and experiment. Physics explores matter, energy, and their interactions. Chemistry studies substances, their properties, and reactions. Biology examines living organisms. Astronomy focuses on celestial objects and the universe. Each field has made remarkable contributions to our understanding of the world around us."
+        
+        # History related
+        elif any(word in prompt_lower for word in ["history", "war", "ancient", "civilization", "century"]):
+            response = "History provides us with valuable insights into past events, cultures, and civilizations. Through studying history, we can understand how societies have evolved, learn from past successes and failures, and gain perspective on current global issues. While I'm in simulation mode, I can provide general information about historical periods, significant events, and cultural developments."
+        
+        # Art and culture related
+        elif any(word in prompt_lower for word in ["art", "music", "literature", "movie", "culture", "book"]):
+            response = "Art and culture are fundamental expressions of human creativity and experience. The arts encompass visual arts, music, literature, film, dance, and more. These creative forms allow us to explore emotions, share stories, and connect across different backgrounds and perspectives. Cultural traditions also shape our identities and communities. If you have a specific topic in arts or culture you'd like to discuss, feel free to ask."
+        
+        # Economics and business
+        elif any(word in prompt_lower for word in ["economy", "business", "market", "finance", "investment", "money"]):
+            response = "Economics and business are fascinating fields that study how societies allocate resources and how organizations operate. Economic principles help us understand markets, trade, and financial systems. Business concepts cover entrepreneurship, management, marketing, and organizational behavior. While I'm in simulation mode, I can discuss general concepts but cannot provide specific financial advice or real-time market data."
+        
+        # Default response for questions
+        elif "?" in prompt:
+            response = "That's an interesting question! In a fully configured system, I would provide a detailed answer based on my training data and available information. For now, I'm operating in simulation mode with pre-defined responses. If you'd like to discuss a different topic, feel free to ask another question."
         
         # Default response
         else:
             # Pick a random generic response
             response = random.choice(responses)
+            
+            # Add some more context based on the prompt length
+            if len(prompt) > 100:
+                response += "\n\nI notice you've shared quite a detailed message. In a fully configured system, I would analyze the specifics of your input and provide a tailored response. Feel free to continue our conversation or try a different topic."
+            elif len(prompt) < 10:
+                response += "\n\nYour message was quite brief. Feel free to provide more details if you'd like a more specific response."
         
         # Add a note about the simulation mode
+        note = f"\n\n[Note: This is a simulated {service_type} response. Configure API keys for real AI responses.]"
+        
+        # Only add the note if it's not already a very long response
+        if len(response) < 500:
+            response += note
+        
         return {
             "success": True,
-            "data": response + f"\n\n[Note: This is a simulated {service_type} response. Configure API keys for real AI responses.]"
+            "data": response
         }
     
     @staticmethod
@@ -203,34 +239,41 @@ class AIService:
             dict: Response with success status and data/error
         """
         service_type = service_config.get('api_type', 'none')
-        
-        # Always use simulated responses while API keys are being implemented
-        return AIService.simulate_ai_response(service_type, prompt)
-        
-        # The following code is commented out until API keys are implemented
-        """
         model = service_config.get('api_model', '')
         
-        if service_type == 'openai':
-            # Use default model if none specified
-            if not model:
-                model = "gpt-3.5-turbo"
-            return AIService.call_openai_api(prompt, model)
+        # Check if API keys are available
+        has_openai_key = bool(OPENAI_API_KEY)
+        has_huggingface_key = bool(HUGGINGFACE_API_KEY)
+        
+        # Use real API if keys are available, otherwise use simulation
+        try:
+            if service_type == 'openai' and has_openai_key:
+                # Use default model if none specified
+                if not model:
+                    model = "gpt-3.5-turbo"
+                return AIService.call_openai_api(prompt, model)
+                
+            elif service_type == 'huggingface' and has_huggingface_key:
+                # Use default model if none specified
+                if not model:
+                    model = "google/flan-t5-base"
+                return AIService.call_huggingface_api(prompt, model)
+                
+            elif service_type == 'custom':
+                # For now, custom integrations will use simulation
+                return AIService.simulate_ai_response('custom', prompt)
             
-        elif service_type == 'huggingface':
-            # Use default model if none specified
-            if not model:
-                model = "google/flan-t5-base"
-            return AIService.call_huggingface_api(prompt, model)
-            
-        elif service_type == 'custom':
-            # For custom integrations, we'd implement specific logic here
-            # This is a placeholder for future custom integrations
+            else:
+                # No API key available or unknown service type, use simulation
+                print(f"Using simulation mode for {service_type} (no API key available)")
+                return AIService.simulate_ai_response(service_type, prompt)
+                
+        except Exception as e:
+            print(f"Error in send_to_ai_service: {str(e)}")
             return {
                 "success": False,
-                "error": "Custom integrations are not yet implemented"
+                "error": f"Error processing request: {str(e)}"
             }
-        """
 
 # Legacy function wrappers for backward compatibility
 def call_openai_api(prompt, model="gpt-3.5-turbo"):

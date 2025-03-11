@@ -90,12 +90,16 @@ class CatalogView(PaginationMixin, ListView):
             queryset = queryset.filter(category=category)
         
         # Apply sorting if provided
-        sort_by = self.request.GET.get('sort', 'popularity')
-        if sort_by == 'name':
+        sort_by = self.request.GET.get('sort', 'popularity_desc')
+        if sort_by == 'name_asc':
             queryset = queryset.order_by('name')
+        elif sort_by == 'name_desc':
+            queryset = queryset.order_by('-name')
+        elif sort_by == 'popularity_asc':
+            queryset = queryset.order_by('popularity')
         elif sort_by == 'provider':
             queryset = queryset.order_by('provider')
-        else:  # Default to popularity
+        else:  # Default to popularity (highest first)
             queryset = queryset.order_by('-popularity')
         
         return queryset
@@ -107,9 +111,9 @@ class CatalogView(PaginationMixin, ListView):
         context = super().get_context_data(**kwargs)
         
         # Add filter parameters to context for maintaining state
-        context['search_query'] = self.request.GET.get('searchAITool', '')
-        context['selected_category'] = self.request.GET.get('category', 'All')
-        context['sort_by'] = self.request.GET.get('sort', 'popularity')
+        context['searchTerm'] = self.request.GET.get('searchAITool', '')
+        context['current_category'] = self.request.GET.get('category', 'All')
+        context['sort'] = self.request.GET.get('sort', 'popularity')
         context['categories'] = CATEGORIES
         
         # Add user favorites if user is authenticated
@@ -216,183 +220,13 @@ def profile_view(request):
     })
 
 
-def chat_view(request, ai_id):
-    """Display the chat interface for a specific AI tool."""
-    ai_tool = get_object_or_404(AITool, id=ai_id)
-    
-    # Check if this AI has API integration
-    has_api = ai_tool.api_type != 'none'
-    
-    # Get or create a conversation
-    conversation_id = request.GET.get('conversation_id')
-    if conversation_id:
-        # Load existing conversation if ID provided
-        conversation = get_object_or_404(Conversation, id=conversation_id)
-        if request.user.is_authenticated and conversation.user != request.user:
-            # Prevent access to other users' conversations
-            messages.error(request, "You don't have permission to access this conversation.")
-            return redirect('presentationAI', id=ai_id)
-    else:
-        # Create a new conversation
-        conversation = Conversation.objects.create(
-            user=request.user if request.user.is_authenticated else None,
-            ai_tool=ai_tool,
-            title=f"Chat with {ai_tool.name}"
-        )
-    
-    # Get messages for this conversation
-    chat_messages = conversation.get_messages()
-    
-    return render(request, 'catalog/chat.html', {
-        'ai_tool': ai_tool,
-        'conversation': conversation,
-        'messages': chat_messages,
-        'has_api': has_api
-    })
+# Chat view moved to interaction app
 
 
-@csrf_exempt
-@require_POST
-def send_message(request, conversation_id):
-    """Handle sending messages in the chat."""
-    try:
-        data = json.loads(request.body)
-        message_text = data.get('message', '')
-        model_override = data.get('model', None)  # Get model from request if provided
-        
-        if not message_text.strip():
-            return JsonResponse({
-                'success': False,
-                'error': 'Message cannot be empty'
-            })
-        
-        # Get the conversation
-        conversation = get_object_or_404(Conversation, id=conversation_id)
-        ai_tool = conversation.ai_tool
-        
-        # Create user message
-        user_message = Message.objects.create(
-            conversation=conversation,
-            content=message_text,
-            is_user=True
-        )
-        
-        # Process with AI based on tool's API type
-        ai_response_text = "I'm sorry, this AI tool doesn't have active API integration."
-        
-        if ai_tool.api_type == 'openai':
-            # Use model override if provided, otherwise use the one from the AI tool
-            model = model_override or ai_tool.api_model or "gpt-3.5-turbo"
-            response = utils.call_openai_api(message_text, model)
-            if response['success']:
-                try:
-                    # For newer OpenAI API format
-                    if 'choices' in response['data'] and 'message' in response['data']['choices'][0]:
-                        ai_response_text = response['data']['choices'][0]['message']['content'].strip()
-                    # For older OpenAI API format
-                    elif 'choices' in response['data'] and 'text' in response['data']['choices'][0]:
-                        ai_response_text = response['data']['choices'][0]['text'].strip()
-                    else:
-                        ai_response_text = "Received an unexpected response format from the AI."
-                except (KeyError, IndexError):
-                    ai_response_text = "Received an unexpected response format from the AI."
-            else:
-                ai_response_text = f"Error calling API: {response.get('error', 'Unknown error')}"
-                
-        elif ai_tool.api_type == 'huggingface':
-            # Use model override if provided, otherwise use the one from the AI tool
-            model = model_override or ai_tool.api_model or "google/flan-t5-base"
-            response = utils.call_huggingface_api(message_text, model)
-            if response['success']:
-                try:
-                    if isinstance(response['data'], list):
-                        ai_response_text = response['data'][0]['generated_text']
-                    else:
-                        ai_response_text = response['data']['generated_text']
-                except (KeyError, IndexError):
-                    ai_response_text = "Received an unexpected response format from the AI."
-            else:
-                ai_response_text = f"Error calling API: {response.get('error', 'Unknown error')}"
-        else:
-            # For demo mode, create a simulated response
-            service_config = {
-                'api_type': 'none'
-            }
-            ai_response_text = utils.send_to_ai_service(message_text, service_config)
-        
-        # Create AI response message
-        ai_message = Message.objects.create(
-            conversation=conversation,
-            content=ai_response_text,
-            is_user=False
-        )
-        
-        # Update conversation timestamp
-        conversation.save()  # This updates the updated_at field
-        
-        return JsonResponse({
-            'success': True,
-            'user_message': {
-                'id': str(user_message.id),
-                'content': user_message.content,
-                'timestamp': user_message.timestamp.isoformat()
-            },
-            'ai_message': {
-                'id': str(ai_message.id),
-                'content': ai_message.content,
-                'timestamp': ai_message.timestamp.isoformat()
-            }
-        })
-        
-    except json.JSONDecodeError:
-        return JsonResponse({
-            'success': False,
-            'error': 'Invalid JSON data'
-        }, status=400)
-    except Exception as e:
-        return JsonResponse({
-            'success': False,
-            'error': str(e)
-        }, status=500)
+# Send message function moved to interaction app
 
 
-@login_required
-def download_conversation(request, conversation_id, format='json'):
-    """Download conversation history in the specified format."""
-    conversation = get_object_or_404(Conversation, id=conversation_id)
-    
-    # Check if user has access to this conversation
-    if conversation.user and conversation.user != request.user:
-        messages.error(request, "You don't have permission to access this conversation.")
-        return redirect('profile')
-    
-    ai_name = conversation.ai_tool.name
-    timestamp = conversation.updated_at.strftime('%Y%m%d_%H%M%S')
-    filename = f"conversation_{ai_name}_{timestamp}"
-    
-    if format == 'json':
-        # Return JSON format
-        response = HttpResponse(conversation.to_json(), content_type='application/json')
-        response['Content-Disposition'] = f'attachment; filename="{filename}.json"'
-        return response
-    
-    elif format == 'txt':
-        # Return plain text format
-        lines = [f"Conversation with {ai_name} - {conversation.created_at.strftime('%Y-%m-%d %H:%M')}"]
-        lines.append("-" * 50)
-        
-        for msg in conversation.get_messages():
-            sender = "You" if msg.is_user else ai_name
-            time_str = msg.timestamp.strftime('%H:%M:%S')
-            lines.append(f"[{time_str}] {sender}: {msg.content}")
-            
-        response = HttpResponse("\n".join(lines), content_type='text/plain')
-        response['Content-Disposition'] = f'attachment; filename="{filename}.txt"'
-        return response
-    
-    else:
-        messages.error(request, f"Unsupported format: {format}")
-        return redirect('chat', ai_id=conversation.ai_tool.id)
+# Download conversation function moved to interaction app
 
 
 @login_required
@@ -420,59 +254,7 @@ def toggle_favorite(request, ai_id):
     })
 
 
-def chat_selection(request):
-    """Display a page to select an AI model to chat with."""
-    # Get filter parameters from request
-    searchTerm = request.GET.get('searchAITool', '')
-    category = request.GET.get('category', '')
-    sort = request.GET.get('sort', '')
-    
-    # Start with all AI tools
-    ai_tools = AITool.objects.all()
-
-    # Apply category filter if provided and valid
-    if category in CATEGORIES:
-        ai_tools = ai_tools.filter(category=category)
-    
-    # Apply search filter if provided (search in name, provider, and description)
-    if searchTerm:
-        ai_tools = ai_tools.filter(
-            Q(name__icontains=searchTerm) | 
-            Q(provider__icontains=searchTerm) | 
-            Q(description__icontains=searchTerm)
-        )
-    
-    # Apply sorting if provided
-    if sort:
-        if sort == 'popularity_desc':
-            ai_tools = ai_tools.order_by('-popularity')
-        elif sort == 'popularity_asc':
-            ai_tools = ai_tools.order_by('popularity')
-        elif sort == 'name_asc':
-            ai_tools = ai_tools.order_by('name')
-        elif sort == 'name_desc':
-            ai_tools = ai_tools.order_by('-name')
-    else:
-        # Default sorting by popularity (highest first)
-        ai_tools = ai_tools.order_by('-popularity')
-    
-    # Get the featured AI (highest popularity)
-    featured_ai = AITool.objects.all().order_by('-popularity').first()
-
-    # Get user's recent conversations
-    recent_conversations = []
-    if request.user.is_authenticated:
-        recent_conversations = Conversation.objects.filter(user=request.user).order_by('-updated_at')[:5]
-
-    return render(request, 'catalog/chat_selection.html', {
-        'ai_tools': ai_tools,
-        'categories': CATEGORIES,
-        'searchTerm': searchTerm,
-        'current_category': category,
-        'sort': sort,
-        'featured_ai': featured_ai,
-        'recent_conversations': recent_conversations,
-    })
+# Chat selection view moved to interaction app
 
 
 def compare_tools(request):

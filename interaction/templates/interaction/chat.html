@@ -5,6 +5,94 @@
 
 {% block extra_css %}
 <link rel="stylesheet" href="{% static 'interaction/css/chat.css' %}">
+<style>
+    /* Message Display Fix */
+    .message-group {
+        display: flex !important;
+        margin-bottom: 15px;
+        align-items: flex-start;
+        width: 100%;
+    }
+    
+    .message-avatar {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-right: 10px;
+        flex-shrink: 0;
+    }
+    
+    .user-avatar {
+        background-color: #007bff;
+        color: white;
+    }
+    
+    .ai-avatar {
+        background-color: #6c757d;
+        color: white;
+    }
+    
+    .message-content-wrapper {
+        flex: 1;
+        margin-left: 10px;
+        display: flex;
+        flex-direction: column;
+    }
+    
+    .message-sender {
+        font-weight: bold;
+        margin-bottom: 5px;
+    }
+    
+    .message-bubbles {
+        display: flex;
+        flex-direction: column;
+    }
+    
+    .message {
+        margin-bottom: 5px;
+        display: flex;
+        flex-direction: column;
+    }
+    
+    .message-user {
+        align-self: flex-end;
+    }
+    
+    .message-ai {
+        align-self: flex-start;
+    }
+    
+    .message-bubble {
+        padding: 10px 15px;
+        border-radius: 18px;
+        max-width: 80%;
+        word-wrap: break-word;
+        display: inline-block;
+    }
+    
+    .message-user .message-bubble {
+        background-color: #007bff;
+        color: white;
+        border-bottom-right-radius: 5px;
+    }
+    
+    .message-ai .message-bubble {
+        background-color: #f0f2f5;
+        color: #333;
+        border-bottom-left-radius: 5px;
+    }
+    
+    .message-time {
+        font-size: 0.75rem;
+        color: #6c757d;
+        margin-top: 2px;
+        text-align: right;
+    }
+</style>
 {% endblock %}
 
 {% block content %}
@@ -65,6 +153,8 @@
         <!-- Chat Container -->
         <div class="chat-container">
             <div class="chat-messages" id="chatMessages">
+
+                
                 {% if messages %}
                     <!-- User Groups Messages -->
                     {% for message in messages %}
@@ -98,6 +188,16 @@
                             </div>
                         </div>
                     {% endfor %}
+                    <script>
+                        // Force scroll to bottom after messages are loaded
+                        document.addEventListener('DOMContentLoaded', function() {
+                            var chatMessages = document.getElementById('chatMessages');
+                            if (chatMessages) {
+                                chatMessages.scrollTop = chatMessages.scrollHeight;
+                                console.log('Scrolled to bottom of chat messages');
+                            }
+                        });
+                    </script>
                 {% else %}
                     <!-- Empty State -->
                     <div class="chat-empty-state">
@@ -302,10 +402,32 @@
 <!-- Django template variables -->
 <script>
     // Global variables from Django template
-    var CONVERSATION_ID = "{{ conversation.id }}";
+    var CONVERSATION_ID = "{{ conversation_id|default:conversation.id }}";
     var AI_TOOL_ID = "{{ ai_tool.id }}";
     var AI_TOOL_NAME = "{{ ai_tool.name }}";
     var AI_TOOL_IMAGE = "{{ ai_tool.image.url|default:'' }}";
+    console.log("Conversation ID initialized as:", CONVERSATION_ID);
+    console.log("Number of messages loaded: {{ messages|length }}");
+    
+    // Initialize chat when the page loads
+    document.addEventListener('DOMContentLoaded', function() {
+        console.log('DOM loaded, initializing chat...');
+        
+        // Force scroll to bottom of chat messages
+        var chatMessages = document.getElementById('chatMessages');
+        if (chatMessages) {
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+            console.log('Scrolled to bottom of chat messages');
+        }
+        
+        // Make sure all message groups are visible
+        var messageGroups = document.querySelectorAll('.message-group');
+        console.log('Found ' + messageGroups.length + ' message groups');
+        
+        messageGroups.forEach(function(group) {
+            group.style.display = 'flex';
+        });
+    });
 </script>
 
 <!-- Main chat functionality -->

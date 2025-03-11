@@ -5,6 +5,7 @@ from django.utils.html import format_html
 from django.urls import reverse
 from django.contrib import messages
 from django.http import HttpResponseRedirect
+from django.core.management import call_command
 
 class AIToolAdmin(admin.ModelAdmin):
     list_display = ('name', 'provider', 'category', 'popularity', 'api_type', 'is_featured', 'view_favorites_count', 'image_preview')
@@ -30,7 +31,8 @@ class AIToolAdmin(admin.ModelAdmin):
         'unfeature_tools', 
         'increase_popularity', 
         'reset_popularity',
-        'duplicate_tools'
+        'duplicate_tools',
+        'refresh_logos'
     ]
     
     def get_queryset(self, request):
@@ -48,9 +50,16 @@ class AIToolAdmin(admin.ModelAdmin):
     def image_preview(self, obj):
         """Display a thumbnail of the AI tool image"""
         if obj.image:
-            return format_html('<img src="{}" width="50" height="50" style="object-fit: cover;" />', obj.image.url)
-        return "No image"
-    image_preview.short_description = 'Image'
+            return format_html(
+                '<img src="{}" width="50" height="50" style="object-fit: contain; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1);" />',
+                obj.image.url
+            )
+        # If no image, display a placeholder with the first letter of the tool name
+        return format_html(
+            '<div style="width:50px; height:50px; border-radius:8px; background:linear-gradient(135deg, #5f4b8b, #9168c0); color:white; display:flex; align-items:center; justify-content:center; font-weight:bold; font-size:20px;">{}</div>',
+            obj.name[0].upper()
+        )
+    image_preview.short_description = 'Logo'
     
     def feature_tools(self, request, queryset):
         """Mark selected tools as featured"""
@@ -126,6 +135,29 @@ class AIToolAdmin(admin.ModelAdmin):
             messages.SUCCESS
         )
     duplicate_tools.short_description = "🔄 Duplicate selected AI tools"
+    
+    def refresh_logos(self, request, queryset):
+        """Refresh logos for selected AI tools using high-quality sources"""
+        try:
+            # Note which tools were selected
+            selected_names = list(queryset.values_list('name', flat=True))
+            
+            # We'll use our management command to refresh logos
+            call_command('fetch_ai_tool_logos', force=True)
+            
+            # Report success
+            self.message_user(
+                request,
+                f"Successfully refreshed logos for {len(selected_names)} AI tools: {', '.join(selected_names)}.",
+                messages.SUCCESS
+            )
+        except Exception as e:
+            self.message_user(
+                request,
+                f"Error refreshing logos: {str(e)}",
+                messages.ERROR
+            )
+    refresh_logos.short_description = "🖼️ Refresh logos for selected tools"
 
 # Register models with our custom admin site
 admin_site.register(AITool, AIToolAdmin)
