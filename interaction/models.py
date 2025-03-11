@@ -8,7 +8,20 @@ from django.db.models.query import QuerySet
 from catalog.models import AITool
 
 class Conversation(models.Model):
-    """Model representing a conversation between a user and an AI tool."""
+    """
+    Model representing a conversation between a user and an AI tool.
+    
+    This model stores the metadata for a conversation, including references to the user,
+    the AI tool being used, and timestamps for creation and updates.
+    
+    Attributes:
+        id (UUIDField): Unique identifier for the conversation
+        user (ForeignKey): Reference to the user participating in the conversation
+        ai_tool (ForeignKey): Reference to the AI tool used in the conversation
+        title (CharField): Title of the conversation
+        created_at (DateTimeField): When the conversation was created
+        updated_at (DateTimeField): When the conversation was last updated
+    """
     id: models.UUIDField = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     user: models.ForeignKey = models.ForeignKey(
         settings.AUTH_USER_MODEL, 
@@ -34,12 +47,26 @@ class Conversation(models.Model):
         return f"{user_str} - {tool_name} - {self.title}"
     
     def get_messages(self) -> 'QuerySet[Message]':
+        """
+        Get all messages in this conversation ordered by timestamp.
+        
+        Returns:
+            QuerySet[Message]: QuerySet of Message objects ordered by timestamp
+        """
         # Django automatically creates a message_set attribute for the reverse relation
         # Type ignore is needed because mypy doesn't understand Django's dynamic attributes
         return self.message_set.all().order_by('timestamp')  # type: ignore
     
     def to_json(self) -> str:
-        """Convert conversation to JSON format for export"""
+        """
+        Convert conversation to JSON format for export.
+        
+        This method serializes the conversation and its messages into a JSON string
+        suitable for export or API responses.
+        
+        Returns:
+            str: JSON string representation of the conversation
+        """
         data: Dict[str, Any] = {
             'id': str(self.id),
             'title': self.title,
@@ -59,7 +86,18 @@ class Conversation(models.Model):
 
 
 class Message(models.Model):
-    """Model representing a single message in a conversation."""
+    """
+    Model representing a single message in a conversation.
+    
+    This model stores the content of a message, whether it was sent by the user or the AI,
+    and when it was sent.
+    
+    Attributes:
+        conversation (ForeignKey): Reference to the conversation this message belongs to
+        content (TextField): The text content of the message
+        is_user (BooleanField): Whether the message was sent by the user (True) or the AI (False)
+        timestamp (DateTimeField): When the message was sent
+    """
     conversation: models.ForeignKey = models.ForeignKey(Conversation, on_delete=models.CASCADE)
     content: models.TextField = models.TextField()
     is_user: models.BooleanField = models.BooleanField(default=True)  # True if from user, False if from AI
@@ -71,7 +109,19 @@ class Message(models.Model):
 
 
 class FavoritePrompt(models.Model):
-    """Model for storing user's favorite prompts."""
+    """
+    Model for storing user's favorite prompts.
+    
+    This model allows users to save prompts they frequently use with specific AI tools.
+    
+    Attributes:
+        id (UUIDField): Unique identifier for the favorite prompt
+        user (ForeignKey): Reference to the user who saved the prompt
+        ai_tool (ForeignKey): Reference to the AI tool the prompt is intended for
+        prompt_text (TextField): The text of the saved prompt
+        title (CharField): A descriptive title for the prompt
+        created_at (DateTimeField): When the prompt was saved
+    """
     id: models.UUIDField = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     user: models.ForeignKey = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     ai_tool: models.ForeignKey = models.ForeignKey(AITool, on_delete=models.CASCADE)
@@ -85,7 +135,21 @@ class FavoritePrompt(models.Model):
 
 
 class SharedChat(models.Model):
-    """Model for sharing conversations with other users or publicly."""
+    """
+    Model for sharing conversations with other users or publicly.
+    
+    This model enables users to share their conversations either with specific users
+    or publicly via an access token.
+    
+    Attributes:
+        id (UUIDField): Unique identifier for the shared chat
+        conversation (ForeignKey): Reference to the conversation being shared
+        shared_by (ForeignKey): Reference to the user sharing the conversation
+        shared_with (ForeignKey): Reference to the user the conversation is shared with (if not public)
+        is_public (BooleanField): Whether the conversation is publicly accessible
+        access_token (CharField): Unique token for accessing the shared conversation
+        created_at (DateTimeField): When the conversation was shared
+    """
     id: models.UUIDField = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     conversation: models.ForeignKey = models.ForeignKey(Conversation, on_delete=models.CASCADE)
     shared_by: models.ForeignKey = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='shared_chats')
@@ -112,7 +176,16 @@ class SharedChat(models.Model):
 
 
 class UserFavorite(models.Model):
-    """Model for storing user's favorite AI tools."""
+    """
+    Model for storing user's favorite AI tools.
+    
+    This model allows users to bookmark AI tools they frequently use for easier access.
+    
+    Attributes:
+        user (ForeignKey): Reference to the user who favorited the tool
+        ai_tool (ForeignKey): Reference to the favorited AI tool
+        created_at (DateTimeField): When the tool was favorited
+    """
     user: models.ForeignKey = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     ai_tool: models.ForeignKey = models.ForeignKey(AITool, on_delete=models.CASCADE)
     created_at: models.DateTimeField = models.DateTimeField(auto_now_add=True)

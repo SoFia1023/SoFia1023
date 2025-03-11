@@ -27,7 +27,16 @@ CATEGORIES = ["Text Generator", "Image Generator", "Video Generator", "Transcrip
 # Direct chat view
 @login_required
 def direct_chat(request: HttpRequest) -> HttpResponse:
-    """View for the smart chat interface that routes messages to appropriate AI tools."""
+    """
+    View for the smart chat interface that routes messages to appropriate AI tools.
+    
+    Args:
+        request (HttpRequest): The HTTP request object containing user session and GET parameters
+        
+    Returns:
+        HttpResponse: Rendered direct chat template with conversation context
+    """
+    
     conversation_id = request.GET.get('conversation_id')
     
     if conversation_id:
@@ -62,7 +71,20 @@ def direct_chat(request: HttpRequest) -> HttpResponse:
 @login_required
 @require_POST
 def direct_chat_message(request: HttpRequest) -> JsonResponse:
-    """Handle sending a message in the direct chat interface with smart routing."""
+    """
+    Handle sending a message in the direct chat interface with smart routing.
+    
+    This function processes a user message, determines the appropriate AI tool to handle it,
+    creates or updates a conversation, and returns the AI's response.
+    
+    Args:
+        request (HttpRequest): The HTTP request object containing the message data in JSON format
+        
+    Returns:
+        JsonResponse: JSON containing the AI response, conversation ID, and AI tool name,
+                     or error information if processing failed
+    """
+    
     try:
         # Parse the request data
         data = json.loads(request.body)
@@ -179,7 +201,18 @@ def direct_chat_message(request: HttpRequest) -> JsonResponse:
 # Chat views
 @login_required
 def chat_selection(request: HttpRequest) -> HttpResponse:
-    """View to select an AI tool to chat with."""
+    """
+    View to select an AI tool to chat with.
+    
+    This function displays available AI tools with filtering and sorting options.
+    
+    Args:
+        request (HttpRequest): The HTTP request object containing filter parameters
+        
+    Returns:
+        HttpResponse: Rendered template with filtered and sorted AI tools
+    """
+    
     # Get filter parameters from request
     searchTerm = request.GET.get('searchAITool', '')
     category = request.GET.get('category', '')
@@ -238,7 +271,20 @@ def chat_selection(request: HttpRequest) -> HttpResponse:
 
 @login_required
 def chat_view(request: HttpRequest, ai_id: Optional[int] = None, conversation_id: Optional[str] = None) -> HttpResponse:
-    """View for chatting with an AI tool."""
+    """
+    View for chatting with an AI tool.
+    
+    This function either loads an existing conversation or creates a new one with the specified AI tool.
+    
+    Args:
+        request (HttpRequest): The HTTP request object containing user session
+        ai_id (Optional[int]): ID of the AI tool to chat with, required when starting a new conversation
+        conversation_id (Optional[str]): UUID of an existing conversation to load
+        
+    Returns:
+        HttpResponse: Rendered chat template with conversation context
+    """
+    
     # Debug logging
     print(f"[CHAT] chat_view called with ai_id={ai_id}, conversation_id={conversation_id}")
     
@@ -299,7 +345,20 @@ def chat_view(request: HttpRequest, ai_id: Optional[int] = None, conversation_id
 @login_required
 @require_POST
 def send_message(request: HttpRequest, conversation_id: str) -> JsonResponse:
-    """Handle sending a message in a conversation."""
+    """
+    Handle sending a message in a conversation.
+    
+    This function processes a user message in an existing conversation, sends it to the appropriate
+    AI service, and returns the AI's response.
+    
+    Args:
+        request (HttpRequest): The HTTP request object containing the message data in JSON format
+        conversation_id (str): UUID of the conversation to send the message to
+        
+    Returns:
+        JsonResponse: JSON containing the AI response and timestamp, or error information
+    """
+    
     # Add debug logging
     print(f"[CHAT] Received message request for conversation {conversation_id}")
     
@@ -397,7 +456,18 @@ def send_message(request: HttpRequest, conversation_id: str) -> JsonResponse:
 
 @login_required
 def conversation_history(request: HttpRequest) -> HttpResponse:
-    """View user's conversation history."""
+    """
+    View user's conversation history.
+    
+    This function retrieves and displays all conversations for the current user.
+    
+    Args:
+        request (HttpRequest): The HTTP request object containing user session
+        
+    Returns:
+        HttpResponse: Rendered template with the user's conversation history
+    """
+    
     conversations = Conversation.objects.filter(
         user=request.user
     ).order_by('-updated_at')
@@ -408,7 +478,20 @@ def conversation_history(request: HttpRequest) -> HttpResponse:
 
 @login_required
 def delete_conversation(request: HttpRequest, conversation_id: str) -> HttpResponse:
-    """Delete a conversation."""
+    """
+    Delete a conversation.
+    
+    This function handles the deletion of a conversation, with confirmation page.
+    
+    Args:
+        request (HttpRequest): The HTTP request object containing user session
+        conversation_id (str): UUID of the conversation to delete
+        
+    Returns:
+        HttpResponse: Redirect to conversation history on successful deletion,
+                     or confirmation page on GET request
+    """
+    
     conversation = get_object_or_404(
         Conversation, 
         id=conversation_id,
@@ -425,8 +508,21 @@ def delete_conversation(request: HttpRequest, conversation_id: str) -> HttpRespo
     })
 
 @login_required
-def download_conversation(request, conversation_id, format='json'):
-    """Download a conversation in various formats."""
+def download_conversation(request: HttpRequest, conversation_id: str, format: str = 'json') -> HttpResponse:
+    """
+    Download a conversation in various formats.
+    
+    This function formats and returns a conversation in the specified format for download.
+    
+    Args:
+        request (HttpRequest): The HTTP request object containing user session
+        conversation_id (str): UUID of the conversation to download
+        format (str): Format to download the conversation in ('json', 'txt', or 'csv')
+        
+    Returns:
+        HttpResponse: HTTP response with appropriate content type and attachment headers
+    """
+    
     conversation = get_object_or_404(
         Conversation, 
         id=conversation_id,
@@ -444,8 +540,20 @@ def download_conversation(request, conversation_id, format='json'):
 
 # Favorite prompts views
 @login_required
-def favorite_prompts(request, ai_id=None):
-    """View and manage favorite prompts."""
+def favorite_prompts(request: HttpRequest, ai_id: Optional[int] = None) -> HttpResponse:
+    """
+    View and manage favorite prompts.
+    
+    This function displays the user's favorite prompts, optionally filtered by AI tool.
+    
+    Args:
+        request (HttpRequest): The HTTP request object containing user session
+        ai_id (Optional[int]): ID of the AI tool to filter prompts by
+        
+    Returns:
+        HttpResponse: Rendered template with the user's favorite prompts
+    """
+    
     if ai_id:
         ai_tool = get_object_or_404(AITool, id=ai_id)
         prompts = FavoritePrompt.objects.filter(
@@ -468,8 +576,19 @@ def favorite_prompts(request, ai_id=None):
 
 @login_required
 @require_POST
-def save_favorite_prompt(request):
-    """Save a prompt as favorite."""
+def save_favorite_prompt(request: HttpRequest) -> JsonResponse:
+    """
+    Save a prompt as favorite.
+    
+    This function processes a request to save a prompt as a favorite for the current user.
+    
+    Args:
+        request (HttpRequest): The HTTP request object containing prompt data in JSON format
+        
+    Returns:
+        JsonResponse: JSON indicating success or error information
+    """
+    
     data = json.loads(request.body)
     ai_id = data.get('ai_id')
     prompt_text = data.get('prompt_text', '').strip()
@@ -490,8 +609,21 @@ def save_favorite_prompt(request):
     return JsonResponse({'success': True})
 
 @login_required
-def delete_favorite_prompt(request, prompt_id):
-    """Delete a favorite prompt."""
+def delete_favorite_prompt(request: HttpRequest, prompt_id: int) -> HttpResponse:
+    """
+    Delete a favorite prompt.
+    
+    This function handles the deletion of a favorite prompt, with confirmation page.
+    
+    Args:
+        request (HttpRequest): The HTTP request object containing user session
+        prompt_id (int): ID of the prompt to delete
+        
+    Returns:
+        HttpResponse: Redirect to favorite prompts on successful deletion,
+                     or confirmation page on GET request
+    """
+    
     prompt = get_object_or_404(
         FavoritePrompt, 
         id=prompt_id,
@@ -509,8 +641,20 @@ def delete_favorite_prompt(request, prompt_id):
 
 # Sharing views
 @login_required
-def share_conversation(request, conversation_id):
-    """Share a conversation with others."""
+def share_conversation(request: HttpRequest, conversation_id: str) -> HttpResponse:
+    """
+    Share a conversation with others.
+    
+    This function handles the sharing of a conversation, either publicly or with a specific user.
+    
+    Args:
+        request (HttpRequest): The HTTP request object containing user session and form data
+        conversation_id (str): UUID of the conversation to share
+        
+    Returns:
+        HttpResponse: Rendered template with sharing success information or sharing form
+    """
+    
     conversation = get_object_or_404(
         Conversation, 
         id=conversation_id,
@@ -561,8 +705,20 @@ def share_conversation(request, conversation_id):
         'conversation': conversation
     })
 
-def view_shared_chat(request, access_token):
-    """View a shared conversation."""
+def view_shared_chat(request: HttpRequest, access_token: str) -> HttpResponse:
+    """
+    View a shared conversation.
+    
+    This function displays a shared conversation if the user has access to it.
+    
+    Args:
+        request (HttpRequest): The HTTP request object containing user session
+        access_token (str): Access token for the shared conversation
+        
+    Returns:
+        HttpResponse: Rendered template with the shared conversation or access denied page
+    """
+    
     shared_chat = get_object_or_404(SharedChat, access_token=access_token)
     conversation = shared_chat.conversation
     

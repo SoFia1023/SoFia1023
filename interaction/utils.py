@@ -12,13 +12,21 @@ from interaction.models import Conversation
 
 def route_message_to_ai_tool(message_content: str) -> Optional[AITool]:
     """
-    Analyze message content and route to the most appropriate AI tool.
+    Analyze message content and route to the most appropriate AI tool based on content patterns.
+    
+    This function uses regex pattern matching to determine the most appropriate AI tool category
+    for the given message content, then returns the most popular tool in that category.
     
     Args:
-        message_content (str): The user's message content
+        message_content (str): The user's message content to analyze
         
     Returns:
         Optional[AITool]: The most appropriate AI tool for handling the message, or None if no tool is found
+        
+    Example:
+        >>> tool = route_message_to_ai_tool("Generate an image of a sunset")
+        >>> print(tool.category)
+        'Image Generator'
     """
     # Convert to lowercase for case-insensitive matching
     content_lower = message_content.lower()
@@ -96,12 +104,26 @@ def format_conversation_for_download(conversation: Conversation, format_type: st
     """
     Format a conversation for download in the specified format.
     
+    This function converts a conversation and its messages into one of several downloadable formats.
+    Supported formats include JSON, plain text, and CSV.
+    
     Args:
-        conversation: The Conversation object to format
-        format_type (str): The format type ('json', 'txt', or 'csv')
+        conversation (Conversation): The Conversation object to format with its associated messages
+        format_type (str): The format type to convert to ('json', 'txt', or 'csv')
         
     Returns:
-        tuple: (formatted_content, content_type, file_extension)
+        Tuple[str, str, str]: A tuple containing:
+            - formatted_content (str): The conversation content in the requested format
+            - content_type (str): The MIME type for the content (e.g., 'application/json')
+            - file_extension (str): The appropriate file extension (e.g., 'json')
+            
+    Raises:
+        ValueError: If an invalid format_type is provided
+        
+    Example:
+        >>> content, mime_type, ext = format_conversation_for_download(conversation, 'json')
+        >>> print(mime_type)
+        'application/json'
     """
     messages = conversation.get_messages()
     
