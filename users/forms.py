@@ -1,6 +1,7 @@
 from django import forms
 from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
 from .models import CustomUser
+from typing import Dict, Any, List, Optional, Union, Type
 
 class CustomUserCreationForm(UserCreationForm):
     email = forms.EmailField(
@@ -23,7 +24,7 @@ class CustomUserCreationForm(UserCreationForm):
 
     class Meta:
         model = CustomUser
-        fields = ['email', 'username', 'first_name', 'password1', 'password2']
+        fields: List[str] = ['email', 'username', 'first_name', 'password1', 'password2']
 
 
 class CustomUserLoginForm(AuthenticationForm):

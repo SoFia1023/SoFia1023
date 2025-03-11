@@ -6,8 +6,10 @@ from django.urls import reverse
 from django.contrib import messages
 import json
 import csv
-from django.http import HttpResponse
+from django.http import HttpResponse, HttpRequest
 import datetime
+from typing import List, Dict, Any, Optional, Union, Tuple, Set, Callable, Type, cast
+from django.db.models.query import QuerySet
 
 class MessageInline(admin.TabularInline):
     model = Message
@@ -15,14 +17,14 @@ class MessageInline(admin.TabularInline):
     readonly_fields = ('timestamp', 'content_preview')
     fields = ('is_user', 'content_preview', 'timestamp')
     
-    def content_preview(self, obj):
+    def content_preview(self, obj: Message) -> str:
         """Display a preview of the message content"""
         if len(obj.content) > 100:
             return obj.content[:100] + '...'
         return obj.content
     content_preview.short_description = 'Content'
     
-    def has_add_permission(self, request, obj=None):
+    def has_add_permission(self, request: HttpRequest, obj: Optional[Conversation] = None) -> bool:
         return False
 
 @admin.register(Conversation)
@@ -42,11 +44,11 @@ class ConversationAdmin(admin.ModelAdmin):
         'archive_conversations'
     ]
     
-    def get_queryset(self, request):
+    def get_queryset(self, request: HttpRequest) -> QuerySet[Conversation]:
         """Optimize query by prefetching related objects"""
         return super().get_queryset(request).select_related('user', 'ai_tool').prefetch_related('message_set')
     
-    def message_count(self, obj):
+    def message_count(self, obj: Conversation) -> str:
         """Display the number of messages in this conversation"""
         count = obj.message_set.count()
         return count

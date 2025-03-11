@@ -3,7 +3,7 @@ import uuid
 import json
 import secrets
 from django.shortcuts import render, redirect, get_object_or_404
-from django.http import JsonResponse, HttpResponse
+from django.http import JsonResponse, HttpResponse, HttpRequest
 from django.contrib.auth.decorators import login_required
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
@@ -11,6 +11,8 @@ from django.contrib import messages
 from django.urls import reverse
 from django.utils import timezone
 from django.db.models import Q
+from typing import Dict, Any, List, Optional, Union, Type, TypeVar, cast, Tuple
+from django.db.models.query import QuerySet
 
 from catalog.models import AITool
 from .models import Conversation, Message, FavoritePrompt, SharedChat
@@ -24,7 +26,7 @@ CATEGORIES = ["Text Generator", "Image Generator", "Video Generator", "Transcrip
 
 # Direct chat view
 @login_required
-def direct_chat(request):
+def direct_chat(request: HttpRequest) -> HttpResponse:
     """View for the smart chat interface that routes messages to appropriate AI tools."""
     conversation_id = request.GET.get('conversation_id')
     
@@ -59,7 +61,7 @@ def direct_chat(request):
 
 @login_required
 @require_POST
-def direct_chat_message(request):
+def direct_chat_message(request: HttpRequest) -> JsonResponse:
     """Handle sending a message in the direct chat interface with smart routing."""
     try:
         # Parse the request data
@@ -82,20 +84,36 @@ def direct_chat_message(request):
             except:
                 # If conversation not found, route to a new AI tool
                 ai_tool = route_message_to_ai_tool(user_message)
+                # Handle case where no AI tool is found
+                if ai_tool is None:
+                    # Fallback to the first AI tool in the database
+                    ai_tool = AITool.objects.first()
+                    if ai_tool is None:
+                        return JsonResponse({'error': 'No AI tools available'}, status=500)
+                
+                # Create conversation with the tool
+                tool_name = ai_tool.name if hasattr(ai_tool, 'name') else "AI Tool"
                 conversation = Conversation.objects.create(
                     user=request.user,
                     ai_tool=ai_tool,
-                    title=f"Chat with {ai_tool.name}"
+                    title=f"Chat with {tool_name}"
                 )
         else:
             # Route message to appropriate AI tool
             ai_tool = route_message_to_ai_tool(user_message)
+            # Handle case where no AI tool is found
+            if ai_tool is None:
+                # Fallback to the first AI tool in the database
+                ai_tool = AITool.objects.first()
+                if ai_tool is None:
+                    return JsonResponse({'error': 'No AI tools available'}, status=500)
             
             # Create a new conversation with the selected AI tool
+            tool_name = ai_tool.name if hasattr(ai_tool, 'name') else "AI Tool"
             conversation = Conversation.objects.create(
                 user=request.user,
                 ai_tool=ai_tool,
-                title=f"Chat with {ai_tool.name}"
+                title=f"Chat with {tool_name}"
             )
         
         # Save user message
@@ -160,7 +178,7 @@ def direct_chat_message(request):
 
 # Chat views
 @login_required
-def chat_selection(request):
+def chat_selection(request: HttpRequest) -> HttpResponse:
     """View to select an AI tool to chat with."""
     # Get filter parameters from request
     searchTerm = request.GET.get('searchAITool', '')
@@ -219,7 +237,7 @@ def chat_selection(request):
     })
 
 @login_required
-def chat_view(request, ai_id=None, conversation_id=None):
+def chat_view(request: HttpRequest, ai_id: Optional[int] = None, conversation_id: Optional[str] = None) -> HttpResponse:
     """View for chatting with an AI tool."""
     # Debug logging
     print(f"[CHAT] chat_view called with ai_id={ai_id}, conversation_id={conversation_id}")
@@ -280,7 +298,7 @@ def chat_view(request, ai_id=None, conversation_id=None):
 
 @login_required
 @require_POST
-def send_message(request, conversation_id):
+def send_message(request: HttpRequest, conversation_id: str) -> JsonResponse:
     """Handle sending a message in a conversation."""
     # Add debug logging
     print(f"[CHAT] Received message request for conversation {conversation_id}")
@@ -378,7 +396,7 @@ def send_message(request, conversation_id):
         return JsonResponse({'error': f'An unexpected error occurred: {str(e)}'}, status=500)
 
 @login_required
-def conversation_history(request):
+def conversation_history(request: HttpRequest) -> HttpResponse:
     """View user's conversation history."""
     conversations = Conversation.objects.filter(
         user=request.user
@@ -389,7 +407,7 @@ def conversation_history(request):
     })
 
 @login_required
-def delete_conversation(request, conversation_id):
+def delete_conversation(request: HttpRequest, conversation_id: str) -> HttpResponse:
     """Delete a conversation."""
     conversation = get_object_or_404(
         Conversation, 

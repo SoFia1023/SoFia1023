@@ -8,6 +8,11 @@ import time
 from django.http import HttpResponse
 from django.conf import settings
 import random
+from typing import Dict, Any, List, Tuple, Optional, Union
+# Import for type annotation
+from typing import TYPE_CHECKING
+if TYPE_CHECKING:
+    from interaction.models import Conversation
 
 # Get API keys from environment variables (or set defaults for demo)
 OPENAI_API_KEY = os.environ.get('OPENAI_API_KEY', '')
@@ -17,7 +22,7 @@ class AIService:
     """Service class for handling AI API interactions."""
     
     @staticmethod
-    def call_openai_api(prompt, model="gpt-3.5-turbo"):
+    def call_openai_api(prompt: str, model: str = "gpt-3.5-turbo") -> Dict[str, Any]:
         """
         Call OpenAI API with the provided prompt.
         
@@ -71,7 +76,7 @@ class AIService:
             }
     
     @staticmethod
-    def call_huggingface_api(prompt, model="google/flan-t5-base"):
+    def call_huggingface_api(prompt: str, model: str = "google/flan-t5-base") -> Dict[str, Any]:
         """
         Call Hugging Face API with the provided prompt.
         
@@ -121,7 +126,7 @@ class AIService:
             }
     
     @staticmethod
-    def simulate_ai_response(service_type, prompt):
+    def simulate_ai_response(service_type: str, prompt: str) -> Dict[str, Any]:
         """
         Simulate an AI response for demo purposes when API keys aren't available.
         
@@ -227,7 +232,7 @@ class AIService:
         }
     
     @staticmethod
-    def send_to_ai_service(prompt, service_config):
+    def send_to_ai_service(prompt: str, service_config: Dict[str, Any]) -> Dict[str, Any]:
         """
         Route the prompt to the appropriate AI service based on configuration.
         
@@ -276,20 +281,20 @@ class AIService:
             }
 
 # Legacy function wrappers for backward compatibility
-def call_openai_api(prompt, model="gpt-3.5-turbo"):
+def call_openai_api(prompt: str, model: str = "gpt-3.5-turbo") -> Dict[str, Any]:
     return AIService.call_openai_api(prompt, model)
 
-def call_huggingface_api(prompt, model="google/flan-t5-base"):
+def call_huggingface_api(prompt: str, model: str = "google/flan-t5-base") -> Dict[str, Any]:
     return AIService.call_huggingface_api(prompt, model)
 
-def simulate_ai_response(service_type, prompt):
+def simulate_ai_response(service_type: str, prompt: str) -> Dict[str, Any]:
     return AIService.simulate_ai_response(service_type, prompt)
 
-def send_to_ai_service(prompt, service_config):
+def send_to_ai_service(prompt: str, service_config: Dict[str, Any]) -> Dict[str, Any]:
     return AIService.send_to_ai_service(prompt, service_config)
 
 # Utility function for formatting conversation downloads
-def format_conversation_for_download(conversation, format_type='json'):
+def format_conversation_for_download(conversation: 'Conversation', format_type: str = 'json') -> Tuple[str, str, str]:
     """
     Format a conversation for download in the specified format.
     

@@ -6,9 +6,11 @@ from inspireIA.admin import admin_site
 from django.utils.html import format_html
 from django.urls import reverse
 from django.contrib import messages
-from django.http import HttpResponse
+from django.http import HttpResponse, HttpRequest
 import csv
 import datetime
+from typing import List, Dict, Any, Optional, Union, Tuple, Set, Callable, Type, cast
+from django.db.models.query import QuerySet
 
 # Register your models here.
 #admin.site.register(CustomUser)  #
@@ -44,11 +46,11 @@ class CustomUserAdmin(UserAdmin):
         'revoke_staff_status'
     ]
     
-    def get_queryset(self, request):
+    def get_queryset(self, request: HttpRequest) -> QuerySet[CustomUser]:
         """Optimize query by prefetching related objects"""
         return super().get_queryset(request).prefetch_related('groups', 'favorites')
     
-    def get_groups(self, obj):
+    def get_groups(self, obj: CustomUser) -> str:
         """Return a comma-separated list of the user's groups."""
         groups = [group.name for group in obj.groups.all()]
         if not groups:

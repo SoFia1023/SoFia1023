@@ -1,4 +1,7 @@
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
+from django.http import HttpRequest
+from django.db.models.query import QuerySet
+from typing import Any, Dict, List, Optional, Tuple, Union, cast
 
 class PaginationMixin:
     """
@@ -11,7 +14,14 @@ class PaginationMixin:
     paginate_by = 10
     page_kwarg = 'page'
     
-    def paginate_queryset(self, queryset, page_size=None):
+    # These attributes are expected to be provided by the view that uses this mixin
+    request: HttpRequest
+    
+    def get_queryset(self) -> QuerySet:
+        # This method is expected to be implemented by the view that uses this mixin
+        raise NotImplementedError("Subclasses must implement get_queryset()")
+    
+    def paginate_queryset(self, queryset: QuerySet, page_size: Optional[int] = None) -> Tuple[Paginator, Any, Any, bool]:
         """
         Paginate the queryset.
         
@@ -36,14 +46,16 @@ class PaginationMixin:
         is_paginated = paginator.num_pages > 1
         return (paginator, page, page.object_list, is_paginated)
     
-    def get_context_data(self, **kwargs):
+    def get_context_data(self, **kwargs) -> Dict[str, Any]:
         """
         Add pagination context data.
         
         Returns:
             dict: Context data with pagination information
         """
-        context = super().get_context_data(**kwargs)
+        # Using Any for the parent class since we don't know what it is
+        # This is a mixin that can be used with different view types
+        context = super().get_context_data(**kwargs)  # type: ignore
         queryset = self.get_queryset()
         paginator, page, queryset, is_paginated = self.paginate_queryset(queryset)
         

@@ -6,9 +6,11 @@ import re
 from io import StringIO
 import csv
 from django.utils import timezone
+from typing import Dict, Any, List, Tuple, Optional, Union, Pattern
 from catalog.models import AITool
+from interaction.models import Conversation
 
-def route_message_to_ai_tool(message_content):
+def route_message_to_ai_tool(message_content: str) -> Optional[AITool]:
     """
     Analyze message content and route to the most appropriate AI tool.
     
@@ -16,7 +18,7 @@ def route_message_to_ai_tool(message_content):
         message_content (str): The user's message content
         
     Returns:
-        AITool: The most appropriate AI tool for handling the message
+        Optional[AITool]: The most appropriate AI tool for handling the message, or None if no tool is found
     """
     # Convert to lowercase for case-insensitive matching
     content_lower = message_content.lower()
@@ -90,7 +92,7 @@ def route_message_to_ai_tool(message_content):
     
     return ai_tool
 
-def format_conversation_for_download(conversation, format_type='json'):
+def format_conversation_for_download(conversation: Conversation, format_type: str = 'json') -> Tuple[str, str, str]:
     """
     Format a conversation for download in the specified format.
     

@@ -5,7 +5,7 @@ from django.db.models import Q
 from django.contrib.auth import get_user_model, authenticate, login, logout
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
-from django.http import JsonResponse, HttpResponse
+from django.http import JsonResponse, HttpResponse, HttpRequest
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
 from django.views.generic import ListView, DetailView
@@ -13,6 +13,8 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from django.urls import reverse_lazy
 import json
 import time
+from typing import Dict, Any, List, Optional, Union, Type, TypeVar, cast
+from django.db.models.query import QuerySet
 from . import utils
 from .mixins import PaginationMixin
 
@@ -30,7 +32,7 @@ CATEGORIES = [
 User = get_user_model()
 
 
-def home(request):
+def home(request: HttpRequest) -> HttpResponse:
     """Render the home page with a showcase of top AI tools."""
     # Get 3 most popular AIs to showcase
     popular_ais = AITool.objects.all().order_by('-popularity')[:3]
@@ -46,7 +48,7 @@ class AIToolDetailView(DetailView):
     context_object_name = 'ai_tool'
     pk_url_kwarg = 'id'
     
-    def get_context_data(self, **kwargs):
+    def get_context_data(self, **kwargs: Any) -> Dict[str, Any]:
         """Add related AI tools to the context."""
         context = super().get_context_data(**kwargs)
         
@@ -81,7 +83,7 @@ class CatalogView(PaginationMixin, ListView):
     context_object_name = 'ai_tools'
     paginate_by = 12  # Show 12 AI tools per page
     
-    def get_queryset(self):
+    def get_queryset(self) -> QuerySet[AITool]:
         """
         Filter and sort the queryset based on request parameters.
         """
@@ -116,7 +118,7 @@ class CatalogView(PaginationMixin, ListView):
         
         return queryset
     
-    def get_context_data(self, **kwargs):
+    def get_context_data(self, **kwargs: Any) -> Dict[str, Any]:
         """
         Add additional context data for the template.
         """
@@ -169,7 +171,9 @@ def register_view(request):
             return render(request, 'catalog/register.html')
         
         # Create user
-        user = User.objects.create_user(
+        User = get_user_model()
+        # Type assertion to help mypy understand this is a UserManager with create_user
+        user = cast(Any, User.objects).create_user(
             username=username,
             email=email,
             password=password1
@@ -314,7 +318,7 @@ class ModelsView(PaginationMixin, ListView):
     context_object_name = 'ai_tools'
     paginate_by = 12  # Show 12 AI tools per page
     
-    def get_queryset(self):
+    def get_queryset(self) -> QuerySet[AITool]:
         """
         Filter and sort the queryset based on request parameters.
         """
@@ -349,7 +353,7 @@ class ModelsView(PaginationMixin, ListView):
         
         return queryset
     
-    def get_context_data(self, **kwargs):
+    def get_context_data(self, **kwargs: Any) -> Dict[str, Any]:
         """
         Add additional context data for the template.
         """

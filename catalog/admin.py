@@ -4,8 +4,10 @@ from inspireIA.admin import admin_site
 from django.utils.html import format_html
 from django.urls import reverse
 from django.contrib import messages
-from django.http import HttpResponseRedirect
+from django.http import HttpResponseRedirect, HttpRequest
 from django.core.management import call_command
+from typing import List, Dict, Any, Optional, Union, Tuple, Set, Callable, Type, cast
+from django.db.models.query import QuerySet
 
 class AIToolAdmin(admin.ModelAdmin):
     list_display = ('name', 'provider', 'category', 'popularity', 'api_type', 'is_featured', 'view_favorites_count', 'image_preview')
@@ -35,19 +37,19 @@ class AIToolAdmin(admin.ModelAdmin):
         'refresh_logos'
     ]
     
-    def get_queryset(self, request):
+    def get_queryset(self, request: HttpRequest) -> QuerySet[AITool]:
         """Optimize query by annotating with favorites count"""
         qs = super().get_queryset(request)
         return qs.prefetch_related('userfavorite_set')
     
-    def view_favorites_count(self, obj):
+    def view_favorites_count(self, obj: AITool) -> str:
         """Display the number of users who have favorited this tool"""
         count = obj.userfavorite_set.count()
         url = reverse('admin:interaction_userfavorite_changelist') + f'?ai_tool__id__exact={obj.id}'
         return format_html('<a href="{}">{} users</a>', url, count)
     view_favorites_count.short_description = 'Favorited by'
     
-    def image_preview(self, obj):
+    def image_preview(self, obj: AITool) -> str:
         """Display a thumbnail of the AI tool image"""
         if obj.image:
             return format_html(

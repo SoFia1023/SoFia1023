@@ -1,7 +1,8 @@
 from django.core.management.base import BaseCommand
 from django.contrib.auth.models import Group, Permission
 from django.contrib.contenttypes.models import ContentType
-from catalog.models import AITool, UserFavorite
+from catalog.models import AITool
+from interaction.models import UserFavorite
 from interaction.models import Conversation, Message, FavoritePrompt, SharedChat
 from users.models import CustomUser
 
