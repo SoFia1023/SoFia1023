@@ -405,44 +405,81 @@ def direct_chat(request):
    pip install -r requirements.txt
    ```
 
-4. Run migrations:
+4. Create environment configuration:
+   ```bash
+   cp .env.example .env
+   # Edit .env file with your settings
+   ```
+
+5. Run migrations:
    ```bash
    python manage.py migrate
    ```
 
-5. Create a superuser:
+6. Create a superuser:
    ```bash
    python manage.py createsuperuser
    ```
 
-6. Run the development server:
+7. Run the development server:
    ```bash
    python manage.py runserver
    ```
 
-7. Access the application at http://127.0.0.1:8000/
+8. Access the application at http://127.0.0.1:8000/
 
 ## 🔒 Environment Configuration
 
-The project uses environment-specific settings files:
+### Settings Structure
 
-- `base.py`: Common settings for all environments
-- `development.py`: Development-specific settings
-- `production.py`: Production-specific settings
+The project uses a modular settings approach with environment-specific configuration files:
 
-To switch between environments, set the `DJANGO_SETTINGS_MODULE` environment variable:
+```
+inspireIA/
+└── settings/
+    ├── __init__.py       # Environment selection logic
+    ├── base.py           # Common settings shared across all environments
+    ├── development.py    # Development-specific settings
+    ├── testing.py        # Testing-specific settings
+    ├── production.py     # Production-specific settings
+    ├── local.py          # Local overrides (gitignored)
+    └── local.py.example  # Template for local.py
+```
+
+### Environment Variables
+
+The project uses python-dotenv to load environment variables from a `.env` file. Key variables include:
+
+- `DJANGO_ENV`: Environment to use (development, testing, production)
+- `DJANGO_SECRET_KEY`: Django secret key
+- `DEBUG`: Debug mode toggle
+- `ALLOWED_HOSTS`: Comma-separated list of allowed hosts
+- `DATABASE_URL`: Database connection URL
+
+See [Settings Documentation](docs/settings.md) for complete details on configuration options.
+
+### Environment Selection
+
+The environment is selected based on the `DJANGO_ENV` environment variable in your `.env` file:
 
 ```bash
-# Development (default)
-export DJANGO_SETTINGS_MODULE=inspireIA.settings.development
-
-# Production
-export DJANGO_SETTINGS_MODULE=inspireIA.settings.production
+# In .env file
+DJANGO_ENV=development  # Options: development, testing, production
 ```
+
+No need to set `DJANGO_SETTINGS_MODULE` manually as the project handles this automatically.
 
 ## 📊 Implemented Features
 
 ### Recent Updates (March 2025)
+
+#### Settings Module Refactoring (March 2025)
+- Implemented a modular settings approach with environment-specific configuration files
+- Added environment selection logic in `__init__.py` based on `DJANGO_ENV` variable
+- Integrated `python-dotenv` for consistent environment variable management
+- Created a testing settings file for improved test performance
+- Added comprehensive settings documentation
+- Enhanced security with better environment variable validation
 
 #### Code Quality Improvements (March 2025)
 - Enhanced code documentation with comprehensive docstrings across the entire codebase

@@ -4,12 +4,21 @@ Contains settings common to all environments.
 """
 import os
 from pathlib import Path
+from typing import Dict, Any, List, Tuple
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
+# Note: BASE_DIR is also defined in __init__.py for dotenv loading
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
 
+# Helper function to get environment variables with defaults
+def get_env_value(env_variable: str, default_value: Any = None) -> Any:
+    """
+    Get an environment variable or return a default value
+    """
+    return os.environ.get(env_variable, default_value)
+
 # Application definition
-INSTALLED_APPS = [
+INSTALLED_APPS: List[str] = [
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -21,7 +30,7 @@ INSTALLED_APPS = [
     'interaction',
 ]
 
-MIDDLEWARE = [
+MIDDLEWARE: List[str] = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -32,13 +41,13 @@ MIDDLEWARE = [
     'inspireIA.middleware.RequestLogMiddleware',
 ]
 
-ROOT_URLCONF = 'inspireIA.urls'
+ROOT_URLCONF: str = 'inspireIA.urls'
 
-TEMPLATES = [
+TEMPLATES: List[Dict[str, Any]] = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
         'DIRS': [
-            os.path.join(BASE_DIR, 'inspireIA', 'templates'),
+            BASE_DIR / 'inspireIA' / 'templates',
         ],
         'APP_DIRS': True,
         'OPTIONS': {
@@ -53,11 +62,11 @@ TEMPLATES = [
     },
 ]
 
-WSGI_APPLICATION = 'inspireIA.wsgi.application'
+WSGI_APPLICATION: str = 'inspireIA.wsgi.application'
 
 # Database
-# https://docs.djangoproject.com/en/5.1/ref/settings/#databases
-DATABASES = {
+# Default to SQLite, but can be overridden in environment-specific settings
+DATABASES: Dict[str, Dict[str, Any]] = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
         'NAME': BASE_DIR / 'db.sqlite3',
@@ -65,13 +74,15 @@ DATABASES = {
 }
 
 # Password validation
-# https://docs.djangoproject.com/en/5.1/ref/settings/#auth-password-validators
-AUTH_PASSWORD_VALIDATORS = [
+AUTH_PASSWORD_VALIDATORS: List[Dict[str, str]] = [
     {
         'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',
     },
     {
         'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator',
+        'OPTIONS': {
+            'min_length': int(get_env_value('MIN_PASSWORD_LENGTH', 8)),
+        }
     },
     {
         'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator',
@@ -82,24 +93,25 @@ AUTH_PASSWORD_VALIDATORS = [
 ]
 
 # Internationalization
-# https://docs.djangoproject.com/en/5.1/topics/i18n/
-LANGUAGE_CODE = 'en-us'
-TIME_ZONE = 'UTC'
-USE_I18N = True
-USE_TZ = True
+LANGUAGE_CODE: str = get_env_value('LANGUAGE_CODE', 'en-us')
+TIME_ZONE: str = get_env_value('TIME_ZONE', 'UTC')
+USE_I18N: bool = True
+USE_TZ: bool = True
 
 # Default primary key field type
-DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+DEFAULT_AUTO_FIELD: str = 'django.db.models.BigAutoField'
 
 # Static files (CSS, JavaScript, Images)
-STATIC_URL = 'static/'
-STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
-STATICFILES_DIRS = [os.path.join(BASE_DIR, 'static')]
+STATIC_URL: str = get_env_value('STATIC_URL', 'static/')
+STATIC_ROOT: Path = BASE_DIR / 'staticfiles'
+STATICFILES_DIRS: List[Path] = [BASE_DIR / 'static']
 
 # Media files
-MEDIA_URL = '/media/'
-MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
-AUTH_USER_MODEL = 'users.CustomUser'
+MEDIA_URL: str = get_env_value('MEDIA_URL', '/media/')
+MEDIA_ROOT: Path = BASE_DIR / 'media'
+
+# Custom user model
+AUTH_USER_MODEL: str = 'users.CustomUser'
 
 # Authentication settings
 LOGIN_URL = '/login/'
