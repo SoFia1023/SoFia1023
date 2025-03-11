@@ -29,6 +29,80 @@ Inspire AI is a web application designed to help students and teachers discover,
 
 ## 🚀 Features Highlight
 
+## 🧭 URL Patterns and Routing
+
+The Inspire AI project follows Django's URL routing system with a clear hierarchical structure. Below is a comprehensive documentation of all URL patterns organized by app.
+
+### 🌐 Main Project URLs (`inspireIA/urls.py`)
+
+| URL Pattern | View | Name | Description |
+|------------|------|------|-------------|
+| `admin/` | `admin.site.urls` | N/A | Django's default admin interface |
+| `inspire-admin/` | `admin_site.urls` | `inspire_admin` | Custom admin interface with enhanced features |
+| `''` (root) | `catalog_views.home` | `home` | Project homepage |
+| `catalog/` | include `catalog.urls` | N/A | All catalog-related URLs |
+| `interaction/` | include `interaction.urls` | N/A | All interaction-related URLs |
+| `users/` | include `users.urls` | N/A | All user management URLs |
+
+### 📚 Catalog App URLs (`catalog/urls.py`)
+
+| URL Pattern | View | Name | Description |
+|------------|------|------|-------------|
+| `''` | `CatalogView.as_view()` | `catalog` | Main catalog page with AI tools listing |
+| `presentation/<uuid:id>/` | `AIToolDetailView.as_view()` | `presentationAI` | Detailed view of a specific AI tool |
+| `compare/` | `compare_tools` | `compare` | Compare multiple AI tools |
+| `register/` | `register_view` | `register` | User registration page |
+| `login/` | `login_view` | `login` | User login page |
+| `logout/` | `logout_view` | `logout` | User logout functionality |
+| `profile/` | `profile_view` | `profile` | User profile page |
+| `ai/<uuid:ai_id>/favorite/` | `toggle_favorite` | `toggle_favorite` | Toggle favorite status for an AI tool |
+
+### 💬 Interaction App URLs (`interaction/urls.py`)
+
+| URL Pattern | View | Name | Description |
+|------------|------|------|-------------|
+| `direct-chat/` | `direct_chat` | `direct_chat` | Smart chat interface with automatic tool routing |
+| `direct-chat/message/` | `direct_chat_message` | `direct_chat_message` | API endpoint for direct chat messages |
+| `chat/` | `chat_selection` | `chat_selection` | Select AI tool for chatting |
+| `chat/conversation/<uuid:conversation_id>/` | `chat_view` | `continue_conversation` | Continue an existing conversation |
+| `chat/conversation/<uuid:conversation_id>/send/` | `send_message` | `send_message` | Send message in an existing conversation |
+| `chat/<uuid:ai_id>/` | `chat_view` | `chat` | Start a new chat with specific AI tool |
+| `conversations/` | `conversation_history` | `conversation_history` | View conversation history |
+| `conversations/<uuid:conversation_id>/delete/` | `delete_conversation` | `delete_conversation` | Delete a conversation |
+| `conversations/<uuid:conversation_id>/download/<str:format>/` | `download_conversation` | `download_conversation` | Download conversation in specified format |
+| `prompts/` | `favorite_prompts` | `favorite_prompts` | View all favorite prompts |
+| `prompts/ai/<uuid:ai_id>/` | `favorite_prompts` | `ai_favorite_prompts` | View favorite prompts for specific AI tool |
+| `prompts/save/` | `save_favorite_prompt` | `save_favorite_prompt` | Save a new favorite prompt |
+| `prompts/<uuid:prompt_id>/delete/` | `delete_favorite_prompt` | `delete_favorite_prompt` | Delete a favorite prompt |
+| `share/<uuid:conversation_id>/` | `share_conversation` | `share_conversation` | Share a conversation |
+| `shared/<str:access_token>/` | `view_shared_chat` | `view_shared_chat` | View a shared conversation |
+
+### 👤 Users App URLs (`users/urls.py`)
+
+| URL Pattern | View | Name | Description |
+|------------|------|------|-------------|
+| `login/` | `user_login` | `login` | User login page |
+| `logout/` | `user_logout` | `logout` | User logout functionality |
+| `register/` | `register` | `register` | User registration page |
+| `profile/` | `profile` | `profile` | User profile page |
+| `admin/check-permissions/<int:user_id>/` | `check_user_permissions` | `check_user_permissions` | Admin tool to check user permissions |
+
+### 🔄 URL Naming Conventions
+
+The project follows these URL naming conventions:
+
+- **Namespaced URLs**: App-specific URLs are namespaced (e.g., `catalog:home`, `interaction:chat`) for avoiding name conflicts
+- **RESTful patterns**: Resource-oriented URLs with appropriate HTTP methods
+- **Consistent naming**: Related functionality uses consistent naming patterns
+- **Semantic URLs**: URLs are designed to be descriptive and semantic
+
+### 🔗 URL Routing Logic
+
+1. **Main request flow**: `inspireIA/urls.py` → App-specific urls.py → View function/class
+2. **URL resolution**: Django matches URLs from top to bottom within each file
+3. **Parameter capturing**: URL parameters are captured using `<type:name>` syntax
+4. **Reverse URL resolution**: URLs can be reversed in templates and code using `{% url %}` and `reverse()`
+
 ### 🔍 Intelligent Search & Discovery
 
 - **Advanced Search**: Find AI tools using natural language queries, categories, or specific capabilities

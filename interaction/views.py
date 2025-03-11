@@ -86,51 +86,62 @@ def direct_chat_message(request: HttpRequest) -> JsonResponse:
     """
     
     try:
-        # Parse the request data
+        # STEP 1: PARSE AND VALIDATE INPUT DATA
+        # Extract the message content and conversation ID from the request body
         data = json.loads(request.body)
         user_message = data.get('message', '').strip()
         conversation_id = data.get('conversation_id')
         
+        # Validate that the message is not empty
         if not user_message:
             return JsonResponse({'error': 'Message cannot be empty'}, status=400)
         
-        # If conversation_id is provided, use that conversation
+        # STEP 2: CONVERSATION HANDLING LOGIC
+        # There are two possible paths: continue existing conversation or start a new one
         if conversation_id:
+            # CASE 2A: EXISTING CONVERSATION
+            # Try to retrieve the existing conversation and its associated AI tool
             try:
+                # Ensure the conversation exists and belongs to the current user (security check)
                 conversation = get_object_or_404(
                     Conversation, 
                     id=conversation_id,
-                    user=request.user
+                    user=request.user  # Important security check to prevent accessing others' conversations
                 )
                 ai_tool = conversation.ai_tool
             except:
-                # If conversation not found, route to a new AI tool
+                # FALLBACK: If conversation not found or doesn't belong to user,
+                # treat this as a new conversation and find appropriate AI tool
                 ai_tool = route_message_to_ai_tool(user_message)
-                # Handle case where no AI tool is found
+                
+                # FALLBACK CHAIN: Multiple levels of fallback to ensure we always have a tool
                 if ai_tool is None:
-                    # Fallback to the first AI tool in the database
+                    # Primary fallback: Use the most popular tool in the database
                     ai_tool = AITool.objects.first()
+                    # Secondary fallback: Check if we have any tools at all
                     if ai_tool is None:
                         return JsonResponse({'error': 'No AI tools available'}, status=500)
                 
-                # Create conversation with the tool
+                # Create a new conversation with the selected/fallback tool
+                # Use a safe accessor pattern for the tool name in case of custom tool objects
                 tool_name = ai_tool.name if hasattr(ai_tool, 'name') else "AI Tool"
                 conversation = Conversation.objects.create(
                     user=request.user,
                     ai_tool=ai_tool,
-                    title=f"Chat with {tool_name}"
+                    title=f"Chat with {tool_name}"  # Generate a default title
                 )
         else:
-            # Route message to appropriate AI tool
+            # CASE 2B: NEW CONVERSATION
+            # Route the message to the most appropriate AI tool based on content analysis
             ai_tool = route_message_to_ai_tool(user_message)
-            # Handle case where no AI tool is found
+            
+            # Apply the same fallback chain as above
             if ai_tool is None:
-                # Fallback to the first AI tool in the database
                 ai_tool = AITool.objects.first()
                 if ai_tool is None:
                     return JsonResponse({'error': 'No AI tools available'}, status=500)
             
-            # Create a new conversation with the selected AI tool
+            # Create a fresh conversation with the selected AI tool
             tool_name = ai_tool.name if hasattr(ai_tool, 'name') else "AI Tool"
             conversation = Conversation.objects.create(
                 user=request.user,
@@ -138,64 +149,80 @@ def direct_chat_message(request: HttpRequest) -> JsonResponse:
                 title=f"Chat with {tool_name}"
             )
         
-        # Save user message
+        # STEP 3: SAVE USER MESSAGE
+        # Record the user's message in the database to maintain conversation history
         Message.objects.create(
             conversation=conversation,
             content=user_message,
-            is_user=True
+            is_user=True  # Flag indicating this is a user message, not an AI response
         )
         
-        # Update conversation timestamp
+        # Update the conversation's timestamp to reflect the latest activity
+        # This is used for sorting conversations by recency
         conversation.updated_at = timezone.now()
         conversation.save()
         
-        # Prepare service configuration
+        # STEP 4: PREPARE AI SERVICE CONFIGURATION
+        # Extract the necessary configuration from the AI tool for API calls
         service_config = {
-            'api_type': ai_tool.api_type,
-            'api_model': ai_tool.api_model,
-            'api_endpoint': ai_tool.api_endpoint
+            'api_type': ai_tool.api_type,      # Which AI service to use (e.g., 'openai', 'huggingface')
+            'api_model': ai_tool.api_model,    # Which model to use within that service
+            'api_endpoint': ai_tool.api_endpoint  # Custom endpoint if applicable
         }
         
-        # Send message to AI service
+        # STEP 5: SEND MESSAGE TO AI SERVICE AND PROCESS RESPONSE
         try:
+            # Call the AI service with the user's message and tool configuration
             ai_response = AIService.send_to_ai_service(user_message, service_config)
             
+            # Check if the AI service call was successful
             if ai_response.get('success'):
-                # Save AI response
+                # CASE 5A: SUCCESSFUL AI RESPONSE
+                # Save the AI's response to the conversation history
                 ai_message = Message.objects.create(
                     conversation=conversation,
-                    content=ai_response.get('data'),
-                    is_user=False
+                    content=ai_response.get('data'),  # The actual response text
+                    is_user=False  # Flag indicating this is an AI response
                 )
                 
-                # Update conversation timestamp again
+                # Update conversation timestamp again to reflect the AI's response
                 conversation.updated_at = timezone.now()
                 conversation.save()
                 
-                # Increment AI tool popularity
+                # Increment the AI tool's popularity counter
+                # This helps track which tools are most used and successful
                 ai_tool.popularity += 1
                 ai_tool.save()
                 
+                # Return the successful response to the client
                 return JsonResponse({
-                    'response': ai_response.get('data'),
-                    'conversation_id': str(conversation.id),
-                    'ai_tool_name': ai_tool.name
+                    'response': ai_response.get('data'),  # AI's response text
+                    'conversation_id': str(conversation.id),  # For continued conversation
+                    'ai_tool_name': ai_tool.name  # For UI display
                 })
             else:
+                # CASE 5B: AI SERVICE ERROR
+                # Return the error from the AI service to the client
                 return JsonResponse({
                     'error': ai_response.get('error', 'An error occurred with the AI service'),
                     'conversation_id': str(conversation.id),
                     'ai_tool_name': ai_tool.name
                 })
         except Exception as e:
+            # CASE 5C: UNEXPECTED ERROR DURING AI PROCESSING
+            # Catch and return any exceptions that occur during AI service interaction
             return JsonResponse({
                 'error': f"Error processing message: {str(e)}",
                 'conversation_id': str(conversation.id),
                 'ai_tool_name': ai_tool.name
             })
     except json.JSONDecodeError:
+        # CASE: MALFORMED JSON INPUT
+        # Handle invalid JSON in the request body
         return JsonResponse({'error': 'Invalid JSON format'}, status=400)
     except Exception as e:
+        # CASE: UNEXPECTED GENERAL ERROR
+        # Catch-all for any other exceptions to prevent server crashes
         return JsonResponse({'error': f"Unexpected error: {str(e)}"}, status=500)
 
 # Chat views

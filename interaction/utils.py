@@ -28,10 +28,13 @@ def route_message_to_ai_tool(message_content: str) -> Optional[AITool]:
         >>> print(tool.category)
         'Image Generator'
     """
-    # Convert to lowercase for case-insensitive matching
+    # Convert to lowercase for case-insensitive matching to ensure consistent pattern matching
+    # regardless of the user's capitalization style
     content_lower = message_content.lower()
     
-    # Define patterns for different AI tool categories
+    # Define regex patterns for different AI tool categories
+    # Each category has multiple patterns to increase the chance of a correct match
+    # The patterns are designed to capture common ways users might request specific types of content
     patterns = {
         'Image Generator': [
             r'(create|generate|make|draw|design|produce) (a|an|some)? ?(image|picture|photo|illustration|artwork|drawing)',
@@ -68,33 +71,41 @@ def route_message_to_ai_tool(message_content: str) -> Optional[AITool]:
     }
     
     # Default to Text Generator if no specific patterns match
+    # This serves as our fallback category for general text-based queries
     best_category = 'Text Generator'
     highest_score = 0
     
-    # Check each category's patterns
+    # Check each category's patterns against the user message
+    # We calculate a score based on how many pattern matches are found
     for category, category_patterns in patterns.items():
         score = 0
         for pattern in category_patterns:
+            # Find all instances of the pattern in the message
+            # Each match increases the category's score
             matches = re.findall(pattern, content_lower)
             score += len(matches)
         
-        # If this category has a higher score, update the best match
+        # If this category has a higher score than previous categories,
+        # update our best match. This ensures we select the most relevant tool.
         if score > highest_score:
             highest_score = score
             best_category = category
     
     # Get the most popular AI tool in the best matching category
+    # We sort by popularity to ensure users get the most reliable tool in that category
     ai_tool = AITool.objects.filter(
         category=best_category
     ).order_by('-popularity').first()
     
-    # Fallback to the most popular Text Generator if no tool found in the matched category
+    # Fallback mechanism #1: If no tool is found in the matched category,
+    # default to the most popular Text Generator, which can handle general queries
     if not ai_tool:
         ai_tool = AITool.objects.filter(
             category='Text Generator'
         ).order_by('-popularity').first()
     
-    # Ultimate fallback to any AI tool if still nothing found
+    # Fallback mechanism #2: If still no tool is found (database might be empty in that category),
+    # select any available AI tool to ensure the user gets a response
     if not ai_tool:
         ai_tool = AITool.objects.all().order_by('-popularity').first()
     
