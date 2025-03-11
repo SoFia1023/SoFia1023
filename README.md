@@ -370,6 +370,13 @@ export DJANGO_SETTINGS_MODULE=inspireIA.settings.production
 
 ### Recent Updates (March 2025)
 
+#### Code Quality Improvements (March 2025)
+- Enhanced code documentation with comprehensive docstrings across the entire codebase
+- Added detailed type hints to improve IDE support and catch potential bugs early
+- Improved module-level documentation with usage examples
+- Standardized docstring format following PEP 257 conventions
+- Added detailed parameter and return value documentation for all functions and methods
+
 #### Direct Chat with Smart Routing
 - Added a new direct chat interface that automatically routes messages to the most appropriate AI tool
 - Implemented pattern matching for different AI tool categories
@@ -417,6 +424,28 @@ export DJANGO_SETTINGS_MODULE=inspireIA.settings.production
 - Automated status checking for integrated APIs
 - Customizable notification system
 - Detailed audit logs for all system activities
+
+## 💻 Code Quality & Documentation
+
+The project follows strict code quality standards to ensure maintainability and ease of onboarding for new developers:
+
+### Documentation Standards
+- **Comprehensive Docstrings**: All classes, methods, and functions include detailed docstrings
+- **Type Hints**: Extensive use of Python type hints for better IDE support and early error detection
+- **Module Documentation**: Each module includes a descriptive header explaining its purpose and usage
+- **Inline Comments**: Complex algorithms and business logic include explanatory comments
+- **Example Usage**: Key utilities include example usage in their documentation
+
+### Code Style
+- **PEP 8 Compliance**: All Python code follows PEP 8 style guidelines
+- **Black Formatting**: Automatic code formatting with Black
+- **isort**: Consistent import sorting
+- **flake8**: Linting to catch potential issues
+
+### Testing
+- **pytest**: Comprehensive test suite with pytest
+- **Coverage Tracking**: Monitoring of test coverage
+- **CI/CD Integration**: Automated testing in the development pipeline
 
 ## 🖥️ User Interface
 
@@ -685,6 +714,9 @@ We welcome contributions from the community! Please check out our [Contributing 
 - We follow PEP 8 for Python code
 - ESLint configuration for JavaScript
 - Black for automatic code formatting
+- isort for import sorting
+- Type hints throughout the codebase
+- Comprehensive docstrings following PEP 257
 - Pre-commit hooks for quality assurance
 
 ## 📄 License
