@@ -33,7 +33,18 @@ User = get_user_model()
 
 
 def home(request: HttpRequest) -> HttpResponse:
-    """Render the home page with a showcase of top AI tools."""
+    """
+    Render the home page with a showcase of top AI tools.
+    
+    This view displays the landing page of the application, featuring the most popular
+    AI tools to attract user interest.
+    
+    Args:
+        request (HttpRequest): The HTTP request object
+        
+    Returns:
+        HttpResponse: Rendered home page with popular AI tools context
+    """
     # Get 3 most popular AIs to showcase
     popular_ais = AITool.objects.all().order_by('-popularity')[:3]
     return render(request, 'catalog/home.html', {
@@ -42,14 +53,36 @@ def home(request: HttpRequest) -> HttpResponse:
 
 
 class AIToolDetailView(DetailView):
-    """Display detailed information about a specific AI tool."""
+    """
+    Display detailed information about a specific AI tool.
+    
+    This view provides detailed information about an AI tool, including its description,
+    provider, category, and related tools in the same category.
+    
+    Attributes:
+        model (Model): The model class this view displays
+        template_name (str): The template used for rendering
+        context_object_name (str): The variable name for the object in the template
+        pk_url_kwarg (str): The URL parameter name for the primary key
+    """
     model = AITool
     template_name = 'catalog/presentationAI.html'
     context_object_name = 'ai_tool'
     pk_url_kwarg = 'id'
     
     def get_context_data(self, **kwargs: Any) -> Dict[str, Any]:
-        """Add related AI tools to the context."""
+        """
+        Add related AI tools to the context.
+        
+        This method enhances the template context with related AI tools in the same category
+        and the favorite status for authenticated users.
+        
+        Args:
+            **kwargs: Additional keyword arguments
+            
+        Returns:
+            Dict[str, Any]: The enhanced context dictionary
+        """
         context = super().get_context_data(**kwargs)
         
         # Get related AIs in the same category (limited to 3)
@@ -76,7 +109,16 @@ CATEGORIES = ["Text Generator", "Image Generator", "Video Generator", "Transcrip
 class CatalogView(PaginationMixin, ListView):
     """
     Display the catalog of AI tools with filtering, sorting, and search capabilities.
-    Using the OpenRouter-inspired design from models.html template.
+    
+    This view presents AI tools in a catalog format with advanced filtering options,
+    search functionality, and sorting capabilities. It uses the OpenRouter-inspired
+    design from models.html template.
+    
+    Attributes:
+        model (Model): The model class this view displays
+        template_name (str): The template used for rendering
+        context_object_name (str): The variable name for the object list in the template
+        paginate_by (int): Number of items to display per page
     """
     model = AITool
     template_name = 'catalog/models.html'  # Using the new models.html template
@@ -86,6 +128,12 @@ class CatalogView(PaginationMixin, ListView):
     def get_queryset(self) -> QuerySet[AITool]:
         """
         Filter and sort the queryset based on request parameters.
+        
+        This method applies search filters, category filters, and sorting options
+        to the AITool queryset based on GET parameters in the request.
+        
+        Returns:
+            QuerySet[AITool]: Filtered and sorted queryset of AI tools
         """
         queryset = AITool.objects.all()
         
@@ -121,6 +169,15 @@ class CatalogView(PaginationMixin, ListView):
     def get_context_data(self, **kwargs: Any) -> Dict[str, Any]:
         """
         Add additional context data for the template.
+        
+        This method enhances the template context with search parameters, filtering options,
+        and user favorites for authenticated users.
+        
+        Args:
+            **kwargs: Additional keyword arguments
+            
+        Returns:
+            Dict[str, Any]: The enhanced context dictionary with filter parameters
         """
         context = super().get_context_data(**kwargs)
         
@@ -140,12 +197,35 @@ class CatalogView(PaginationMixin, ListView):
         return context
 
 # Keep the function-based view for backward compatibility
-def catalog_view(request):
-    """Legacy function-based view that redirects to the class-based view."""
+def catalog_view(request: HttpRequest) -> HttpResponse:
+    """
+    Legacy function-based view that redirects to the class-based view.
+    
+    This function exists for backward compatibility with code that might still
+    reference the function-based view.
+    
+    Args:
+        request (HttpRequest): The HTTP request object
+        
+    Returns:
+        HttpResponse: Response from the class-based view
+    """
     return CatalogView.as_view()(request)
 
 
-def register_view(request):
+def register_view(request: HttpRequest) -> HttpResponse:
+    """
+    Handle user registration.
+    
+    This view processes user registration forms, validates the input data,
+    creates new user accounts, and logs in the user upon successful registration.
+    
+    Args:
+        request (HttpRequest): The HTTP request object
+        
+    Returns:
+        HttpResponse: Redirect to home page on success or registration form with errors
+    """
     """Handle user registration."""
     if request.method == 'POST':
         username = request.POST.get('username')
@@ -188,7 +268,20 @@ def register_view(request):
     return render(request, 'catalog/register.html')
 
 
-def login_view(request):
+def login_view(request: HttpRequest) -> HttpResponse:
+    """
+    Handle user login.
+    
+    This view authenticates users based on username and password,
+    manages session expiration based on the 'remember me' option,
+    and redirects to the appropriate page after login.
+    
+    Args:
+        request (HttpRequest): The HTTP request object
+        
+    Returns:
+        HttpResponse: Redirect to next page on success or login form with errors
+    """
     """Handle user login."""
     if request.method == 'POST':
         username = request.POST.get('username')
@@ -213,16 +306,38 @@ def login_view(request):
     return render(request, 'catalog/login.html')
 
 
-def logout_view(request):
-    """Handle user logout."""
+def logout_view(request: HttpRequest) -> HttpResponse:
+    """
+    Handle user logout.
+    
+    This view logs out the current user, terminates their session,
+    and redirects them to the home page with a success message.
+    
+    Args:
+        request (HttpRequest): The HTTP request object
+        
+    Returns:
+        HttpResponse: Redirect to home page after logout
+    """
     logout(request)
     messages.success(request, 'You have been successfully logged out.')
     return redirect('home')
 
 
 @login_required
-def profile_view(request):
-    """Display user profile with favorite AI tools and activity."""
+def profile_view(request: HttpRequest) -> HttpResponse:
+    """
+    Display user profile with favorite AI tools and activity.
+    
+    This view shows the user's profile information, their favorite AI tools,
+    and their recent conversation history.
+    
+    Args:
+        request (HttpRequest): The HTTP request object
+        
+    Returns:
+        HttpResponse: Rendered profile page with user data context
+    """
     # Get user's favorite AI tools
     favorites = UserFavorite.objects.filter(user=request.user).select_related('ai_tool')
     
@@ -247,8 +362,20 @@ def profile_view(request):
 
 @login_required
 @require_POST
-def toggle_favorite(request, ai_id):
-    """Toggle favorite status for an AI tool."""
+def toggle_favorite(request: HttpRequest, ai_id: str) -> JsonResponse:
+    """
+    Toggle favorite status for an AI tool.
+    
+    This view adds or removes an AI tool from a user's favorites list
+    and returns a JSON response indicating the new status.
+    
+    Args:
+        request (HttpRequest): The HTTP request object
+        ai_id (str): UUID of the AI tool to toggle
+        
+    Returns:
+        JsonResponse: JSON response with success status and message
+    """
     ai_tool = get_object_or_404(AITool, id=ai_id)
     
     # Check if already favorited
@@ -273,8 +400,19 @@ def toggle_favorite(request, ai_id):
 # Chat selection view moved to interaction app
 
 
-def compare_tools(request):
-    """Compare two AI tools side by side."""
+def compare_tools(request: HttpRequest) -> HttpResponse:
+    """
+    Compare two AI tools side by side.
+    
+    This view allows users to compare features and capabilities of two AI tools
+    by displaying them in a side-by-side comparison layout.
+    
+    Args:
+        request (HttpRequest): The HTTP request object containing tool IDs to compare
+        
+    Returns:
+        HttpResponse: Rendered comparison page with tool data
+    """
     tool1_id = request.GET.get('tool1')
     tool2_id = request.GET.get('tool2')
     
@@ -303,15 +441,36 @@ def compare_tools(request):
     })
 
 # Keep the function-based view for backward compatibility
-def presentationAI(request, id):
-    """Legacy function-based view that redirects to the class-based view."""
+def presentationAI(request: HttpRequest, id: str) -> HttpResponse:
+    """
+    Legacy function-based view that redirects to the class-based view.
+    
+    This function exists for backward compatibility with code that might still
+    reference the function-based view for AI tool details.
+    
+    Args:
+        request (HttpRequest): The HTTP request object
+        id (str): UUID of the AI tool to display
+        
+    Returns:
+        HttpResponse: Response from the class-based view
+    """
     return AIToolDetailView.as_view()(request, id=id)
 
 
 class ModelsView(PaginationMixin, ListView):
     """
     Display AI models in a grid layout with filtering and search capabilities.
-    This view is inspired by OpenRouter's models page design.
+    
+    This view presents AI tools in a modern grid layout with filtering options,
+    search functionality, and sorting capabilities. The design is inspired by
+    OpenRouter's models page.
+    
+    Attributes:
+        model (Model): The model class this view displays
+        template_name (str): The template used for rendering
+        context_object_name (str): The variable name for the object list in the template
+        paginate_by (int): Number of items to display per page
     """
     model = AITool
     template_name = 'catalog/models.html'
@@ -321,6 +480,12 @@ class ModelsView(PaginationMixin, ListView):
     def get_queryset(self) -> QuerySet[AITool]:
         """
         Filter and sort the queryset based on request parameters.
+        
+        This method applies search filters, category filters, and sorting options
+        to the AITool queryset based on GET parameters in the request.
+        
+        Returns:
+            QuerySet[AITool]: Filtered and sorted queryset of AI tools
         """
         queryset = AITool.objects.all()
         
@@ -356,6 +521,15 @@ class ModelsView(PaginationMixin, ListView):
     def get_context_data(self, **kwargs: Any) -> Dict[str, Any]:
         """
         Add additional context data for the template.
+        
+        This method enhances the template context with search parameters, filtering options,
+        and user favorites for authenticated users.
+        
+        Args:
+            **kwargs: Additional keyword arguments
+            
+        Returns:
+            Dict[str, Any]: The enhanced context dictionary with filter parameters
         """
         context = super().get_context_data(**kwargs)
         
@@ -376,6 +550,17 @@ class ModelsView(PaginationMixin, ListView):
 
 
 # Function-based view for models page for backward compatibility
-def models_view(request):
-    """Legacy function-based view that redirects to the class-based view."""
+def models_view(request: HttpRequest) -> HttpResponse:
+    """
+    Legacy function-based view that redirects to the class-based view.
+    
+    This function exists for backward compatibility with code that might still
+    reference the function-based view for the models page.
+    
+    Args:
+        request (HttpRequest): The HTTP request object
+        
+    Returns:
+        HttpResponse: Response from the class-based view
+    """
     return ModelsView.as_view()(request)

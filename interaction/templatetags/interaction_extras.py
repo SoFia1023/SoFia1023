@@ -4,6 +4,7 @@ from datetime import datetime, timedelta
 from django.utils import timezone
 from interaction.models import Conversation, Message
 
+# Create a template library instance
 register = template.Library()
 
 @register.filter
