@@ -1,12 +1,13 @@
 import requests
 import json
 import os
+from typing import Dict, Any, Optional, Union
 from dotenv import load_dotenv
 
 # Load environment variables from .env file
 load_dotenv()
 
-def call_openai_api(prompt, max_tokens=100):
+def call_openai_api(prompt: str, max_tokens: int = 100) -> Dict[str, Any]:
     """
     Call the OpenAI API for text generation.
     
@@ -62,7 +63,7 @@ def call_openai_api(prompt, max_tokens=100):
             'error': f'Request failed: {str(e)}'
         }
 
-def call_huggingface_api(prompt, model="google/flan-t5-small"):
+def call_huggingface_api(prompt: str, model: str = "google/flan-t5-small") -> Dict[str, Any]:
     """
     Call the Hugging Face Inference API.
     

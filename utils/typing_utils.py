@@ -1,5 +1,18 @@
 """
 Utility functions for type checking and annotations.
+
+This module provides type-safe wrappers and utilities to enhance type checking
+while maintaining Django's dynamic attribute functionality. These utilities are
+designed to work well with mypy and other static type checkers.
+
+Example:
+    ```python
+    from utils.typing_utils import admin_display
+    
+    @admin_display(short_description="Full Name", ordering="last_name")
+    def get_full_name(user):
+        return f"{user.first_name} {user.last_name}"
+    ```
 """
 from typing import Any, Callable, TypeVar, cast, Optional
 

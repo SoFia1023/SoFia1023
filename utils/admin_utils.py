@@ -1,5 +1,18 @@
 """
 Utility functions for Django admin classes with proper type annotations.
+
+This module provides type-safe wrappers around Django admin decorators and utilities
+to ensure proper type checking while maintaining Django admin functionality.
+
+Example:
+    ```python
+    from utils.admin_utils import admin_display
+    
+    class MyModelAdmin(admin.ModelAdmin):
+        @admin_display(description="User's full name", ordering="last_name")
+        def get_full_name(self, obj):
+            return f"{obj.first_name} {obj.last_name}"
+    ```
 """
 from typing import Any, Callable, TypeVar, Optional, cast
 
