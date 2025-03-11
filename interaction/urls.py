@@ -2,6 +2,9 @@ from django.urls import path, URLPattern, URLResolver
 from typing import List, Union
 from . import views
 
+# Register the app namespace
+app_name = 'interaction'
+
 # Type hint for URL patterns
 urlpatterns: List[Union[URLPattern, URLResolver]] = [    
     # Direct chat URLs

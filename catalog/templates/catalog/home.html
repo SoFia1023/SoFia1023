@@ -251,6 +251,7 @@
     margin-bottom: 1.5rem;
     display: -webkit-box;
     -webkit-line-clamp: 3;
+    line-clamp: 3;
     -webkit-box-orient: vertical;
     overflow: hidden;
     line-height: 1.5;
@@ -483,7 +484,7 @@
       <div class="col-xl-10 col-lg-11 mx-auto">
         <div class="search-container animate-on-scroll" style="animation-delay: 0.2s">
           <div class="mega-search-box">
-            <form action="{% url 'catalog' %}" method="GET">
+            <form action="{% url 'catalog:catalog' %}" method="GET">
               <div class="row g-3">
                 <div class="col-lg-9">
                   <div class="position-relative">
@@ -499,16 +500,16 @@
               <div class="mt-4">
                 <div class="d-flex flex-wrap">
                   <p class="mb-2 me-3 text-muted fw-medium">Popular categories:</p>
-                  <a href="{% url 'catalog' %}?category=Image Generator" class="category-chip">
+                  <a href="{% url 'catalog:catalog' %}?category=Image Generator" class="category-chip">
                     <i class="fas fa-image"></i> Image Generation
                   </a>
-                  <a href="{% url 'catalog' %}?category=Text Generator" class="category-chip">
+                  <a href="{% url 'catalog:catalog' %}?category=Text Generator" class="category-chip">
                     <i class="fas fa-keyboard"></i> Text Generation
                   </a>
-                  <a href="{% url 'catalog' %}?category=Transcription" class="category-chip">
+                  <a href="{% url 'catalog:catalog' %}?category=Transcription" class="category-chip">
                     <i class="fas fa-headphones"></i> Transcription
                   </a>
-                  <a href="{% url 'catalog' %}?category=Translation" class="category-chip">
+                  <a href="{% url 'catalog:catalog' %}?category=Translation" class="category-chip">
                     <i class="fas fa-language"></i> Translation
                   </a>
                 </div>
@@ -532,7 +533,7 @@
               <p class="mb-0 text-muted">Start a conversation with any AI</p>
             </div>
           </div>
-          <a href="{% url 'chat_selection' %}" class="btn btn-primary w-100 mt-3">Chat Now</a>
+          <a href="{% url 'interaction:chat_selection' %}" class="btn btn-primary w-100 mt-3">Chat Now</a>
         </div>
       </div>
       <div class="col-md-4 animate-on-scroll" style="animation-delay: 0.4s">
@@ -546,7 +547,7 @@
               <p class="mb-0 text-muted">Find the best tool for your needs</p>
             </div>
           </div>
-          <a href="{% url 'catalog' %}" class="btn btn-outline-primary w-100 mt-3">Browse Catalog</a>
+          <a href="{% url 'catalog:catalog' %}" class="btn btn-outline-primary w-100 mt-3">Browse Catalog</a>
         </div>
       </div>
       <div class="col-md-4 animate-on-scroll" style="animation-delay: 0.5s">
@@ -560,7 +561,7 @@
               <p class="mb-0 text-muted">View your recent conversations</p>
             </div>
           </div>
-          <a href="{% url 'conversation_history' %}" class="btn btn-outline-primary w-100 mt-3">View History</a>
+          <a href="{% url 'interaction:conversation_history' %}" class="btn btn-outline-primary w-100 mt-3">View History</a>
         </div>
       </div>
     </div>
@@ -577,7 +578,7 @@
         <p class="text-muted animate-on-scroll">Discover AI tools organized by what they do best</p>
       </div>
       <div class="col-md-6 text-md-end d-flex align-items-end justify-content-md-end">
-        <a href="{% url 'catalog' %}" class="btn btn-outline-primary animate-on-scroll">
+        <a href="{% url 'catalog:catalog' %}" class="btn btn-outline-primary animate-on-scroll">
           View All Categories <i class="fas fa-arrow-right ms-2"></i>
         </a>
       </div>
@@ -586,7 +587,7 @@
     <div class="row g-4">
       <!-- Category Cards -->
       <div class="col-lg-3 col-md-4 col-sm-6 animate-on-scroll">
-        <a href="{% url 'catalog' %}?category=Image Generator" class="text-decoration-none">
+        <a href="{% url 'catalog:catalog' %}?category=Image Generator" class="text-decoration-none">
           <div class="card h-100 border-0 shadow-sm">
             <div class="card-body p-4 text-center">
               <div class="rounded-circle mx-auto mb-4 d-flex align-items-center justify-content-center" style="width: 80px; height: 80px; background: linear-gradient(135deg, rgba(91, 70, 244, 0.1), rgba(140, 101, 247, 0.1));">
@@ -600,7 +601,7 @@
       </div>
       
       <div class="col-lg-3 col-md-4 col-sm-6 animate-on-scroll" style="animation-delay: 0.1s">
-        <a href="{% url 'catalog' %}?category=Text Generator" class="text-decoration-none">
+        <a href="{% url 'catalog:catalog' %}?category=Text Generator" class="text-decoration-none">
           <div class="card h-100 border-0 shadow-sm">
             <div class="card-body p-4 text-center">
               <div class="rounded-circle mx-auto mb-4 d-flex align-items-center justify-content-center" style="width: 80px; height: 80px; background: linear-gradient(135deg, rgba(255, 138, 61, 0.1), rgba(255, 158, 94, 0.1));">
@@ -614,7 +615,7 @@
       </div>
       
       <div class="col-lg-3 col-md-4 col-sm-6 animate-on-scroll" style="animation-delay: 0.2s">
-        <a href="{% url 'catalog' %}?category=Audio Processing" class="text-decoration-none">
+        <a href="{% url 'catalog:catalog' %}?category=Audio Processing" class="text-decoration-none">
           <div class="card h-100 border-0 shadow-sm">
             <div class="card-body p-4 text-center">
               <div class="rounded-circle mx-auto mb-4 d-flex align-items-center justify-content-center" style="width: 80px; height: 80px; background: linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(59, 130, 246, 0.1));">
@@ -628,7 +629,7 @@
       </div>
       
       <div class="col-lg-3 col-md-4 col-sm-6 animate-on-scroll" style="animation-delay: 0.3s">
-        <a href="{% url 'catalog' %}?category=Data Analysis" class="text-decoration-none">
+        <a href="{% url 'catalog:catalog' %}?category=Data Analysis" class="text-decoration-none">
           <div class="card h-100 border-0 shadow-sm">
             <div class="card-body p-4 text-center">
               <div class="rounded-circle mx-auto mb-4 d-flex align-items-center justify-content-center" style="width: 80px; height: 80px; background: linear-gradient(135deg, rgba(16, 185, 129, 0.1), rgba(16, 185, 129, 0.1));">
@@ -654,7 +655,7 @@
         <p class="text-muted animate-on-scroll">Discover the most-used tools by our community</p>
       </div>
       <div class="col-md-6 text-md-end d-flex align-items-end justify-content-md-end">
-        <a href="{% url 'catalog' %}" class="btn btn-outline-primary animate-on-scroll">
+        <a href="{% url 'catalog:catalog' %}" class="btn btn-outline-primary animate-on-scroll">
           Explore All Tools <i class="fas fa-arrow-right ms-2"></i>
         </a>
       </div>
@@ -692,8 +693,8 @@
               <p class="ai-card-description">{{ ai.description|truncatechars:120 }}</p>
               
               <div class="ai-card-actions">
-                <a href="{% url 'presentationAI' ai.id %}" class="btn btn-details">Details</a>
-                <a href="{% url 'chat' ai_id=ai.id %}" class="btn btn-try">Try Now <i class="fas fa-arrow-right ms-1"></i></a>
+                <a href="{% url 'catalog:presentationAI' ai.id %}" class="btn btn-details">Details</a>
+                <a href="{% url 'interaction:chat' ai_id=ai.id %}" class="btn btn-try">Try Now <i class="fas fa-arrow-right ms-1"></i></a>
               </div>
             </div>
           </div>
@@ -847,7 +848,7 @@
     
     <div class="row mt-5 pt-3">
       <div class="col-md-8 mx-auto text-center">
-        <a href="{% url 'register' %}" class="btn btn-light btn-lg px-5 animate-on-scroll" style="animation-delay: 0.7s">
+        <a href="{% url 'users:register' %}" class="btn btn-light btn-lg px-5 animate-on-scroll" style="animation-delay: 0.7s">
           Get Started Now <i class="fas fa-arrow-right ms-2"></i>
         </a>
       </div>

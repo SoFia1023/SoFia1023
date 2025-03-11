@@ -446,7 +446,7 @@
         </div>
       {% endif %}
       
-      <a href="{% url 'catalog' %}" class="filter-tag clear-all-tag">
+      <a href="{% url 'catalog:catalog' %}" class="filter-tag clear-all-tag">
         Clear All
       </a>
     </div>
@@ -460,7 +460,7 @@
     <div class="models-grid">
       {% for ai in ai_tools %}
         <div class="model-card fade-in model-card-delay-{{ forloop.counter0 }}"
-             data-url="{% url 'presentationAI' ai.id %}">
+             data-url="{% url 'catalog:presentationAI' ai.id %}">
           <div class="model-card-header">
             <div class="model-logo">
               {% if ai.image %}
@@ -524,10 +524,10 @@
                       onclick="event.stopPropagation(); toggleFavorite(event, '{{ ai.id }}')">
                 <i class="{% if ai.id in user_favorites %}fas{% else %}far{% endif %} fa-heart"></i>
               </button>
-              <a href="{% url 'chat' ai_id=ai.id %}" class="model-btn try-btn" onclick="event.stopPropagation();">
+              <a href="{% url 'interaction:chat' ai_id=ai.id %}" class="model-btn try-btn" onclick="event.stopPropagation();">
                 <i class="fas fa-comment-alt me-1"></i> Try
               </a>
-              <a href="{% url 'presentationAI' ai.id %}" class="model-btn view-btn" onclick="event.stopPropagation();">
+              <a href="{% url 'catalog:presentationAI' ai.id %}" class="model-btn view-btn" onclick="event.stopPropagation();">
                 <i class="fas fa-info-circle me-1"></i> Details
               </a>
             </div>
@@ -594,7 +594,7 @@
       </div>
       <h3 class="fw-bold mb-3">No models found</h3>
       <p class="text-muted mb-4">We couldn't find any models matching your search criteria. Try adjusting your filters or search terms.</p>
-      <a href="{% url 'catalog' %}" class="model-btn try-btn">
+      <a href="{% url 'catalog:catalog' %}" class="model-btn try-btn">
         Clear All Filters
       </a>
     </div>

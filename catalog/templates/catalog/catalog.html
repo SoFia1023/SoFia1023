@@ -501,7 +501,7 @@
         </div>
       {% endif %}
       
-      <a href="{% url 'catalog' %}" class="active-filter-tag" style="background-color: #F3F4F6; color: #4B5563;">
+      <a href="{% url 'catalog:catalog' %}" class="active-filter-tag" style="background-color: #F3F4F6; color: #4B5563;">
         Clear All
       </a>
     </div>
@@ -576,7 +576,7 @@
                           onclick="toggleFavorite(event, '{{ ai.id }}')">
                     <i class="far fa-heart"></i>
                   </button>
-                  <a href="{% url 'chat' ai_id=ai.id %}" class="model-action-btn try-btn me-2">
+                  <a href="{% url 'interaction:chat' ai_id=ai.id %}" class="model-action-btn try-btn me-2">
                     <i class="fas fa-comment-alt me-1"></i> Try
                   </a>
                   <div class="dropdown d-inline-block">
@@ -584,10 +584,10 @@
                       More
                     </button>
                     <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="dropdownMenu{{ ai.id }}">
-                      <li><a class="dropdown-item" href="{% url 'presentationAI' ai.id %}">
+                      <li><a class="dropdown-item" href="{% url 'catalog:presentationAI' ai.id %}">
                         <i class="fas fa-info-circle me-2 text-primary"></i>View Details
                       </a></li>
-                      <li><a class="dropdown-item" href="{% url 'compare' %}?tool1={{ ai.id }}">
+                      <li><a class="dropdown-item" href="{% url 'catalog:compare' %}?tool1={{ ai.id }}">
                         <i class="fas fa-balance-scale me-2 text-primary"></i>Compare
                       </a></li>
                     </ul>
@@ -658,7 +658,7 @@
       </div>
       <h3 class="fw-bold mb-3">No models found</h3>
       <p class="text-muted mb-4">We couldn't find any models matching your search criteria. Try adjusting your filters or search terms.</p>
-      <a href="{% url 'catalog' %}" class="model-action-btn try-btn">
+      <a href="{% url 'catalog:catalog' %}" class="model-action-btn try-btn">
         Clear All Filters
       </a>
     </div>

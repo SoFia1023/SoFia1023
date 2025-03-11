@@ -25,7 +25,7 @@ urlpatterns: List[Union[URLPattern, URLResolver]] = [
     path('catalog/', include('catalog.urls', namespace='catalog')),
     
     # Interaction app - handles chats, favorites, sharing
-    path('interaction/', include('interaction.urls')),
+    path('interaction/', include('interaction.urls', namespace='interaction')),
     
     # Users app
     path('users/', include('users.urls')),

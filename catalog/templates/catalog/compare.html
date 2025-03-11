@@ -201,7 +201,7 @@
       <p class="text-muted">Compare features and capabilities of different AI tools side by side</p>
     </div>
     <div class="col-lg-4 text-lg-end">
-      <a href="{% url 'catalog' %}" class="btn btn-outline-primary">
+      <a href="{% url 'catalog:catalog' %}" class="btn btn-outline-primary">
         <i class="fas fa-arrow-left me-2"></i>Back to Catalog
       </a>
     </div>
@@ -313,10 +313,10 @@
         </div>
         
         <div class="compare-actions">
-          <a href="{% url 'presentationAI' tool1.id %}" class="btn btn-primary">
+          <a href="{% url 'catalog:presentationAI' tool1.id %}" class="btn btn-primary">
             <i class="fas fa-info-circle me-1"></i>View Details
           </a>
-          <a href="{% url 'chat' ai_id=tool1.id %}" class="btn btn-success">
+          <a href="{% url 'interaction:chat' ai_id=tool1.id %}" class="btn btn-success">
             <i class="fas fa-comment-alt me-1"></i>Try It
           </a>
         </div>
@@ -408,10 +408,10 @@
         </div>
         
         <div class="compare-actions">
-          <a href="{% url 'presentationAI' tool2.id %}" class="btn btn-primary">
+          <a href="{% url 'catalog:presentationAI' tool2.id %}" class="btn btn-primary">
             <i class="fas fa-info-circle me-1"></i>View Details
           </a>
-          <a href="{% url 'chat' ai_id=tool2.id %}" class="btn btn-success">
+          <a href="{% url 'interaction:chat' ai_id=tool2.id %}" class="btn btn-success">
             <i class="fas fa-comment-alt me-1"></i>Try It
           </a>
         </div>
