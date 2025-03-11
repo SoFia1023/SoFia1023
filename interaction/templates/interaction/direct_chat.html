@@ -249,18 +249,18 @@
                     </button>
                     <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="chatOptionsDropdown">
                         {% if conversation %}
-                        <li><a class="dropdown-item" href="{% url 'download_conversation' conversation_id=conversation.id format='txt' %}">
+                        <li><a class="dropdown-item" href="{% url 'interaction:download_conversation' conversation_id=conversation.id format='txt' %}">
                             <i class="bi bi-file-text me-2"></i> Download as Text
                         </a></li>
-                        <li><a class="dropdown-item" href="{% url 'download_conversation' conversation_id=conversation.id format='json' %}">
+                        <li><a class="dropdown-item" href="{% url 'interaction:download_conversation' conversation_id=conversation.id format='json' %}">
                             <i class="bi bi-file-code me-2"></i> Download as JSON
                         </a></li>
                         <li><hr class="dropdown-divider"></li>
-                        <li><a class="dropdown-item" href="{% url 'share_conversation' conversation_id=conversation.id %}">
+                        <li><a class="dropdown-item" href="{% url 'interaction:share_conversation' conversation_id=conversation.id %}">
                             <i class="bi bi-share me-2"></i> Share Conversation
                         </a></li>
                         <li><hr class="dropdown-divider"></li>
-                        <li><a class="dropdown-item text-danger" href="{% url 'delete_conversation' conversation_id=conversation.id %}">
+                        <li><a class="dropdown-item text-danger" href="{% url 'interaction:delete_conversation' conversation_id=conversation.id %}">
                             <i class="bi bi-trash me-2"></i> Delete Conversation
                         </a></li>
                         {% endif %}

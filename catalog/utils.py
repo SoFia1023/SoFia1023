@@ -8,11 +8,9 @@ import time
 from django.http import HttpResponse
 from django.conf import settings
 import random
-from typing import Dict, Any, List, Tuple, Optional, Union
+from typing import Dict, Any, List, Optional, Union
 # Import for type annotation
 from typing import TYPE_CHECKING
-if TYPE_CHECKING:
-    from interaction.models import Conversation
 
 # Get API keys from environment variables (or set defaults for demo)
 OPENAI_API_KEY = os.environ.get('OPENAI_API_KEY', '')
@@ -320,105 +318,4 @@ def simulate_ai_response(service_type: str, prompt: str) -> Dict[str, Any]:
 def send_to_ai_service(prompt: str, service_config: Dict[str, Any]) -> Dict[str, Any]:
     return AIService.send_to_ai_service(prompt, service_config)
 
-# Utility function for formatting conversation downloads
-def format_conversation_for_download(conversation: 'Conversation', format_type: str = 'json') -> Tuple[str, str, str]:
-    """
-    Format a conversation for download in the specified format.
-    
-    Args:
-        conversation: The Conversation object to format
-        format_type (str): The format type ('json', 'txt', or 'csv')
-        
-    Returns:
-        tuple: (formatted_content, content_type, file_extension)
-    """
-    # Retrieve all messages associated with this conversation
-    # This gets the complete message history in chronological order
-    messages = conversation.get_messages()
-    
-    # FORMAT HANDLING LOGIC:
-    # The function supports three different export formats with different structures
-    
-    # JSON FORMAT HANDLER
-    if format_type == 'json':
-        # Use the built-in to_json method from the Conversation model
-        # This ensures we follow the model's serialization rules consistently
-        content = conversation.to_json()
-        # Set appropriate MIME type for HTTP response headers
-        content_type = 'application/json'
-        # File extension for download filename
-        file_ext = 'json'
-        
-    # PLAIN TEXT FORMAT HANDLER
-    elif format_type == 'txt':
-        # Create a human-readable text format with clear structure
-        # Start with conversation metadata as a header
-        lines = [f"Conversation: {conversation.title}"]
-        lines.append(f"AI Tool: {conversation.ai_tool.name}")
-        lines.append(f"Date: {conversation.created_at.strftime('%Y-%m-%d %H:%M')}")
-        # Add a separator line for visual clarity
-        lines.append("-" * 40)
-        
-        # Process each message with clear sender identification
-        for msg in messages:
-            # Label messages as either from the user or the AI tool
-            sender = "You" if msg.is_user else conversation.ai_tool.name
-            # Format timestamp consistently
-            timestamp = msg.timestamp.strftime('%Y-%m-%d %H:%M')
-            # Add sender info with timestamp
-            lines.append(f"{sender} ({timestamp}):")
-            # Add the actual message content
-            lines.append(msg.content)
-            # Add an empty line between messages for readability
-            lines.append("")
-        
-        # Join all lines with newline characters to create the final content    
-        content = "\n".join(lines)
-        # Set appropriate MIME type for plain text
-        content_type = 'text/plain'
-        # File extension for download filename
-        file_ext = 'txt'
-        
-    # CSV FORMAT HANDLER
-    elif format_type == 'csv':
-        # Create a structured CSV format suitable for data analysis
-        # Import necessary libraries for CSV handling
-        import csv
-        from io import StringIO
-        
-        # Use StringIO as an in-memory file-like object to write CSV data
-        output = StringIO()
-        writer = csv.writer(output)
-        # Define column headers for the CSV file
-        writer.writerow(['Timestamp', 'Sender', 'Message'])
-        
-        # Process each message as a row in the CSV
-        for msg in messages:
-            # Use "User" instead of "You" for more formal data analysis context
-            sender = "User" if msg.is_user else conversation.ai_tool.name
-            # Write a row with timestamp, sender, and content
-            writer.writerow([
-                # Use more precise timestamp format with seconds for CSV
-                msg.timestamp.strftime('%Y-%m-%d %H:%M:%S'),
-                sender,
-                msg.content
-            ])
-        
-        # Get the final CSV content as a string    
-        content = output.getvalue()
-        # Set appropriate MIME type for CSV
-        content_type = 'text/csv'
-        # File extension for download filename
-        file_ext = 'csv'
-        
-    # FALLBACK FORMAT HANDLER
-    else:
-        # If an unsupported format is requested, default to JSON
-        # This ensures the function always returns something valid
-        content = conversation.to_json()
-        content_type = 'application/json'
-        file_ext = 'json'
-        
-    # Return a tuple with all necessary information for the HTTP response
-    # This includes the formatted content, MIME type, and file extension
-    return content, content_type, file_ext
+# This function has been moved to core.utils to avoid code duplication

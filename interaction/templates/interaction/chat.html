@@ -165,6 +165,7 @@
                         <span class="tooltip-text">More options</span>
                     </button>
                     <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="chatOptionsDropdown">
+                        {% if conversation and conversation.id %}
                         <li><a class="dropdown-item" href="{% url 'interaction:download_conversation' conversation_id=conversation.id format='txt' %}">
                             <i class="bi bi-file-text me-2"></i> Download as Text
                         </a></li>
@@ -179,6 +180,9 @@
                         <li><a class="dropdown-item text-danger" href="{% url 'interaction:delete_conversation' conversation_id=conversation.id %}">
                             <i class="bi bi-trash me-2"></i> Delete Conversation
                         </a></li>
+                        {% else %}
+                        <li><span class="dropdown-item disabled">No conversation available</span></li>
+                        {% endif %}
                     </ul>
                 </div>
             </div>
@@ -353,7 +357,7 @@
                     </button>
                 </div>
                 
-                <a href="{% url 'ai_favorite_prompts' ai_id=ai_tool.id %}" class="manage-prompts-link">
+                <a href="{% url 'interaction:ai_favorite_prompts' ai_id=ai_tool.id %}" class="manage-prompts-link">
                     <i class="bi bi-gear me-1"></i> Manage all prompts
                 </a>
             </div>
@@ -398,7 +402,7 @@
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
-                <form id="savePromptForm" method="post" action="{% url 'save_favorite_prompt' %}">
+                <form id="savePromptForm" method="post" action="{% url 'interaction:save_favorite_prompt' %}">
                     {% csrf_token %}
                     <div class="mb-3">
                         <label for="promptTitle" class="form-label">Prompt Title</label>
@@ -436,7 +440,7 @@
 <!-- Django template variables -->
 <script>
     // Global variables from Django template
-    var CONVERSATION_ID = "{{ conversation_id|default:conversation.id }}";
+    var CONVERSATION_ID = "{% if conversation_id %}{{ conversation_id }}{% elif conversation and conversation.id %}{{ conversation.id }}{% else %}{% endif %}";
     var AI_TOOL_ID = "{{ ai_tool.id }}";
     var AI_TOOL_NAME = "{{ ai_tool.name }}";
     var AI_TOOL_IMAGE = "{{ ai_tool.image.url|default:'' }}";
@@ -621,7 +625,7 @@
         if (newChatBtn) {
             newChatBtn.addEventListener('click', function() {
                 if (confirm('Start a new chat? Your current conversation will be saved.')) {
-                    window.location.href = "{% url 'chat_selection' %}";
+                    window.location.href = "{% url 'interaction:chat_selection' %}";
                 }
             });
         }
@@ -750,7 +754,7 @@
                 loadingIndicator.style.display = 'flex';
                 
                 // Submit form data as JSON
-                fetch('{% url "save_favorite_prompt" %}', {
+                fetch('{% url "interaction:save_favorite_prompt" %}', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -864,7 +868,7 @@
                 // Create a form and submit it
                 const form = document.createElement('form');
                 form.method = 'POST';
-                form.action = '{% url "delete_conversation" conversation_id=conversation.id %}';
+                {% if conversation and conversation.id %}form.action = '{% url "interaction:delete_conversation" conversation_id=conversation.id %}';{% endif %}
                 
                 // Add CSRF token
                 const csrfInput = document.createElement('input');

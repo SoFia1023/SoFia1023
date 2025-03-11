@@ -142,10 +142,10 @@
                 </div>
                 <div class="card-body">
                     <div class="d-grid gap-2">
-                        <a href="{% url 'download_conversation' conversation_id=conversation.id format='txt' %}" class="btn btn-outline-secondary">
+                        <a href="{% url 'interaction:download_conversation' conversation_id=conversation.id format='txt' %}" class="btn btn-outline-secondary">
                             <i class="bi bi-file-text me-2"></i>Download as Text
                         </a>
-                        <a href="{% url 'download_conversation' conversation_id=conversation.id format='json' %}" class="btn btn-outline-secondary">
+                        <a href="{% url 'interaction:download_conversation' conversation_id=conversation.id format='json' %}" class="btn btn-outline-secondary">
                             <i class="bi bi-file-code me-2"></i>Download as JSON
                         </a>
                     </div>

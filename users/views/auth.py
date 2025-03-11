@@ -45,7 +45,7 @@ def register(request: HttpRequest) -> HttpResponse:
     else:
         form = CustomUserCreationForm()
         
-    return render(request, 'users/auth/register.html', {
+    return render(request, 'users/register.html', {
         'form': form
     })
 
@@ -85,7 +85,7 @@ def login_view(request: HttpRequest) -> HttpResponse:
     else:
         form = AuthenticationForm()
         
-    return render(request, 'users/auth/login.html', {
+    return render(request, 'users/login.html', {
         'form': form
     })
 

@@ -1,0 +1,283 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Dashboard - {{ user.username }}{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'users/css/dashboard.css' %}">
+{% endblock %}
+
+{% block messages %}
+{% if messages %}
+<div class="container mt-3">
+    {% for message in messages %}
+    <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+        {{ message }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+    {% endfor %}
+</div>
+{% endif %}
+{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row">
+        <div class="col-lg-3">
+            <div class="card shadow-sm mb-4">
+                <div class="card-body">
+                    <div class="d-flex align-items-center mb-3">
+                        {% if user.profile_image %}
+                            <img src="{{ user.profile_image.url }}" alt="{{ user.username }}" class="rounded-circle me-3" width="64" height="64">
+                        {% else %}
+                            <div class="bg-primary rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 64px; height: 64px;">
+                                <span class="text-white fs-4">{{ user.username|first|upper }}</span>
+                            </div>
+                        {% endif %}
+                        <div>
+                            <h5 class="mb-0">{{ user.username }}</h5>
+                            <p class="text-muted mb-0">{{ user.email }}</p>
+                        </div>
+                    </div>
+                    <div class="border-top pt-3">
+                        <div class="mb-2">
+                            <strong>Member since:</strong> {{ user.date_joined|date:"F j, Y" }}
+                        </div>
+                        <div class="mb-2">
+                            <strong>Last login:</strong> {{ user.last_login|date:"F j, Y" }}
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="list-group shadow-sm mb-4">
+                <a href="{% url 'users:dashboard' %}?tab=overview" class="list-group-item list-group-item-action {% if active_tab == 'overview' %}active{% endif %}">
+                    <i class="bi bi-speedometer2 me-2"></i> Overview
+                </a>
+                <a href="{% url 'users:dashboard' %}?tab=profile" class="list-group-item list-group-item-action {% if active_tab == 'profile' %}active{% endif %}">
+                    <i class="bi bi-person me-2"></i> Profile
+                </a>
+                <a href="{% url 'users:dashboard' %}?tab=security" class="list-group-item list-group-item-action {% if active_tab == 'security' %}active{% endif %}">
+                    <i class="bi bi-shield-lock me-2"></i> Security
+                </a>
+                <a href="{% url 'interaction:conversation_history' %}" class="list-group-item list-group-item-action">
+                    <i class="bi bi-chat-left-text me-2"></i> Conversation History
+                </a>
+                <a href="{% url 'interaction:favorite_prompts' %}" class="list-group-item list-group-item-action">
+                    <i class="bi bi-star me-2"></i> Favorite Prompts
+                </a>
+            </div>
+        </div>
+        
+        <div class="col-lg-9">
+            {% if active_tab == 'overview' %}
+            <!-- Overview Tab Content -->
+            <div class="row mb-4">
+                <div class="col-md-4">
+                    <div class="card shadow-sm h-100">
+                        <div class="card-body">
+                            <h5 class="card-title">Total Conversations</h5>
+                            <p class="display-4 mb-0">{{ total_conversations }}</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card shadow-sm h-100">
+                        <div class="card-body">
+                            <h5 class="card-title">Total Messages</h5>
+                            <p class="display-4 mb-0">{{ total_messages }}</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card shadow-sm h-100">
+                        <div class="card-body">
+                            <h5 class="card-title">Most Used AI Tool</h5>
+                            <p class="display-6 mb-0">{{ most_used_tool|default:"None" }}</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card shadow-sm mb-4">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Recent Conversations</h5>
+                    <a href="{% url 'interaction:conversation_history' %}" class="btn btn-sm btn-outline-primary">View All</a>
+                </div>
+                <div class="card-body">
+                    {% if recent_conversations %}
+                        <div class="list-group list-group-flush">
+                            {% for conversation in recent_conversations %}
+                                <a href="{% url 'interaction:continue_conversation' conversation_id=conversation.id %}" class="list-group-item list-group-item-action">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <div>
+                                            <h6 class="mb-1">{{ conversation.title|default:"Untitled Conversation" }}</h6>
+                                            <p class="text-muted mb-0 small">
+                                                <i class="bi bi-robot me-1"></i> {{ conversation.ai_tool.name|default:"Unknown AI" }}
+                                                <span class="mx-2">•</span>
+                                                <i class="bi bi-chat-left me-1"></i> {{ conversation.message_set.count }} messages
+                                            </p>
+                                        </div>
+                                        <small class="text-muted">{{ conversation.updated_at|date:"M d, Y" }}</small>
+                                    </div>
+                                </a>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <div class="text-center py-4">
+                            <i class="bi bi-chat-square-text display-1 text-muted"></i>
+                            <p class="mt-3">You haven't had any conversations yet.</p>
+                            <a href="{% url 'interaction:chat_selection' %}" class="btn btn-primary">Start a Conversation</a>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <div class="card shadow-sm">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Favorite AI Tools</h5>
+                    <a href="{% url 'interaction:favorite_prompts' %}" class="btn btn-sm btn-outline-primary">View All</a>
+                </div>
+                <div class="card-body">
+                    {% if favorites %}
+                        <div class="row row-cols-1 row-cols-md-3 g-4">
+                            {% for favorite in favorites %}
+                                <div class="col">
+                                    <div class="card h-100">
+                                        {% if favorite.ai_tool.image %}
+                                            <img src="{{ favorite.ai_tool.image.url }}" class="card-img-top" alt="{{ favorite.ai_tool.name }}">
+                                        {% else %}
+                                            <div class="card-img-top bg-light d-flex align-items-center justify-content-center" style="height: 140px;">
+                                                <i class="bi bi-robot display-4 text-muted"></i>
+                                            </div>
+                                        {% endif %}
+                                        <div class="card-body">
+                                            <h5 class="card-title">{{ favorite.ai_tool.name }}</h5>
+                                            <p class="card-text small">{{ favorite.ai_tool.description|truncatechars:100 }}</p>
+                                            <a href="{% url 'interaction:chat' ai_id=favorite.ai_tool.id %}" class="btn btn-sm btn-primary">Chat Now</a>
+                                        </div>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <div class="text-center py-4">
+                            <i class="bi bi-star display-1 text-muted"></i>
+                            <p class="mt-3">You don't have any favorite AI tools yet.</p>
+                            <a href="{% url 'catalog:catalog' %}" class="btn btn-primary">Browse AI Tools</a>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+            {% elif active_tab == 'profile' %}
+            <!-- Profile Tab Content -->
+            <div class="card shadow-sm">
+                <div class="card-header">
+                    <h5 class="mb-0">Edit Profile</h5>
+                </div>
+                <div class="card-body">
+                    <form method="post" enctype="multipart/form-data">
+                        {% csrf_token %}
+                        <input type="hidden" name="update_profile" value="1">
+                        
+                        <div class="mb-3">
+                            <label for="{{ profile_form.username.id_for_label }}" class="form-label">Username</label>
+                            {{ profile_form.username }}
+                            {% if profile_form.username.errors %}
+                                <div class="invalid-feedback d-block">{{ profile_form.username.errors }}</div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="{{ profile_form.email.id_for_label }}" class="form-label">Email</label>
+                            {{ profile_form.email }}
+                            {% if profile_form.email.errors %}
+                                <div class="invalid-feedback d-block">{{ profile_form.email.errors }}</div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ profile_form.first_name.id_for_label }}" class="form-label">First Name</label>
+                                {{ profile_form.first_name }}
+                                {% if profile_form.first_name.errors %}
+                                    <div class="invalid-feedback d-block">{{ profile_form.first_name.errors }}</div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ profile_form.last_name.id_for_label }}" class="form-label">Last Name</label>
+                                {{ profile_form.last_name }}
+                                {% if profile_form.last_name.errors %}
+                                    <div class="invalid-feedback d-block">{{ profile_form.last_name.errors }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        {% if profile_form.profile_image %}
+                        <div class="mb-3">
+                            <label for="{{ profile_form.profile_image.id_for_label }}" class="form-label">Profile Image</label>
+                            {{ profile_form.profile_image }}
+                            {% if profile_form.profile_image.errors %}
+                                <div class="invalid-feedback d-block">{{ profile_form.profile_image.errors }}</div>
+                            {% endif %}
+                        </div>
+                        {% endif %}
+                        
+                        <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                            <button type="submit" class="btn btn-primary">Save Changes</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            {% elif active_tab == 'security' %}
+            <!-- Security Tab Content -->
+            <div class="card shadow-sm">
+                <div class="card-header">
+                    <h5 class="mb-0">Change Password</h5>
+                </div>
+                <div class="card-body">
+                    <form method="post">
+                        {% csrf_token %}
+                        <input type="hidden" name="change_password" value="1">
+                        
+                        <div class="mb-3">
+                            <label for="{{ password_form.old_password.id_for_label }}" class="form-label">Current Password</label>
+                            {{ password_form.old_password }}
+                            {% if password_form.old_password.errors %}
+                                <div class="invalid-feedback d-block">{{ password_form.old_password.errors }}</div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="{{ password_form.new_password1.id_for_label }}" class="form-label">New Password</label>
+                            {{ password_form.new_password1 }}
+                            {% if password_form.new_password1.errors %}
+                                <div class="invalid-feedback d-block">{{ password_form.new_password1.errors }}</div>
+                            {% endif %}
+                            <div class="form-text">{{ password_form.new_password1.help_text }}</div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="{{ password_form.new_password2.id_for_label }}" class="form-label">Confirm New Password</label>
+                            {{ password_form.new_password2 }}
+                            {% if password_form.new_password2.errors %}
+                                <div class="invalid-feedback d-block">{{ password_form.new_password2.errors }}</div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                            <button type="submit" class="btn btn-primary">Change Password</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'users/js/dashboard.js' %}"></script>
+{% endblock %}

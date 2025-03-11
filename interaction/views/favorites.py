@@ -16,20 +16,21 @@ from interaction.models import FavoritePrompt
 
 
 @login_required
-def favorite_prompts(request: HttpRequest) -> HttpResponse:
+def favorite_prompts(request: HttpRequest, ai_id: Optional[uuid.UUID] = None) -> HttpResponse:
     """
     View for listing the user's favorite prompts.
     
-    This view renders a list of the user's favorite prompts.
+    This view renders a list of the user's favorite prompts, optionally filtered by AI tool.
     
     Args:
         request: The HTTP request object
+        ai_id: Optional UUID of the AI tool to filter by
         
     Returns:
         Rendered favorite prompts page
     """
-    # Get the AI tool ID filter, if any
-    ai_tool_id = request.GET.get('ai_tool_id')
+    # Get the AI tool ID filter, either from the URL parameter or query string
+    ai_tool_id = str(ai_id) if ai_id else request.GET.get('ai_tool_id')
     
     # Get the user's favorite prompts
     queryset = FavoritePrompt.objects.filter(user=request.user)

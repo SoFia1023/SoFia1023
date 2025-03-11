@@ -1,14 +1,20 @@
 """
 Dashboard views for the users app.
 
-This module contains views related to the user dashboard, showing user activity and statistics.
+This module contains views related to the user dashboard, showing user activity, statistics,
+and profile management.
 """
 from typing import Any, Dict, Optional, Union
+from django.contrib.auth import update_session_auth_hash
 from django.contrib.auth.decorators import login_required
+from django.contrib.auth.forms import PasswordChangeForm
+from django.contrib import messages
 from django.http import HttpRequest, HttpResponse
-from django.shortcuts import render
+from django.shortcuts import render, redirect
+from django.views.decorators.http import require_http_methods
 
 from interaction.models import Conversation, UserFavorite
+from users.forms import UserProfileForm
 
 
 @login_required
@@ -16,7 +22,8 @@ def dashboard(request: HttpRequest) -> HttpResponse:
     """
     View for the user dashboard.
     
-    This view renders the user's dashboard, showing recent activity and statistics.
+    This view renders the user's dashboard, showing recent activity, statistics,
+    and profile management options. It also handles profile updates.
     
     Args:
         request: The HTTP request object
@@ -25,6 +32,36 @@ def dashboard(request: HttpRequest) -> HttpResponse:
         Rendered dashboard page
     """
     user = request.user
+    profile_form = None
+    password_form = None
+    active_tab = request.GET.get('tab', 'overview')
+    
+    # Handle profile form submission
+    if request.method == 'POST' and 'update_profile' in request.POST:
+        profile_form = UserProfileForm(request.POST, request.FILES, instance=user)
+        if profile_form.is_valid():
+            profile_form.save()
+            messages.success(request, 'Your profile was successfully updated!')
+            return redirect('users:dashboard')
+        active_tab = 'profile'
+    
+    # Handle password form submission
+    elif request.method == 'POST' and 'change_password' in request.POST:
+        password_form = PasswordChangeForm(user, request.POST)
+        if password_form.is_valid():
+            user_updated = password_form.save()
+            # Update the session to prevent the user from being logged out
+            update_session_auth_hash(request, user_updated)
+            messages.success(request, 'Your password was successfully updated!')
+            return redirect('users:dashboard')
+        active_tab = 'security'
+    
+    # Initialize forms if not already created
+    if profile_form is None:
+        profile_form = UserProfileForm(instance=user)
+    
+    if password_form is None:
+        password_form = PasswordChangeForm(user)
     
     # Get recent conversations
     recent_conversations = Conversation.objects.filter(
@@ -59,5 +96,8 @@ def dashboard(request: HttpRequest) -> HttpResponse:
         'favorites': favorites,
         'total_conversations': total_conversations,
         'total_messages': total_messages,
-        'most_used_tool': most_used_tool
+        'most_used_tool': most_used_tool,
+        'profile_form': profile_form,
+        'password_form': password_form,
+        'active_tab': active_tab
     })

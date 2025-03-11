@@ -72,18 +72,18 @@
                                                 </button>
                                                 <ul class="dropdown-menu dropdown-menu-end">
                                                     <li>
-                                                        <a class="dropdown-item" href="{% url 'download_conversation' conversation_id=conversation.id format='txt' %}">
+                                                        <a class="dropdown-item" href="{% url 'interaction:download_conversation' conversation_id=conversation.id format='txt' %}">
                                                             <i class="bi bi-file-text me-2"></i> Download as Text
                                                         </a>
                                                     </li>
                                                     <li>
-                                                        <a class="dropdown-item" href="{% url 'download_conversation' conversation_id=conversation.id format='json' %}">
+                                                        <a class="dropdown-item" href="{% url 'interaction:download_conversation' conversation_id=conversation.id format='json' %}">
                                                             <i class="bi bi-file-code me-2"></i> Download as JSON
                                                         </a>
                                                     </li>
                                                     <li><hr class="dropdown-divider"></li>
                                                     <li>
-                                                        <a class="dropdown-item text-danger" href="{% url 'delete_conversation' conversation_id=conversation.id %}">
+                                                        <a class="dropdown-item text-danger" href="{% url 'interaction:delete_conversation' conversation_id=conversation.id %}">
                                                             <i class="bi bi-trash me-2"></i> Delete
                                                         </a>
                                                     </li>

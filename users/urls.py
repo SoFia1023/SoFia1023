@@ -1,8 +1,10 @@
 from typing import List, Union
 from django.urls import path, URLPattern, URLResolver
+from django.views.generic.base import RedirectView
 from .views.auth import login_view, logout_view, register
-from .views.profile import profile_view, update_profile, change_password
 from .views.dashboard import dashboard
+# Import directly from the module file
+from users.views_admin import check_user_permissions
 
 app_name = 'users'
 
@@ -14,12 +16,15 @@ urlpatterns: List[Union[URLPattern, URLResolver]] = [
     path('logout/', logout_view, name='logout'),
     path('register/', register, name='register'),
     
-    # Profile URLs
-    path('profile/', profile_view, name='profile'),
-    path('profile/update/', update_profile, name='update_profile'),
-    path('profile/change-password/', change_password, name='change_password'),
+    # Redirect old profile URLs to dashboard with appropriate tabs
+    path('profile/', RedirectView.as_view(pattern_name='users:dashboard', query_string=False), name='profile'),
+    path('profile/update/', RedirectView.as_view(url='/users/dashboard/?tab=profile', permanent=True), name='update_profile'),
+    path('profile/change-password/', RedirectView.as_view(url='/users/dashboard/?tab=security', permanent=True), name='change_password'),
     
     # Dashboard URL
     path('dashboard/', dashboard, name='dashboard'),
+    
+    # Admin URLs
+    path('admin/users/<int:user_id>/permissions/', check_user_permissions, name='check_user_permissions'),
 ]
 

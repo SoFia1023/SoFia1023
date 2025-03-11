@@ -24,11 +24,11 @@
                 <div class="card-body">
                     <h5 class="card-title mb-3">Filter by AI Tool</h5>
                     <div class="d-flex flex-wrap gap-2">
-                        <a href="{% url 'favorite_prompts' %}" class="btn {% if not selected_ai %}btn-primary{% else %}btn-outline-primary{% endif %}">
+                        <a href="{% url 'interaction:favorite_prompts' %}" class="btn {% if not selected_ai %}btn-primary{% else %}btn-outline-primary{% endif %}">
                             All Tools
                         </a>
                         {% for tool in ai_tools %}
-                            <a href="{% url 'ai_favorite_prompts' ai_id=tool.id %}" class="btn {% if selected_ai.id == tool.id %}btn-primary{% else %}btn-outline-primary{% endif %}">
+                            <a href="{% url 'interaction:ai_favorite_prompts' ai_id=tool.id %}" class="btn {% if selected_ai.id == tool.id %}btn-primary{% else %}btn-outline-primary{% endif %}">
                                 {{ tool.name }}
                             </a>
                         {% endfor %}
@@ -53,13 +53,13 @@
                                     </button>
                                     <ul class="dropdown-menu dropdown-menu-end">
                                         <li>
-                                            <a class="dropdown-item" href="{% url 'chat' ai_id=prompt.ai_tool.id %}?prompt={{ prompt.prompt_text|urlencode }}">
+                                            <a class="dropdown-item" href="{% url 'interaction:chat' ai_id=prompt.ai_tool.id %}?prompt={{ prompt.prompt_text|urlencode }}">
                                                 <i class="bi bi-chat-dots me-2"></i> Use in Chat
                                             </a>
                                         </li>
                                         <li><hr class="dropdown-divider"></li>
                                         <li>
-                                            <a class="dropdown-item text-danger" href="{% url 'delete_favorite_prompt' prompt_id=prompt.id %}">
+                                            <a class="dropdown-item text-danger" href="{% url 'interaction:delete_favorite_prompt' prompt_id=prompt.id %}">
                                                 <i class="bi bi-trash me-2"></i> Delete
                                             </a>
                                         </li>
@@ -111,7 +111,7 @@
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
-                <form id="addPromptForm" method="post" action="{% url 'save_favorite_prompt' %}">
+                <form id="addPromptForm" method="post" action="{% url 'interaction:save_favorite_prompt' %}">
                     {% csrf_token %}
                     <div class="mb-3">
                         <label for="promptTitle" class="form-label">Title</label>
@@ -158,7 +158,7 @@
                 prompt_text: document.getElementById('promptText').value.trim()
             };
             
-            fetch('{% url "save_favorite_prompt" %}', {
+            fetch('{% url "interaction:save_favorite_prompt" %}', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
