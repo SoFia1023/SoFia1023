@@ -1,7 +1,9 @@
-from django.urls import path
+from django.urls import path, URLPattern, URLResolver
+from typing import List, Union
 from . import views
 
-urlpatterns = [    
+# Type hint for URL patterns
+urlpatterns: List[Union[URLPattern, URLResolver]] = [    
     # Direct chat URLs
     path('direct-chat/', views.direct_chat, name='direct_chat'),
     path('direct-chat/message/', views.direct_chat_message, name='direct_chat_message'),
