@@ -8,7 +8,7 @@
 [![Python](https://img.shields.io/badge/Python-3.9+-blue.svg)](https://www.python.org/)
 [![Bootstrap](https://img.shields.io/badge/Bootstrap-5.3-purple.svg)](https://getbootstrap.com/)
 [![License](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
-[![Status](https://img.shields.io/badge/Status-Active-success.svg)](https://github.com/yourusername/inspireai)
+[![Status](https://img.shields.io/badge/Status-Active-success.svg)](https://github.com/Mateoloperaortiz/ProyectoIntegrador1)
 
 ---
 
@@ -42,6 +42,7 @@ Inspire AI is a web application designed to help students and teachers discover,
 - **Multi-Modal Support**: Text, image, and hybrid conversation capabilities
 - **Context Awareness**: Maintains conversation context across sessions
 - **Model Selection**: Switch between different AI models within the same tool
+- **Smart Routing**: Automatically routes messages to the most appropriate AI tool based on content analysis
 
 ### 👤 User Experience
 
@@ -54,7 +55,7 @@ Inspire AI is a web application designed to help students and teachers discover,
 
 - **One-Click Sharing**: Generate shareable links for conversations or tool collections
 - **Collaboration Spaces**: Create shared workspaces for team-based tool exploration
-- **Export Options**: Download conversations in multiple formats (PDF, JSON, Markdown)
+- **Export Options**: Download conversations in multiple formats (JSON, TXT, CSV)
 - **Embedding Support**: Embed chat widgets or tool recommendations in external sites
 
 ## 🛠️ Technologies
@@ -63,10 +64,8 @@ Inspire AI is a web application designed to help students and teachers discover,
 - **Frontend**: HTML, CSS, JavaScript, Bootstrap 5.3
 - **Database**: SQLite (development), PostgreSQL (production)
 - **AI Integrations**: OpenAI API, Hugging Face API, Custom API integrations
-- **Authentication**: Django Allauth with social authentication support
-- **Real-time**: Django Channels with WebSockets for chat functionality
-- **Caching**: Redis for performance optimization
-- **Search**: Elasticsearch for advanced search capabilities
+- **Authentication**: Django authentication system with custom user model
+- **Logging**: Custom request logging middleware for tracking user interactions
 - **Monitoring**: Sentry for error tracking and performance monitoring
 
 ## 📂 Project Structure
@@ -75,98 +74,320 @@ The project consists of multiple Django apps, each with specific responsibilitie
 
 ```text
 ProyectoIntegrador1/
-├── catalog/            # AI tool catalog core functionality
-│   ├── migrations/     # Database migrations
-│   ├── static/         # CSS, JS, images
-│   ├── templates/      # HTML templates
-│   ├── management/     # Custom management commands
-│   ├── admin.py        # Admin panel configuration
-│   ├── mixins.py       # Reusable view mixins (pagination, filtering)
-│   ├── models.py       # AI tool data models
-│   ├── urls.py         # URL routing
-│   └── views.py        # View controllers
-├── interaction/        # User-AI interaction functionality
-│   ├── migrations/     # Database migrations
-│   ├── templates/      # HTML templates
-│   ├── models.py       # Conversation and message models
-│   ├── urls.py         # URL routing
-│   └── views.py        # View controllers
-├── users/              # User authentication and management
-│   ├── migrations/     # Database migrations
-│   ├── static/         # User-specific assets
-│   ├── templates/      # User templates
-│   ├── management/     # User management commands
-│   ├── forms.py        # User forms
-│   ├── models.py       # Custom user model
-│   ├── urls.py         # URL routing
-│   └── views.py        # User view controllers
-└── inspireIA/          # Project configuration
-    ├── settings/       # Environment-specific settings
-    ├── middleware.py   # Custom middleware for request logging and tracking
-    ├── urls.py         # Main URL configuration
-    └── wsgi.py         # WSGI configuration for deployment
+├── catalog/                  # AI tool catalog core functionality
+│   ├── migrations/           # Database migrations
+│   ├── static/               # CSS, JS, images
+│   │   └── catalog/
+│   │       ├── css/          # Catalog-specific stylesheets
+│   │       └── js/           # Catalog-specific JavaScript
+│   ├── templates/            # HTML templates
+│   │   ├── base.html         # Base template for the entire application
+│   │   └── catalog/          # Catalog-specific templates
+│   ├── management/           # Custom management commands
+│   │   └── commands/         # Command implementations
+│   ├── admin.py              # Admin panel configuration
+│   ├── apps.py               # App configuration
+│   ├── context_processors.py # Template context processors
+│   ├── mixins.py             # Reusable view mixins (pagination, filtering)
+│   ├── models.py             # AI tool data models
+│   ├── tests.py              # Unit tests
+│   ├── urls.py               # URL routing
+│   ├── utils.py              # Utility functions
+│   └── views.py              # View controllers
+│
+├── interaction/              # User-AI interaction functionality
+│   ├── migrations/           # Database migrations
+│   ├── static/               # Static assets
+│   │   └── interaction/
+│   │       └── css/          # Interaction-specific stylesheets
+│   ├── templates/            # HTML templates
+│   │   └── interaction/      # Interaction-specific templates
+│   │       ├── chat.html     # Main chat interface
+│   │       ├── direct_chat.html # Smart routing chat interface
+│   │       └── ...           # Other interaction templates
+│   ├── admin.py              # Admin panel configuration
+│   ├── apps.py               # App configuration
+│   ├── models.py             # Conversation and message models
+│   ├── tests.py              # Unit tests
+│   ├── urls.py               # URL routing
+│   ├── utils.py              # Utility functions for routing and formatting
+│   └── views.py              # View controllers for chat functionality
+│
+├── users/                    # User authentication and management
+│   ├── migrations/           # Database migrations
+│   ├── static/               # User-specific assets
+│   │   └── users/
+│   │       ├── css/          # User-specific stylesheets
+│   │       └── js/           # User-specific JavaScript
+│   ├── templates/            # User templates
+│   │   └── users/            # User-specific templates
+│   ├── management/           # User management commands
+│   ├── admin.py              # Admin panel configuration
+│   ├── apps.py               # App configuration
+│   ├── forms.py              # User forms
+│   ├── models.py             # Custom user model
+│   ├── tests.py              # Unit tests
+│   ├── urls.py               # URL routing
+│   └── views.py              # User view controllers
+│
+├── inspireIA/                # Project configuration
+│   ├── settings/             # Environment-specific settings
+│   │   ├── base.py           # Base settings for all environments
+│   │   ├── development.py    # Development-specific settings
+│   │   └── production.py     # Production-specific settings
+│   ├── middleware.py         # Custom middleware for request logging
+│   ├── storage_backends.py   # Storage configuration
+│   ├── urls.py               # Main URL configuration
+│   ├── wsgi.py               # WSGI configuration for deployment
+│   └── asgi.py               # ASGI configuration for async support
+│
+├── static/                   # Global static files
+├── media/                    # User-uploaded files
+├── logs/                     # Application logs
+├── manage.py                 # Django management script
+└── README.md                 # Project documentation
 ```
 
-## 📊 Core Models
+## 💾 Data Models
 
 ### AITool (catalog app)
 
-- Stores information about AI tools including name, provider, category, description
-- Supports API integration configurations (OpenAI, Hugging Face, custom)
-- Tracks popularity and featured status
-- Customizable metadata for specialized tool capabilities
-- Versioning support for tracking tool updates over time
+The core model for storing information about AI tools:
+
+```python
+class AITool(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    name = models.CharField(max_length=255)
+    provider = models.CharField(max_length=255)
+    endpoint = models.URLField()
+    category = models.CharField(max_length=100)
+    description = models.TextField()
+    popularity = models.IntegerField()
+    image = models.ImageField(upload_to='ai_images/', null=True, blank=True)
+    api_type = models.CharField(
+        max_length=50, 
+        choices=[
+            ('openai', 'OpenAI API'),
+            ('huggingface', 'Hugging Face API'),
+            ('custom', 'Custom Integration'),
+            ('none', 'No Integration')
+        ],
+        default='none'
+    )
+    api_model = models.CharField(max_length=100, blank=True, null=True)
+    api_endpoint = models.CharField(max_length=255, blank=True, null=True)
+    is_featured = models.BooleanField(default=False)
+```
 
 ### CustomUser (users app)
 
-- Extends Django's AbstractUser
-- Email-based authentication
-- Stores user preferences and favorites
-- Usage analytics tracking with privacy controls
-- Role-based access with customizable permissions
+Extended user model for authentication and user preferences:
+
+```python
+class CustomUser(AbstractUser):
+    email = models.EmailField(unique=True, help_text="User email")
+    first_name = models.CharField(max_length=255, help_text="User first name")  
+    favorites = models.ManyToManyField(
+        'catalog.AITool',  
+        related_name='favorited_by',
+        blank=True,
+        help_text="User's favorite AI tools"
+    )
+    USERNAME_FIELD = 'email'  
+    REQUIRED_FIELDS = ['username', 'first_name']
+```
 
 ### Conversation & Message (interaction app)
 
-- Tracks user conversations with AI tools
-- Stores message history with timestamps
-- Supports conversation export and sharing
-- Message tagging for better organization
-- Custom conversation metadata for educational use cases
+Models for tracking user conversations with AI tools:
+
+```python
+class Conversation(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, 
+                            null=True, blank=True, related_name='interaction_conversations')
+    ai_tool = models.ForeignKey(AITool, on_delete=models.CASCADE, 
+                               related_name='interaction_conversations')
+    title = models.CharField(max_length=255, default="New Conversation")
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    # Methods for message retrieval and JSON conversion
+    
+class Message(models.Model):
+    conversation = models.ForeignKey(Conversation, on_delete=models.CASCADE)
+    content = models.TextField()
+    is_user = models.BooleanField(default=True)  # True if from user, False if from AI
+    timestamp = models.DateTimeField(default=timezone.now)
+```
 
 ### FavoritePrompt & SharedChat (interaction app)
 
-- Allows users to save and reuse favorite prompts
-- Enables sharing conversations publicly or with specific users
-- Prompt categories and tags for better organization
-- Collaborative prompt editing with version history
+Models for saving favorite prompts and sharing conversations:
 
-## 🌟 Implemented Features
+```python
+class FavoritePrompt(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    ai_tool = models.ForeignKey(AITool, on_delete=models.CASCADE)
+    prompt_text = models.TextField()
+    title = models.CharField(max_length=255)
+    created_at = models.DateTimeField(auto_now_add=True)
+    
+class SharedChat(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    conversation = models.ForeignKey(Conversation, on_delete=models.CASCADE)
+    shared_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, 
+                                 related_name='shared_chats')
+    shared_with = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, 
+                                   null=True, blank=True, related_name='received_chats')
+    is_public = models.BooleanField(default=False)
+    access_token = models.CharField(max_length=64, unique=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+```
 
-### Recent Updates (July 2023)
+## 🔄 Key Features Implementation
 
-#### User Interaction Tracking
-- Added middleware for tracking user interactions with the platform
-- Implemented request logging with timing information
-- Tracks authenticated user activity for analytics
-- Logs request paths, methods, status codes, and processing times
-- Helps identify performance bottlenecks and popular features
+### Smart Message Routing
 
-#### Enhanced Pagination
-- Added PaginationMixin for consistent pagination across the application
-- Improved navigation with smart page range display
-- Better handling of edge cases (invalid page numbers, empty pages)
-- Visual indicators for current page and total pages
-- Consistent pagination UI across all listing pages
+The application includes a smart routing system that analyzes message content and directs it to the most appropriate AI tool:
+
+```python
+def route_message_to_ai_tool(message_content):
+    """
+    Analyze message content and route to the most appropriate AI tool.
+    """
+    # Convert to lowercase for case-insensitive matching
+    content_lower = message_content.lower()
+    
+    # Define patterns for different AI tool categories
+    patterns = {
+        'Image Generator': [
+            r'(create|generate|make|draw|design|produce) (a|an|some)? ?(image|picture|photo|illustration|artwork|drawing)',
+            # Additional patterns...
+        ],
+        'Video Generator': [
+            r'(create|generate|make|produce) (a|an|some)? ?(video|animation|clip|movie)',
+            # Additional patterns...
+        ],
+        # Other categories...
+    }
+    
+    # Match patterns and select the best category
+    # Return the most popular AI tool in that category
+```
+
+### Conversation Export
+
+Users can export their conversations in multiple formats:
+
+```python
+def format_conversation_for_download(conversation, format_type='json'):
+    """
+    Format a conversation for download in the specified format.
+    
+    Supports JSON, TXT, and CSV formats.
+    """
+    # Format conversation based on the requested format type
+    # Return formatted content, content type, and file extension
+```
+
+### Direct Chat Interface
+
+A unified chat interface that automatically routes messages to appropriate AI tools:
+
+```python
+@login_required
+def direct_chat(request):
+    """View for the smart chat interface that routes messages to appropriate AI tools."""
+    # Load existing conversation or start a new one
+    # Render the direct chat template with conversation context
+```
+
+## 🚀 Getting Started
+
+### Prerequisites
+
+- Python 3.9+
+- Django 4.2+
+- pip (Python package manager)
+
+### Installation
+
+1. Clone the repository:
+   ```bash
+   git clone https://github.com/Mateoloperaortiz/ProyectoIntegrador1.git
+   cd ProyectoIntegrador1
+   ```
+
+2. Create a virtual environment:
+   ```bash
+   python -m venv venv
+   source venv/bin/activate  # On Windows: venv\Scripts\activate
+   ```
+
+3. Install dependencies:
+   ```bash
+   pip install -r requirements.txt
+   ```
+
+4. Run migrations:
+   ```bash
+   python manage.py migrate
+   ```
+
+5. Create a superuser:
+   ```bash
+   python manage.py createsuperuser
+   ```
+
+6. Run the development server:
+   ```bash
+   python manage.py runserver
+   ```
+
+7. Access the application at http://127.0.0.1:8000/
+
+## 🔒 Environment Configuration
+
+The project uses environment-specific settings files:
+
+- `base.py`: Common settings for all environments
+- `development.py`: Development-specific settings
+- `production.py`: Production-specific settings
+
+To switch between environments, set the `DJANGO_SETTINGS_MODULE` environment variable:
+
+```bash
+# Development (default)
+export DJANGO_SETTINGS_MODULE=inspireIA.settings.development
+
+# Production
+export DJANGO_SETTINGS_MODULE=inspireIA.settings.production
+```
+
+## 📊 Implemented Features
+
+### Recent Updates (March 2025)
+
+#### Direct Chat with Smart Routing
+- Added a new direct chat interface that automatically routes messages to the most appropriate AI tool
+- Implemented pattern matching for different AI tool categories
+- Enhanced user experience with a unified chat interface
+- Added support for conversation history and context preservation
+
+#### Enhanced Conversation Sharing
+- Improved the conversation sharing functionality with public and private options
+- Added unique access tokens for secure sharing
+- Implemented a dedicated view for shared conversations
+- Added support for downloading conversations in multiple formats (JSON, TXT, CSV)
 
 ### User Management
 
 - Custom user registration and authentication
 - User profiles with favorites and history
-- Permission-based access control with user groups
-- Social authentication (Google, Microsoft)
-- Two-factor authentication for enhanced security
+- Email-based authentication
 - Password reset and account recovery
-- Email verification and notifications
 - User activity logging and analytics
 
 ### AI Tool Catalog
@@ -176,29 +397,20 @@ ProyectoIntegrador1/
 - Tool comparison functionality
 - Favorite tools management
 - Trending and recommended tools sections
-- New tools notification system
 - Rating and review system
 - Usage statistics and visualizations
 
 ### AI Interaction
 
 - Real-time chat interfaces with AI tools
+- Smart message routing to appropriate AI tools
 - Conversation history management
 - Favorite prompts saving and reuse
 - Conversation sharing (public or private)
-- Conversation export (JSON, text formats)
-- Multi-modal support (text, images)
+- Conversation export (JSON, TXT, CSV formats)
 - Context preservation across sessions
 - Prompt templates for educational scenarios
 - Conversation tagging and categorization
-- Advanced system prompts management
-- Message reactions and annotations
-
-### Administration
-
-- Enhanced admin interface for content management
-- Bulk operations for AI tools and user data
-- Permission management and monitoring
 - Custom management commands for data import/export
 - Usage analytics dashboard
 - Content moderation tools
@@ -237,11 +449,30 @@ The application features a modern, intuitive dashboard with:
 - Image upload and display capabilities
 - Message editing and deletion
 - Conversation forking and branching
-- Context and system prompt management panel
+## 🤝 Contributing
 
-### User Profile
+Contributions are welcome! Please feel free to submit a Pull Request.
 
-- Activity timeline with usage statistics
+1. Fork the repository
+2. Create your feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add some amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
+
+## 📄 License
+
+This project is licensed under the MIT License - see the LICENSE file for details.
+
+## 👥 Team
+
+- Mateo Lopera Ortiz - Project Lead
+- EAFIT University - Proyecto Integrador 1
+
+## 📞 Contact
+
+For questions or feedback, please contact:
+- GitHub: [@Mateoloperaortiz](https://github.com/Mateoloperaortiz)
+- Email: [your-email@example.com]
 - Favorite tools and prompts management
 - Shared conversations management
 - Notification preferences
@@ -469,7 +700,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## 📞 Contact
 
-For more information about the project, contact the development.
+For more information about the project, contact the development team.
 
 ---
 
