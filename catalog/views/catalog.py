@@ -18,6 +18,7 @@ class CatalogView(PaginationMixin, FilterMixin, ListView):
     View for displaying the catalog of AI tools with filtering and pagination.
     
     This view renders a list of AI tools with various filtering options and pagination.
+    Using the OpenRouter-inspired template for a modern card-based layout.
     """
     model = AITool
     template_name = 'catalog/catalog.html'
