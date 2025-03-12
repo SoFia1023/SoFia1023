@@ -1,0 +1,202 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}API Logging Demo{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="card shadow-sm">
+                <div class="card-header bg-primary text-white">
+                    <h1 class="h3 mb-0">{{ title }}</h1>
+                </div>
+                <div class="card-body">
+                    <p class="lead">{{ description }}</p>
+                    
+                    <div class="alert alert-info">
+                        <h5>About this Demo</h5>
+                        <p>This page demonstrates how to properly log API requests in the InspireIA application. It shows different scenarios including:</p>
+                        <ul>
+                            <li>Successful API calls</li>
+                            <li>Failed API calls</li>
+                            <li>API calls that raise exceptions</li>
+                            <li>Real API calls to external services</li>
+                        </ul>
+                        <p>All logs are sent to both the console and log files with structured data for easier analysis.</p>
+                    </div>
+                    
+                    {% if messages %}
+                    <div class="messages mb-4">
+                        {% for message in messages %}
+                        <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                            {{ message }}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+                    
+                    <div class="row mt-4">
+                        <div class="col-md-6 mb-3">
+                            <div class="card h-100">
+                                <div class="card-header bg-success text-white">
+                                    <h5 class="mb-0">Successful API Call</h5>
+                                </div>
+                                <div class="card-body">
+                                    <p>Simulate a successful API call with proper logging.</p>
+                                    <form method="post" action="{% url 'core:api_logging_demo' %}">
+                                        {% csrf_token %}
+                                        <input type="hidden" name="api_type" value="success">
+                                        <div class="d-grid">
+                                            <button type="submit" class="btn btn-success">
+                                                Test Successful API Logging
+                                            </button>
+                                        </div>
+                                    </form>
+                                </div>
+                                <div class="card-footer">
+                                    <small class="text-muted">Logs a GET request to /api/v1/data with status code 200</small>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <div class="card h-100">
+                                <div class="card-header bg-warning text-dark">
+                                    <h5 class="mb-0">Failed API Call</h5>
+                                </div>
+                                <div class="card-body">
+                                    <p>Simulate a failed API call with proper error logging.</p>
+                                    <form method="post" action="{% url 'core:api_logging_demo' %}">
+                                        {% csrf_token %}
+                                        <input type="hidden" name="api_type" value="error">
+                                        <div class="d-grid">
+                                            <button type="submit" class="btn btn-warning">
+                                                Test Failed API Logging
+                                            </button>
+                                        </div>
+                                    </form>
+                                </div>
+                                <div class="card-footer">
+                                    <small class="text-muted">Logs a POST request to /api/v1/restricted with status code 403</small>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <div class="card h-100">
+                                <div class="card-header bg-danger text-white">
+                                    <h5 class="mb-0">API Call with Exception</h5>
+                                </div>
+                                <div class="card-body">
+                                    <p>Simulate an API call that raises an exception.</p>
+                                    <form method="post" action="{% url 'core:api_logging_demo' %}">
+                                        {% csrf_token %}
+                                        <input type="hidden" name="api_type" value="exception">
+                                        <div class="d-grid">
+                                            <button type="submit" class="btn btn-danger">
+                                                Test Exception Logging
+                                            </button>
+                                        </div>
+                                    </form>
+                                </div>
+                                <div class="card-footer">
+                                    <small class="text-muted">Demonstrates how to handle and log exceptions during API calls</small>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <div class="card h-100">
+                                <div class="card-header bg-info text-white">
+                                    <h5 class="mb-0">Real API Call</h5>
+                                </div>
+                                <div class="card-body">
+                                    <p>Make a real API call to JSONPlaceholder and log the results.</p>
+                                    <form method="post" action="{% url 'core:api_logging_demo' %}">
+                                        {% csrf_token %}
+                                        <input type="hidden" name="api_type" value="real">
+                                        <div class="d-grid">
+                                            <button type="submit" class="btn btn-info">
+                                                Test Real API Logging
+                                            </button>
+                                        </div>
+                                    </form>
+                                </div>
+                                <div class="card-footer">
+                                    <small class="text-muted">Makes a real HTTP request to jsonplaceholder.typicode.com</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="row mt-4">
+                        <div class="col-12">
+                            <div class="card">
+                                <div class="card-header bg-secondary text-white">
+                                    <h5 class="mb-0">JSON API Endpoint</h5>
+                                </div>
+                                <div class="card-body">
+                                    <p>This demo also includes a JSON API endpoint that demonstrates logging for API responses.</p>
+                                    <div class="d-grid gap-2">
+                                        <a href="{% url 'core:api_logging_demo_json' %}" class="btn btn-secondary" target="_blank">
+                                            View JSON Endpoint
+                                        </a>
+                                        <button id="fetch-json" class="btn btn-outline-secondary">
+                                            Fetch JSON via AJAX
+                                        </button>
+                                    </div>
+                                    
+                                    <div class="mt-3">
+                                        <pre id="json-response" class="bg-light p-3 rounded" style="display: none;"></pre>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-footer">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <a href="{% url 'core:logging_demo' %}" class="btn btn-outline-primary">
+                            <i class="bi bi-arrow-left"></i> Back to Main Logging Demo
+                        </a>
+                        <a href="{% url 'core:logging_demo_user_forms' %}" class="btn btn-outline-primary">
+                            User Forms Logging Demo <i class="bi bi-arrow-right"></i>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const fetchButton = document.getElementById('fetch-json');
+        const responseContainer = document.getElementById('json-response');
+        
+        fetchButton.addEventListener('click', function() {
+            fetchButton.disabled = true;
+            fetchButton.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Loading...';
+            
+            fetch('{% url "core:api_logging_demo_json" %}')
+                .then(response => response.json())
+                .then(data => {
+                    responseContainer.textContent = JSON.stringify(data, null, 2);
+                    responseContainer.style.display = 'block';
+                    fetchButton.disabled = false;
+                    fetchButton.innerHTML = 'Fetch JSON via AJAX';
+                })
+                .catch(error => {
+                    responseContainer.textContent = 'Error: ' + error.message;
+                    responseContainer.style.display = 'block';
+                    fetchButton.disabled = false;
+                    fetchButton.innerHTML = 'Fetch JSON via AJAX';
+                });
+        });
+    });
+</script>
+{% endblock %}

@@ -36,27 +36,97 @@ EMAIL_BACKEND = get_env_value(
 )
 
 # Configure logging for development
+# Development-specific logging configuration that overrides base settings
 LOGGING: Dict[str, Any] = {
     'version': 1,
     'disable_existing_loggers': False,
+    'formatters': {
+        'colored': {
+            '()': 'colorlog.ColoredFormatter',
+            'format': '%(log_color)s%(levelname)-8s%(reset)s %(blue)s[%(asctime)s]%(reset)s %(white)s%(message)s%(reset)s',
+            'datefmt': '%Y-%m-%d %H:%M:%S',
+            'log_colors': {
+                'DEBUG': 'cyan',
+                'INFO': 'green',
+                'WARNING': 'yellow',
+                'ERROR': 'red',
+                'CRITICAL': 'red,bg_white',
+            },
+        },
+        'verbose': {
+            'format': '[{asctime}] {levelname} {module} {process:d} {thread:d} {message}',
+            'datefmt': '%Y-%m-%d %H:%M:%S',
+            'style': '{',
+        },
+        'simple': {
+            'format': '{levelname} {message}',
+            'style': '{',
+        },
+    },
     'handlers': {
         'console': {
-            'class': 'logging.StreamHandler',
+            'level': 'DEBUG',
+            'class': 'colorlog.StreamHandler',
+            'formatter': 'colored',
+        },
+        'file_debug': {
+            'level': 'DEBUG',
+            'class': 'logging.handlers.RotatingFileHandler',
+            'filename': os.path.join(BASE_DIR, 'logs', 'debug.log'),
+            'formatter': 'verbose',
+            'maxBytes': 10485760,  # 10 MB
+            'backupCount': 5,
         },
     },
     'root': {
-        'handlers': ['console'],
-        'level': get_env_value('ROOT_LOG_LEVEL', 'INFO'),
+        'handlers': ['console', 'file_debug'],
+        'level': get_env_value('ROOT_LOG_LEVEL', 'DEBUG'),
     },
     'loggers': {
         'django': {
-            'handlers': ['console'],
+            'handlers': ['console', 'file_debug'],
             'level': get_env_value('DJANGO_LOG_LEVEL', 'INFO'),
             'propagate': False,
         },
         'django.db.backends': {
-            'handlers': ['console'],
-            'level': get_env_value('DB_LOG_LEVEL', 'WARNING'),
+            'handlers': ['console', 'file_debug'],
+            'level': get_env_value('DB_LOG_LEVEL', 'INFO'),  # Set to DEBUG to log all SQL queries
+            'propagate': False,
+        },
+        'django.request': {
+            'handlers': ['console', 'file_debug'],
+            'level': 'DEBUG',
+            'propagate': False,
+        },
+        # Application loggers with more verbose output in development
+        'inspireIA': {
+            'handlers': ['console', 'file_debug'],
+            'level': 'DEBUG',
+            'propagate': False,
+        },
+        'catalog': {
+            'handlers': ['console', 'file_debug'],
+            'level': 'DEBUG',
+            'propagate': False,
+        },
+        'users': {
+            'handlers': ['console', 'file_debug'],
+            'level': 'DEBUG',
+            'propagate': False,
+        },
+        'interaction': {
+            'handlers': ['console', 'file_debug'],
+            'level': 'DEBUG',
+            'propagate': False,
+        },
+        'api': {
+            'handlers': ['console', 'file_debug'],
+            'level': 'DEBUG',
+            'propagate': False,
+        },
+        'core': {
+            'handlers': ['console', 'file_debug'],
+            'level': 'DEBUG',
             'propagate': False,
         },
     },

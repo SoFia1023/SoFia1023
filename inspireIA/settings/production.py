@@ -132,32 +132,133 @@ if REDIS_URL:
 # Do not store API keys in settings files
 
 # Configure logging for production
+# Production-specific logging configuration that overrides base settings
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,
     'formatters': {
         'verbose': {
-            'format': '{levelname} {asctime} {module} {process:d} {thread:d} {message}',
+            'format': '{levelname} {asctime} {name} {module} {process:d} {thread:d} {message}',
             'style': '{',
+            'datefmt': '%Y-%m-%d %H:%M:%S',
+        },
+        'json': {
+            'format': '{\'time\':\'{asctime}\', \'level\':\'{levelname}\', \'name\':\'{name}\', \'module\':\'{module}\', \'message\':\'{message}\'}',
+            'style': '{',
+            'datefmt': '%Y-%m-%d %H:%M:%S',
+        },
+    },
+    'filters': {
+        'require_debug_false': {
+            '()': 'django.utils.log.RequireDebugFalse',
         },
     },
     'handlers': {
         'console': {
-            'level': 'ERROR',
+            'level': 'WARNING',
             'class': 'logging.StreamHandler',
             'formatter': 'verbose',
         },
-        'file': {
+        'file_errors': {
             'level': 'ERROR',
-            'class': 'logging.FileHandler',
-            'filename': os.path.join(BASE_DIR, 'logs/django-error.log'),
+            'class': 'logging.handlers.TimedRotatingFileHandler',
+            'filename': os.path.join(BASE_DIR, 'logs', 'production-errors.log'),
             'formatter': 'verbose',
+            'when': 'midnight',
+            'interval': 1,
+            'backupCount': 30,
+        },
+        'file_warnings': {
+            'level': 'WARNING',
+            'class': 'logging.handlers.TimedRotatingFileHandler',
+            'filename': os.path.join(BASE_DIR, 'logs', 'production-warnings.log'),
+            'formatter': 'verbose',
+            'when': 'midnight',
+            'interval': 1,
+            'backupCount': 14,
+        },
+        'file_info': {
+            'level': 'INFO',
+            'class': 'logging.handlers.TimedRotatingFileHandler',
+            'filename': os.path.join(BASE_DIR, 'logs', 'production-info.log'),
+            'formatter': 'json',
+            'when': 'midnight',
+            'interval': 1,
+            'backupCount': 7,
+        },
+        'mail_admins': {
+            'level': 'ERROR',
+            'class': 'django.utils.log.AdminEmailHandler',
+            'filters': ['require_debug_false'],
+            'include_html': True,
+        },
+        'file_security': {
+            'level': 'INFO',
+            'class': 'logging.handlers.TimedRotatingFileHandler',
+            'filename': os.path.join(BASE_DIR, 'logs', 'production-security.log'),
+            'formatter': 'verbose',
+            'when': 'midnight',
+            'interval': 1,
+            'backupCount': 30,
         },
     },
     'loggers': {
+        # Root logger
+        '': {
+            'handlers': ['console', 'file_errors', 'file_warnings'],
+            'level': 'WARNING',
+            'propagate': True,
+        },
+        # Django loggers
         'django': {
-            'handlers': ['console', 'file'],
-            'level': os.getenv('DJANGO_LOG_LEVEL', 'ERROR'),
+            'handlers': ['console', 'file_errors', 'file_warnings', 'file_info'],
+            'level': os.getenv('DJANGO_LOG_LEVEL', 'WARNING'),
+            'propagate': False,
+        },
+        'django.request': {
+            'handlers': ['file_errors', 'mail_admins'],
+            'level': 'ERROR',
+            'propagate': False,
+        },
+        'django.security': {
+            'handlers': ['file_security', 'mail_admins'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+        'django.security.csrf': {
+            'handlers': ['file_security', 'mail_admins'],
+            'level': 'WARNING',
+            'propagate': False,
+        },
+        # Application loggers
+        'inspireIA': {
+            'handlers': ['console', 'file_errors', 'file_warnings', 'file_info'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+        'catalog': {
+            'handlers': ['file_errors', 'file_warnings', 'file_info'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+        'users': {
+            'handlers': ['file_errors', 'file_warnings', 'file_info'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+        'interaction': {
+            'handlers': ['file_errors', 'file_warnings', 'file_info'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+        'api': {
+            'handlers': ['file_errors', 'file_warnings', 'file_info'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+        'core': {
+            'handlers': ['file_errors', 'file_warnings', 'file_info'],
+            'level': 'INFO',
             'propagate': False,
         },
     },

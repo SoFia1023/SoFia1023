@@ -1,11 +1,21 @@
-from typing import Dict, Any, List, Optional, Union, Type
+import logging
 import re
+from typing import Dict, Any, List, Optional, Union, Type
+
 from django import forms
 from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
 from django.core.validators import FileExtensionValidator
+
+from core.logging_utils import get_logger, log_user_activity
+
+# Get a logger for this module
+logger = get_logger(__name__)
+from django.contrib.auth import authenticate
 from .models import CustomUser
 
 class CustomUserCreationForm(UserCreationForm):
+    """Form for creating new users with enhanced validation and logging."""
+    
     error_messages = {
         'password_mismatch': "The two password fields didn't match.",
         'username_exists': "This username is already taken.",
@@ -95,9 +105,58 @@ class CustomUserCreationForm(UserCreationForm):
         email = self.cleaned_data.get('email')
         
         if email and CustomUser.objects.filter(email=email).exists():
+            # Log duplicate email attempt
+            logger.warning(
+                f"Registration attempt with duplicate email: {email}",
+                extra={
+                    'email': email,
+                    'action': 'registration_failed',
+                    'reason': 'duplicate_email'
+                }
+            )
             raise forms.ValidationError(self.error_messages['email_exists'], code='email_exists')
             
         return email
+        
+    def save(self, commit: bool = True) -> Any:
+        """
+        Save the form data to create a new user.
+        
+        Args:
+            commit: Whether to save the model instance to the database
+            
+        Returns:
+            The saved user instance
+        """
+        user = super().save(commit=False)
+        user.set_password(self.cleaned_data["password1"])
+        
+        if commit:
+            user.save()
+            
+            # Log user registration
+            logger.info(
+                f"New user registered: {user.username}",
+                extra={
+                    'user_id': user.id,
+                    'username': user.username,
+                    'email': user.email,
+                    'action': 'user_registration'
+                }
+            )
+            
+            # Log user activity
+            log_user_activity(
+                logger=logger,
+                user_id=user.id,
+                action="account_created",
+                details={
+                    'username': user.username,
+                    'email': user.email
+                }
+            )
+            
+        return user
 
 
 class CustomUserLoginForm(AuthenticationForm):
@@ -140,24 +199,82 @@ class CustomUserLoginForm(AuthenticationForm):
             if self.user_cache is None:
                 # Check if the user exists but password is wrong
                 if CustomUser.objects.filter(username=username).exists():
+                    # Log failed login with incorrect password
+                    logger.warning(
+                        f"Failed login attempt for username: {username} (incorrect password)",
+                        extra={
+                            'username': username,
+                            'action': 'login_failed',
+                            'reason': 'incorrect_password'
+                        }
+                    )
                     raise forms.ValidationError(
                         "The password you entered is incorrect. Please try again.",
                         code='incorrect_password'
                     )
                 else:
+                    # Log failed login with non-existent user
+                    logger.warning(
+                        f"Failed login attempt for non-existent username: {username}",
+                        extra={
+                            'username': username,
+                            'action': 'login_failed',
+                            'reason': 'user_not_found'
+                        }
+                    )
                     raise forms.ValidationError(
                         self.error_messages['invalid_login'],
                         code='invalid_login'
                     )
             elif not self.user_cache.is_active:
+                # Log failed login for inactive account
+                logger.warning(
+                    f"Login attempt for inactive account: {username}",
+                    extra={
+                        'username': username,
+                        'user_id': self.user_cache.id,
+                        'action': 'login_failed',
+                        'reason': 'account_inactive'
+                    }
+                )
                 raise forms.ValidationError(
                     self.error_messages['inactive'],
                     code='inactive'
+                )
+            else:
+                # Log successful login
+                logger.info(
+                    f"Successful login for user: {username}",
+                    extra={
+                        'username': username,
+                        'user_id': self.user_cache.id,
+                        'action': 'login_success'
+                    }
+                )
+                
+                # Log user activity
+                log_user_activity(
+                    logger=logger,
+                    user_id=self.user_cache.id,
+                    action="user_login",
+                    details={
+                        'username': username
+                    }
                 )
         return self.cleaned_data
 
 
 class UserProfileForm(forms.ModelForm):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Store original values for comparison in save method
+        if self.instance and self.instance.pk:
+            self.initial_data = {
+                'email': self.instance.email,
+                'first_name': self.instance.first_name,
+                'last_name': self.instance.last_name,
+                'bio': self.instance.bio
+            }
     """
     Form for updating user profile information.
     """
@@ -262,6 +379,84 @@ class UserProfileForm(forms.ModelForm):
         if profile_picture:
             # Check file size (5MB limit)
             if profile_picture.size > 5 * 1024 * 1024:  # 5MB in bytes
+                logger.warning(
+                    f"User {self.instance.username} attempted to upload oversized profile picture",
+                    extra={
+                        'user_id': self.instance.id,
+                        'username': self.instance.username,
+                        'file_size': profile_picture.size,
+                        'max_size': 5 * 1024 * 1024,
+                        'action': 'profile_picture_upload_failed'
+                    }
+                )
                 raise forms.ValidationError('Profile picture size should not exceed 5MB.')
                 
         return profile_picture
+        
+    def save(self, commit: bool = True) -> Any:
+        """
+        Save the form data to the model instance.
+        
+        Args:
+            commit: Whether to save the model instance to the database
+            
+        Returns:
+            The saved user instance
+        """
+        user = self.instance
+        
+        # Track which fields were updated
+        updated_fields = []
+        
+        # Compare with initial values to determine what changed
+        if hasattr(self, 'initial_data'):
+            if user.email != self.cleaned_data['email']:
+                updated_fields.append('email')
+                
+            if user.first_name != self.cleaned_data['first_name']:
+                updated_fields.append('first_name')
+                
+            if user.last_name != self.cleaned_data['last_name']:
+                updated_fields.append('last_name')
+                
+            if user.bio != self.cleaned_data['bio']:
+                updated_fields.append('bio')
+        
+        # Update the user instance with form data
+        user.email = self.cleaned_data['email']
+        user.first_name = self.cleaned_data['first_name']
+        user.last_name = self.cleaned_data['last_name']
+        user.bio = self.cleaned_data['bio']
+        
+        # Only update profile picture if a new one was provided
+        if self.cleaned_data.get('profile_picture'):
+            user.profile_picture = self.cleaned_data['profile_picture']
+            updated_fields.append('profile_picture')
+            
+        if commit:
+            user.save()
+            
+            # Only log if fields were actually updated
+            if updated_fields:
+                # Log profile update
+                logger.info(
+                    f"User {user.username} updated profile fields: {', '.join(updated_fields)}",
+                    extra={
+                        'user_id': user.id,
+                        'username': user.username,
+                        'updated_fields': updated_fields,
+                        'action': 'profile_update'
+                    }
+                )
+                
+                # Log user activity
+                log_user_activity(
+                    logger=logger,
+                    user_id=user.id,
+                    action="profile_updated",
+                    details={
+                        'updated_fields': updated_fields
+                    }
+                )
+            
+        return user

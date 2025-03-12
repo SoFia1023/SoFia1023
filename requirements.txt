@@ -21,6 +21,7 @@ hiredis>=2.2.3  # C parser for Redis
 
 # Development tools
 django-debug-toolbar>=4.2.0  # Debug toolbar for development
+colorlog>=6.7.0  # Colored console logging for development
 
 # Testing
 pytest>=7.4.0  # Testing framework

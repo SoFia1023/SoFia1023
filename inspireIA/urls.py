@@ -33,7 +33,8 @@ urlpatterns: List[Union[URLPattern, URLResolver]] = [
     # API app
     path('api/', include('api.urls')),
     
-
+    # Core app - includes utilities and demos
+    path('core/', include('core.urls', namespace='core')),
 ]
 
 # Serve media files in development

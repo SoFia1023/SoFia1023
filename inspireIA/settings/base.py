@@ -133,37 +133,157 @@ LOGIN_URL = '/login/'
 LOGIN_REDIRECT_URL = '/'
 
 # Logging configuration
+# Ensure logs directory exists
+os.makedirs(os.path.join(BASE_DIR, 'logs'), exist_ok=True)
+
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,
     'formatters': {
         'verbose': {
-            'format': '{levelname} {asctime} {module} {message}',
+            'format': '{levelname} {asctime} {name} {module} {process:d} {thread:d} {message}',
             'style': '{',
+            'datefmt': '%Y-%m-%d %H:%M:%S',
         },
         'simple': {
-            'format': '{levelname} {message}',
+            'format': '{levelname} {asctime} {message}',
             'style': '{',
+            'datefmt': '%Y-%m-%d %H:%M:%S',
+        },
+        'json': {
+            'format': '{\'time\':\'{asctime}\', \'level\':\'{levelname}\', \'name\':\'{name}\', \'module\':\'{module}\', \'message\':\'{message}\'}',
+            'style': '{',
+            'datefmt': '%Y-%m-%d %H:%M:%S',
+        },
+    },
+    'filters': {
+        'require_debug_true': {
+            '()': 'django.utils.log.RequireDebugTrue',
+        },
+        'require_debug_false': {
+            '()': 'django.utils.log.RequireDebugFalse',
         },
     },
     'handlers': {
         'console': {
             'level': 'INFO',
             'class': 'logging.StreamHandler',
-            'formatter': 'verbose',
+            'formatter': 'simple',
         },
-        'file': {
+        'file_general': {
             'level': 'INFO',
-            'class': 'logging.FileHandler',
+            'class': 'logging.handlers.RotatingFileHandler',
+            'filename': os.path.join(BASE_DIR, 'logs', 'general.log'),
+            'formatter': 'verbose',
+            'maxBytes': 10485760,  # 10 MB
+            'backupCount': 10,
+        },
+        'file_errors': {
+            'level': 'ERROR',
+            'class': 'logging.handlers.RotatingFileHandler',
+            'filename': os.path.join(BASE_DIR, 'logs', 'errors.log'),
+            'formatter': 'verbose',
+            'maxBytes': 10485760,  # 10 MB
+            'backupCount': 10,
+        },
+        'file_security': {
+            'level': 'INFO',
+            'class': 'logging.handlers.RotatingFileHandler',
+            'filename': os.path.join(BASE_DIR, 'logs', 'security.log'),
+            'formatter': 'verbose',
+            'maxBytes': 10485760,  # 10 MB
+            'backupCount': 10,
+        },
+        'file_requests': {
+            'level': 'INFO',
+            'class': 'logging.handlers.RotatingFileHandler',
             'filename': os.path.join(BASE_DIR, 'logs', 'requests.log'),
             'formatter': 'verbose',
+            'maxBytes': 10485760,  # 10 MB
+            'backupCount': 10,
+        },
+        'file_db': {
+            'level': 'WARNING',
+            'class': 'logging.handlers.RotatingFileHandler',
+            'filename': os.path.join(BASE_DIR, 'logs', 'db.log'),
+            'formatter': 'verbose',
+            'maxBytes': 10485760,  # 10 MB
+            'backupCount': 5,
+        },
+        'mail_admins': {
+            'level': 'ERROR',
+            'class': 'django.utils.log.AdminEmailHandler',
+            'filters': ['require_debug_false'],
+            'include_html': True,
         },
     },
     'loggers': {
-        'inspireIA.request': {
-            'handlers': ['console', 'file'],
+        # Root logger
+        '': {
+            'handlers': ['console', 'file_general', 'file_errors'],
             'level': 'INFO',
-            'propagate': True,
+        },
+        # Django loggers
+        'django': {
+            'handlers': ['console', 'file_general'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+        'django.request': {
+            'handlers': ['file_requests', 'mail_admins'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+        'django.server': {
+            'handlers': ['file_requests'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+        'django.db.backends': {
+            'handlers': ['file_db'],
+            'level': 'WARNING',
+            'propagate': False,
+        },
+        'django.security': {
+            'handlers': ['file_security', 'mail_admins'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+        # Application loggers
+        'inspireIA': {
+            'handlers': ['console', 'file_general'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+        'inspireIA.request': {
+            'handlers': ['console', 'file_requests'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+        'catalog': {
+            'handlers': ['console', 'file_general'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+        'users': {
+            'handlers': ['console', 'file_general'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+        'interaction': {
+            'handlers': ['console', 'file_general'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+        'api': {
+            'handlers': ['console', 'file_general'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+        'core': {
+            'handlers': ['console', 'file_general'],
+            'level': 'INFO',
+            'propagate': False,
         },
     },
 }
