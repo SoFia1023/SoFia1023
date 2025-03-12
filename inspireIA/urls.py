@@ -11,12 +11,16 @@ from catalog.views.home import home
 from django.conf import settings
 from django.conf.urls.static import static
 from .admin import admin_site
+from core.views import service_worker
 
 # Type hint for URL patterns
 urlpatterns: List[Union[URLPattern, URLResolver]] = [
     # Admin sites
     path('admin/', admin.site.urls),  # Default admin site (for backward compatibility)
     path('inspire-admin/', admin_site.urls, name='inspire_admin'),  # Custom admin site
+    
+    # Service worker at root level
+    path('service-worker.js', service_worker, name='service_worker'),
     
     # Home page
     path('', home, name='home'),

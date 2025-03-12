@@ -1,11 +1,15 @@
-from django.shortcuts import render
+"""
+Service worker view module.
+
+This module contains a view to serve the service-worker.js file from the root of the site.
+"""
 from django.http import HttpRequest, HttpResponse
 import os
 from django.conf import settings
 from django.views.decorators.cache import cache_control
 from django.views.decorators.http import require_GET
+from typing import Any
 
-# Create your views here.
 
 @require_GET
 @cache_control(max_age=60 * 60 * 24, immutable=True, public=True)  # Cache for 24 hours
