@@ -83,6 +83,10 @@ DATABASES: Dict[str, Dict[str, Any]] = {
     }
 }
 
+# Security settings
+# Salt for encryption key derivation - should be set in environment variables
+ENCRYPTION_KEY_SALT = get_env_value('ENCRYPTION_KEY_SALT', None)
+
 # Password validation
 AUTH_PASSWORD_VALIDATORS: List[Dict[str, str]] = [
     {

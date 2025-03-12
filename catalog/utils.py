@@ -12,9 +12,8 @@ from typing import Dict, Any, List, Optional, Union
 # Import for type annotation
 from typing import TYPE_CHECKING
 
-# Get API keys from environment variables (or set defaults for demo)
-OPENAI_API_KEY = os.environ.get('OPENAI_API_KEY', '')
-HUGGINGFACE_API_KEY = os.environ.get('HUGGINGFACE_API_KEY', '')
+# Import secure API key management
+from core.security import get_api_key
 
 class AIService:
     """Service class for handling AI API interactions."""
@@ -31,14 +30,17 @@ class AIService:
         Returns:
             dict: Response with success status and data/error
         """
+        # Get API key securely
+        api_key = get_api_key('OPENAI_API_KEY')
+        
         # If no API key set, return a simulated response
-        if not OPENAI_API_KEY:
+        if not api_key:
             return AIService.simulate_ai_response("openai", prompt)
         
         try:
             headers = {
                 "Content-Type": "application/json",
-                "Authorization": f"Bearer {OPENAI_API_KEY}"
+                "Authorization": f"Bearer {api_key}"
             }
             
             data = {
@@ -85,14 +87,17 @@ class AIService:
         Returns:
             dict: Response with success status and data/error
         """
+        # Get API key securely
+        api_key = get_api_key('HUGGINGFACE_API_KEY')
+        
         # If no API key set, return a simulated response
-        if not HUGGINGFACE_API_KEY:
+        if not api_key:
             return AIService.simulate_ai_response("huggingface", prompt)
         
         try:
             API_URL = f"https://api-inference.huggingface.co/models/{model}"
             headers = {
-                "Authorization": f"Bearer {HUGGINGFACE_API_KEY}"
+                "Authorization": f"Bearer {api_key}"
             }
             
             payload = {
@@ -272,8 +277,8 @@ class AIService:
         model = service_config.get('api_model', '')
         
         # Check if API keys are available
-        has_openai_key = bool(OPENAI_API_KEY)
-        has_huggingface_key = bool(HUGGINGFACE_API_KEY)
+        has_openai_key = bool(get_api_key('OPENAI_API_KEY'))
+        has_huggingface_key = bool(get_api_key('HUGGINGFACE_API_KEY'))
         
         # Use real API if keys are available, otherwise use simulation
         try:

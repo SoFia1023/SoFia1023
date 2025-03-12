@@ -128,9 +128,8 @@ if REDIS_URL:
             "Install it with: pip install django-redis"
         )
 
-# API Keys for production services
-OPENAI_API_KEY = get_env_value('OPENAI_API_KEY', '')
-HUGGINGFACE_API_KEY = get_env_value('HUGGINGFACE_API_KEY', '')
+# API Keys should be stored in environment variables only
+# Do not store API keys in settings files
 
 # Configure logging for production
 LOGGING = {

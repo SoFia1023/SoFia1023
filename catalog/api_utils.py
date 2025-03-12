@@ -4,6 +4,9 @@ import os
 from typing import Dict, Any, Optional, Union
 from dotenv import load_dotenv
 
+# Import secure API key management
+from core.security import get_api_key
+
 # Load environment variables from .env file
 load_dotenv()
 
@@ -18,12 +21,13 @@ def call_openai_api(prompt: str, max_tokens: int = 100) -> Dict[str, Any]:
     Returns:
         dict: Response from the API or error message
     """
-    api_key = os.getenv('OPENAI_API_KEY')
+    # Get API key securely
+    api_key = get_api_key('OPENAI_API_KEY')
     
     if not api_key:
         return {
             'success': False,
-            'error': 'API key not found. Please set OPENAI_API_KEY in .env file.'
+            'error': 'API key not found. Please set OPENAI_API_KEY in environment variables.'
         }
     
     headers = {
@@ -74,12 +78,13 @@ def call_huggingface_api(prompt: str, model: str = "google/flan-t5-small") -> Di
     Returns:
         dict: Response from the API or error message
     """
-    api_key = os.getenv('HUGGINGFACE_API_KEY')
+    # Get API key securely
+    api_key = get_api_key('HUGGINGFACE_API_KEY')
     
     if not api_key:
         return {
             'success': False,
-            'error': 'API key not found. Please set HUGGINGFACE_API_KEY in .env file.'
+            'error': 'API key not found. Please set HUGGINGFACE_API_KEY in environment variables.'
         }
     
     headers = {

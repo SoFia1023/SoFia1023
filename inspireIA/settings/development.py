@@ -62,6 +62,5 @@ LOGGING: Dict[str, Any] = {
     },
 }
 
-# API Keys for development (override in .env for your own keys)
-OPENAI_API_KEY = get_env_value('OPENAI_API_KEY', '')
-HUGGINGFACE_API_KEY = get_env_value('HUGGINGFACE_API_KEY', '')
+# API Keys should be stored in environment variables only
+# Do not store API keys in settings files
