@@ -4,7 +4,7 @@
 
 > *Empowering students and educators through intelligent technology discovery*
 
-[![Django](https://img.shields.io/badge/Django-4.2+-green.svg)](https://www.djangoproject.com/)
+[![Django](https://img.shields.io/badge/Django-5.1+-green.svg)](https://www.djangoproject.com/)
 [![Python](https://img.shields.io/badge/Python-3.9+-blue.svg)](https://www.python.org/)
 [![Bootstrap](https://img.shields.io/badge/Bootstrap-5.3-purple.svg)](https://getbootstrap.com/)
 [![License](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
@@ -14,18 +14,21 @@
 
 ## ✨ Overview
 
-Inspire AI is a web application designed to help students and teachers discover, access, search, and interact with Artificial Intelligence tools. The project is part of "Proyecto Integrador 1" at EAFIT University. It provides a centralized platform for AI tool discovery, comparison, and interaction through chat interfaces.
+Inspire AI is a comprehensive web application designed to help students and teachers discover, access, search, and interact with Artificial Intelligence tools. The project is part of "Proyecto Integrador 1" at EAFIT University. It provides a centralized platform for AI tool discovery, comparison, and interaction through chat interfaces, with a focus on education and research applications.
 
 ![Project Banner](https://img.shields.io/badge/EAFIT-Proyecto%20Integrador%201-orange?style=for-the-badge)
 
 ## 🎯 Main Objectives
 
-- Provide a centralized catalog of AI tools
-- Facilitate searching and filtering tools by category and functionality
-- Offer detailed information about each tool
+- Provide a centralized catalog of AI tools with comprehensive information
+- Facilitate searching and filtering tools by category, pricing, and functionality
+- Offer detailed information about each tool with comparison capabilities
 - Allow interaction with AI tools through integrated chat interfaces
-- Enable users to save favorite tools and prompts
+- Enable users to save favorite tools and prompts for quick access
 - Provide conversation history, sharing, and export functionality
+- Create a responsive, accessible interface that works across all devices
+- Implement a secure authentication system with role-based permissions
+- Offer analytics and insights on tool usage and popularity
 
 ## 📂 Modular Code Structure
 
@@ -33,9 +36,18 @@ The project follows a modular code organization pattern to improve maintainabili
 
 ### View Organization
 
-- **Modular Views**: Views are organized into separate modules based on functionality
+- **Modular Views**: Views are organized into separate modules based on functionality (e.g., `catalog/views/catalog.py`, `catalog/views/ai_tools.py`)
 - **Clear Imports**: Each app's `__init__.py` file exports all necessary views for URL routing
 - **Centralized Constants**: Common constants like `CATEGORIES` are defined in dedicated files
+- **Class-Based Views**: Extensive use of Django's class-based views with mixins for code reuse
+- **Function-Based Alternatives**: Simpler function-based views provided as alternatives where appropriate
+
+### Model Organization
+
+- **Clear Relationships**: Models have well-defined relationships with appropriate foreign keys
+- **Type Hints**: All models use Python type hints for better code completion and error detection
+- **Comprehensive Docstrings**: Detailed documentation for each model and its fields
+- **Custom Managers**: Where needed, models have custom managers for common query operations
 
 ### Benefits of Modular Structure
 
@@ -44,8 +56,12 @@ The project follows a modular code organization pattern to improve maintainabili
 - **Easier Collaboration**: Team members can work on different modules simultaneously
 - **Simplified Testing**: Isolated modules are easier to test
 - **Clearer Dependencies**: Import structure clearly shows dependencies between components
+- **Scalability**: New features can be added without disrupting existing functionality
+- **Reusability**: Common patterns can be extracted into mixins and utility functions
 
 ## 🚀 Features Highlight
+
+Inspire AI offers a comprehensive set of features designed to enhance the discovery and use of AI tools:
 
 ## 🧭 URL Patterns and Routing
 
@@ -127,6 +143,11 @@ The project follows these URL naming conventions:
 - **Smart Recommendations**: Personalized AI tool suggestions based on user history and preferences
 - **Interactive Filters**: Dynamic filtering system with real-time results update
 - **Visual Categories**: Intuitive category organization with visual indicators
+- **Sorting Options**: Sort tools by popularity, name, or newest additions
+- **Pricing Filters**: Filter tools by pricing model (free or paid)
+- **Comparison View**: Side-by-side comparison of multiple AI tools
+- **Detailed Tool Pages**: Comprehensive information about each tool with usage examples
+- **Related Tools**: Suggestions for similar or complementary tools
 
 ### 💬 Conversational AI Integration
 
@@ -135,6 +156,11 @@ The project follows these URL naming conventions:
 - **Context Awareness**: Maintains conversation context across sessions
 - **Model Selection**: Switch between different AI models within the same tool
 - **Smart Routing**: Automatically routes messages to the most appropriate AI tool based on content analysis
+- **Conversation History**: Browse, search, and continue previous conversations
+- **Favorite Prompts**: Save and reuse effective prompts for different AI tools
+- **Export Options**: Download conversations in multiple formats (JSON, TXT, CSV)
+- **Sharing Capabilities**: Generate shareable links for conversations with privacy controls
+- **API Integration**: Support for OpenAI, Hugging Face, and custom API integrations
 
 ### 👤 User Experience
 
@@ -142,6 +168,12 @@ The project follows these URL naming conventions:
 - **Dark/Light Theme**: UI theme preference with automatic system detection
 - **Responsive Design**: Optimized experience on desktop, tablet, and mobile devices
 - **Accessibility Focus**: WCAG compliant interface with keyboard navigation support
+- **Progressive Web App**: Installable on mobile devices with offline capabilities
+- **Performance Optimization**: Fast loading times with optimized assets
+- **Intuitive Navigation**: Clear information architecture with breadcrumbs
+- **Feedback System**: In-app notifications and status messages
+- **User Onboarding**: Guided introduction for new users
+- **Cross-Browser Support**: Works consistently across all modern browsers
 
 ### 🔄 Collaboration & Sharing
 
@@ -149,16 +181,30 @@ The project follows these URL naming conventions:
 - **Collaboration Spaces**: Create shared workspaces for team-based tool exploration
 - **Export Options**: Download conversations in multiple formats (JSON, TXT, CSV)
 - **Embedding Support**: Embed chat widgets or tool recommendations in external sites
+- **Privacy Controls**: Granular control over what information is shared
+- **Expiring Links**: Set time limits for shared conversation access
+- **Read-Only Mode**: Share conversations without allowing modifications
+- **Team Features**: Special features for educational institutions and research teams
+- **Integration Options**: Connect with learning management systems
+- **Citation Generation**: Create academic citations for AI-generated content
 
 ## 🛠️ Technologies
 
-- **Backend**: Django (Python)
-- **Frontend**: HTML, CSS, JavaScript, Bootstrap 5.3
+- **Backend**: Django 5.1+ (Python 3.9+)
+- **Frontend**: HTML5, CSS3, JavaScript (ES6+), Bootstrap 5.3
 - **Database**: SQLite (development), PostgreSQL (production)
 - **AI Integrations**: OpenAI API, Hugging Face API, Custom API integrations
 - **Authentication**: Django authentication system with custom user model
 - **Logging**: Custom request logging middleware for tracking user interactions
 - **Monitoring**: Sentry for error tracking and performance monitoring
+- **Caching**: Redis for performance optimization
+- **Task Queue**: Celery for background processing
+- **Testing**: pytest for automated testing
+- **CI/CD**: GitHub Actions for continuous integration and deployment
+- **Containerization**: Docker and Docker Compose
+- **Version Control**: Git with GitHub
+- **Code Quality**: Black, isort, flake8 for code formatting and linting
+- **Documentation**: Markdown with comprehensive project documentation
 
 ## 📂 Project Structure
 
@@ -173,9 +219,27 @@ ProyectoIntegrador1/
 │   │       ├── css/          # Catalog-specific stylesheets
 │   │       └── js/           # Catalog-specific JavaScript
 │   ├── templates/            # HTML templates
-│   │   ├── base.html         # Base template for the entire application
 │   │   └── catalog/          # Catalog-specific templates
-│   ├── management/           # Custom management commands
+│   │       ├── catalog.html  # Main catalog listing page
+│   │       ├── PresentationAI.html # AI tool detail page
+│   │       ├── compare.html  # Tool comparison page
+│   │       └── compare_select.html # Tool selection for comparison
+│   ├── management/
+│   │   └── commands/         # Custom management commands
+│   │       └── populate_ai_tools.py # Command to populate AI tools
+│   ├── views/                # View modules
+│   │   ├── __init__.py       # View imports
+│   │   ├── ai_tools.py       # AI tool detail views
+│   │   ├── auth.py           # Authentication views
+│   │   ├── catalog.py        # Catalog listing views
+│   │   ├── home.py           # Homepage views
+│   │   └── profile.py        # User profile views
+│   ├── models.py             # Database models
+│   ├── urls.py               # URL patterns
+│   ├── admin.py              # Admin site configuration
+│   ├── apps.py               # App configuration
+│   └── templatetags/         # Custom template tags
+│       └── catalog_extras.py # Catalog-specific template tags
 │   │   └── commands/         # Command implementations
 │   ├── views/                # Modular views
 │   │   ├── __init__.py      # View exports
@@ -258,11 +322,71 @@ ProyectoIntegrador1/
 The core model for storing information about AI tools:
 
 ```python
-class AITool(models.Model):
-    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    name = models.CharField(max_length=255)
-    provider = models.CharField(max_length=255)
-    endpoint = models.URLField()
+├── core/                    # Core functionality shared across apps
+│   ├── mixins/              # Reusable view mixins
+│   │   ├── __init__.py      # Mixin imports
+│   │   ├── pagination.py    # Pagination mixins
+│   │   └── filtering.py     # Filtering mixins
+│   ├── middleware/          # Custom middleware
+│   │   └── logging.py       # Request logging middleware
+│   ├── templatetags/        # Global template tags
+│   └── utils/               # Utility functions
+│       ├── formatting.py    # Text formatting utilities
+│       └── validation.py    # Data validation utilities
+│
+├── interaction/             # AI tool interaction functionality
+│   ├── migrations/          # Database migrations
+│   ├── static/              # Interaction-specific static files
+│   ├── templates/           # Interaction templates
+│   │   └── interaction/     # Chat and interaction templates
+│   ├── views/               # View modules
+│   │   ├── chat.py          # Chat interface views
+│   │   └── sharing.py       # Conversation sharing views
+│   ├── models.py            # Conversation and message models
+│   ├── urls.py              # URL patterns
+│   └── admin.py             # Admin site configuration
+│
+├── users/                   # User management functionality
+│   ├── migrations/          # Database migrations
+│   ├── templates/           # User-related templates
+│   │   └── users/           # Authentication templates
+│   ├── forms.py             # User forms
+│   ├── models.py            # Custom user model
+│   ├── urls.py              # URL patterns
+│   └── admin.py             # Admin site configuration
+│
+├── static/                  # Global static files
+│   ├── css/                 # Global CSS
+│   │   ├── base.css         # Base styles
+│   │   └── variables.css    # CSS variables
+│   ├── js/                  # Global JavaScript
+│   │   ├── main.js          # Main JavaScript file
+│   │   └── utils.js         # Utility functions
+│   └── images/              # Global images
+│
+├── templates/               # Global templates
+│   ├── base.html            # Base template
+│   ├── navbar.html          # Navigation bar
+│   └── footer.html          # Footer template
+│
+├── docs/                    # Project documentation
+│   ├── 01_project_overview.md # Project overview
+│   ├── 02_database_models.md # Database models documentation
+│   ├── 03_core_apps.md      # Core apps documentation
+│   └── 04_project_configuration.md # Configuration docs
+│
+├── inspireIA/              # Project configuration
+│   ├── settings.py         # Project settings
+│   ├── urls.py             # Main URL configuration
+│   ├── wsgi.py             # WSGI configuration
+│   └── asgi.py             # ASGI configuration
+│
+├── media/                  # User-uploaded files
+├── manage.py               # Django management script
+├── requirements.txt        # Python dependencies
+├── .gitignore              # Git ignore file
+└── README.md               # Project readme
+```
     category = models.CharField(max_length=100)
     description = models.TextField()
     popularity = models.IntegerField()
@@ -385,11 +509,78 @@ def route_message_to_ai_tool(message_content):
 Users can export their conversations in multiple formats:
 
 ```python
-def format_conversation_for_download(conversation, format_type='json'):
-    """
-    Format a conversation for download in the specified format.
-    
-    Supports JSON, TXT, and CSV formats.
+## 🚀 Getting Started
+
+### Prerequisites
+
+- Python 3.9 or higher
+- pip (Python package manager)
+- Git
+
+### Installation
+
+1. Clone the repository
+
+```bash
+git clone https://github.com/Mateoloperaortiz/ProyectoIntegrador1.git
+cd ProyectoIntegrador1
+```
+
+2. Create a virtual environment
+
+```bash
+python -m venv venv
+
+# On Windows
+venv\Scripts\activate
+
+# On macOS/Linux
+source venv/bin/activate
+```
+
+3. Install dependencies
+
+```bash
+pip install -r requirements.txt
+```
+
+4. Set up environment variables
+
+Create a `.env` file in the root directory with the following variables:
+
+```
+DEBUG=True
+SECRET_KEY=your_secret_key
+DATABASE_URL=sqlite:///db.sqlite3
+OPENAI_API_KEY=your_openai_api_key
+HUGGINGFACE_API_KEY=your_huggingface_api_key
+```
+
+5. Run migrations
+
+```bash
+python manage.py migrate
+```
+
+6. Create a superuser
+
+```bash
+python manage.py createsuperuser
+```
+
+7. Populate the database with sample AI tools
+
+```bash
+python manage.py populate_ai_tools
+```
+
+8. Run the development server
+
+```bash
+python manage.py runserver
+```
+
+9. Access the application at http://127.0.0.1:8000/
     """
     # Format conversation based on the requested format type
     # Return formatted content, content type, and file extension
@@ -540,11 +731,34 @@ No need to set `DJANGO_SETTINGS_MODULE` manually as the project handles this aut
 ### AI Tool Catalog
 
 - Comprehensive AI tool listings with detailed information
-- Search and filtering by category, popularity, and features
-- Tool comparison functionality
-- Favorite tools management
-- Trending and recommended tools sections
-- Rating and review system
+## 🧪 Testing
+
+### Running Tests
+
+```bash
+python -m pytest
+```
+
+### Test Coverage
+
+```bash
+python -m pytest --cov=.
+```
+
+## 📚 Documentation
+
+Comprehensive documentation is available in the `docs/` directory:
+
+- [Project Overview](docs/01_project_overview.md)
+- [Database Models](docs/02_database_models.md)
+- [Core Apps](docs/03_core_apps.md)
+- [Project Configuration](docs/04_project_configuration.md)
+- [Features and Technologies](docs/05_features_and_technologies.md)
+- [Logging Guide](docs/logging_guide.md)
+- [Pagination](docs/pagination.md)
+- [Security](docs/security.md)
+- [Settings](docs/settings.md)
+- [URL Patterns](docs/url_patterns.md)
 - Usage statistics and visualizations
 
 ### AI Interaction
@@ -681,11 +895,49 @@ For questions or feedback, please contact:
 
 ## ⚙️ Management Commands
 
+## 🛠️ Development
+
+### Code Formatting
+
+```bash
+# Format code with Black
+black .
+
+# Sort imports with isort
+isort .
+
+# Run linting with flake8
+flake8
+```
+
+### Custom Management Commands
+
 The project includes several custom Django management commands:
 
-### AI Tool Management
-
 - `python manage.py populate_ai_tools` - Populate database with predefined AI tools
+- `python manage.py cleanup_conversations` - Remove old conversations
+- `python manage.py create_test_data` - Create test data for development
+
+## 🤝 Contributing
+
+Contributions are welcome! Please check out our [contributing guidelines](CONTRIBUTING.md).
+
+## 📄 License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## 👥 Team
+
+- Mateo Lopera Ortiz - Project Lead
+- EAFIT University - Proyecto Integrador 1
+
+## 🙏 Acknowledgements
+
+- Django Team for the amazing web framework
+- Bootstrap Team for the frontend framework
+- OpenAI for API integration examples
+- Hugging Face for model hosting and APIs
+- EAFIT University for project guidance and support
 - `python manage.py export_ai_tools` - Export AI tools to JSON
 - `python manage.py import_ai_tools <file>` - Import AI tools from JSON
 - `python manage.py check_api_status` - Verify status of integrated AI services

@@ -8,7 +8,7 @@ app_name = 'catalog'
 urlpatterns: List[Union[URLPattern, URLResolver]] = [
     # Main pages
     path('', views.CatalogView.as_view(), name='catalog'),
-    path('presentation/<uuid:id>/', views.AIToolDetailView.as_view(), name='presentationAI'),
+    path('presentation/<uuid:id>/', views.presentationAI, name='presentationAI'),
     path('compare/', views.compare_tools, name='compare'),
     
     # User authentication

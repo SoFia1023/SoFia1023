@@ -3,6 +3,7 @@ AI Tools views for the catalog app.
 
 This module contains views related to AI tool details and comparisons.
 """
+import uuid
 from typing import Any, Dict, List, Optional
 from django.http import HttpRequest, HttpResponse
 from django.shortcuts import render, get_object_or_404
@@ -21,6 +22,7 @@ class AIToolDetailView(DetailView):
     model = AITool
     template_name = 'catalog/ai_tool_detail.html'
     context_object_name = 'ai_tool'
+    pk_url_kwarg = 'id'  # Match the URL pattern parameter name
     
     def get_context_data(self, **kwargs: Any) -> Dict[str, Any]:
         """
@@ -48,7 +50,7 @@ class AIToolDetailView(DetailView):
         return context
 
 
-def presentationAI(request: HttpRequest, pk: int) -> HttpResponse:
+def presentationAI(request: HttpRequest, id: uuid.UUID) -> HttpResponse:
     """
     View for displaying a presentation-style page for an AI tool.
     
@@ -57,13 +59,13 @@ def presentationAI(request: HttpRequest, pk: int) -> HttpResponse:
     
     Args:
         request: The HTTP request object
-        pk: The primary key of the AI tool
+        id: The UUID of the AI tool
         
     Returns:
         Rendered presentation page
     """
     # Get the AI tool
-    ai_tool = get_object_or_404(AITool, pk=pk)
+    ai_tool = get_object_or_404(AITool, id=id)
     
     # Check if the user has favorited this AI tool
     is_favorite = False
@@ -75,7 +77,7 @@ def presentationAI(request: HttpRequest, pk: int) -> HttpResponse:
         category=ai_tool.category
     ).exclude(id=ai_tool.id)[:4]
     
-    return render(request, 'catalog/presentation.html', {
+    return render(request, 'catalog/PresentationAI.html', {
         'ai_tool': ai_tool,
         'is_favorite': is_favorite,
         'related_tools': related_tools
@@ -114,14 +116,22 @@ def compare_tools(request: HttpRequest) -> HttpResponse:
     
     # Organize features for comparison
     features = [
-        'name', 'provider', 'category', 'is_free', 'pricing_model',
-        'has_api', 'popularity'
+        'name', 'provider', 'category', 'popularity', 'api_type',
+        'api_model', 'is_featured'
     ]
     
     # Create a comparison table
     comparison = {}
     for feature in features:
-        comparison[feature] = [getattr(tool, feature) for tool in tools]
+        # Use a try-except block to handle missing attributes gracefully
+        feature_values = []
+        for tool in tools:
+            try:
+                feature_values.append(getattr(tool, feature))
+            except AttributeError:
+                # If the attribute doesn't exist, use a placeholder value
+                feature_values.append('N/A')
+        comparison[feature] = feature_values
     
     return render(request, 'catalog/compare.html', {
         'tools': tools,

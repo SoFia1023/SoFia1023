@@ -2,7 +2,42 @@
 
 ## Introduction
 
-InspireIA is a comprehensive platform designed to help users discover, compare, and interact with various AI tools. The platform provides a catalog of AI tools, allows users to chat with these tools, save favorite prompts, and share conversations with others.
+InspireIA is a comprehensive platform designed to help users discover, compare, and interact with various AI tools. The platform provides a catalog of AI tools, allows users to chat with these tools, save favorite prompts, and share conversations with others. The project is part of "Proyecto Integrador 1" at EAFIT University, focusing on creating a centralized hub for AI tool discovery and interaction specifically tailored for educational and research purposes.
+
+## Project Vision and Goals
+
+### Vision Statement
+
+To become the leading platform for AI tool discovery and interaction in educational environments, empowering students and educators to leverage AI technologies effectively in their learning and teaching processes.
+
+### Core Goals
+
+1. **Accessibility**: Make AI tools accessible to users with varying levels of technical expertise
+2. **Education**: Provide educational resources about AI tools and their applications
+3. **Curation**: Offer a curated selection of high-quality AI tools relevant to education
+4. **Integration**: Enable seamless interaction with various AI tools through a unified interface
+5. **Community**: Foster a community of AI tool users and developers in educational settings
+6. **Innovation**: Encourage innovative applications of AI in education through example use cases
+
+## Project Architecture
+
+InspireIA follows a modular, component-based architecture based on Django's MVT (Model-View-Template) pattern:
+
+### Architecture Layers
+
+1. **Presentation Layer**: Templates, CSS, JavaScript for user interface
+2. **Application Layer**: Views, URL patterns, forms for business logic
+3. **Data Layer**: Models, managers, migrations for data persistence
+4. **Integration Layer**: API clients, webhooks for external service integration
+5. **Infrastructure Layer**: Settings, middleware, WSGI/ASGI configuration
+
+### Key Architectural Decisions
+
+1. **Modular App Structure**: Separate Django apps for distinct functionality domains
+2. **View Organization**: Views organized in subdirectories by feature area
+3. **Type Hints**: Consistent use of Python type hints throughout the codebase
+4. **Mixins Over Inheritance**: Preference for composition over inheritance using mixins
+5. **Separation of Concerns**: Clear separation between data access, business logic, and presentation
 
 ## Project Structure
 
@@ -181,10 +216,58 @@ inspireIA/
 
 ## Coding Standards
 
-1. **PEP 8**: Python code follows PEP 8 style guide.
-2. **Type Hints**: Type hints are used consistently throughout the codebase.
-3. **Documentation**: Docstrings and comments are used to explain code functionality.
-4. **Testing**: Unit tests are written for critical functionality.
-5. **Code Formatting**: Black is used for code formatting.
-6. **Import Sorting**: isort is used for import sorting.
-7. **Linting**: flake8 is used for linting.
+### Python Code Standards
+
+1. **PEP 8**: Python code follows PEP 8 style guide for consistent formatting
+2. **Type Hints**: Type hints are used consistently throughout the codebase
+3. **Documentation**: Docstrings follow the Google style guide format
+4. **Imports**: Imports are organized using isort with the following sections:
+   - Standard library imports
+   - Third-party library imports
+   - Django imports
+   - Local application imports
+5. **Naming Conventions**:
+   - Classes: CamelCase (e.g., `AITool`, `UserProfile`)
+   - Functions/Methods: snake_case (e.g., `get_tools`, `format_response`)
+   - Variables: snake_case (e.g., `user_id`, `tool_list`)
+   - Constants: UPPER_CASE (e.g., `DEFAULT_TIMEOUT`, `API_VERSION`)
+
+### JavaScript Code Standards
+
+1. **ES6+ Features**: Modern JavaScript features are used throughout
+2. **Function Declarations**: Arrow functions for callbacks, named functions for methods
+3. **Variable Declarations**: `const` by default, `let` when reassignment is needed
+4. **DOM Manipulation**: Vanilla JavaScript with helper functions
+5. **Event Handling**: Event delegation pattern for dynamic elements
+
+### HTML/CSS Standards
+
+1. **Semantic HTML**: Proper use of semantic HTML5 elements
+2. **Accessibility**: WCAG 2.1 AA compliance with proper ARIA attributes
+3. **CSS Organization**: Component-based CSS with BEM naming convention
+4. **Responsive Design**: Mobile-first approach with responsive breakpoints
+5. **CSS Variables**: Use of CSS custom properties for theming
+
+### Testing Standards
+
+1. **Test Coverage**: Minimum 70% test coverage for critical functionality
+2. **Test Organization**: Tests organized by app and feature area
+3. **Fixtures**: Reusable test fixtures for common test scenarios
+4. **Mocking**: External services are mocked in tests
+5. **CI Integration**: Tests run automatically on pull requests
+
+### Documentation Standards
+
+1. **Code Documentation**: Comprehensive docstrings for all functions, classes, and methods
+2. **Project Documentation**: Markdown files in the `docs/` directory
+3. **API Documentation**: OpenAPI/Swagger documentation for API endpoints
+4. **User Documentation**: User guides and tutorials in the project wiki
+5. **Change Documentation**: Detailed commit messages and pull request descriptions
+
+### Version Control Standards
+
+1. **Branching Strategy**: Feature branches with pull requests to main
+2. **Commit Messages**: Conventional Commits format (type: description)
+3. **Code Reviews**: Required for all pull requests
+4. **CI/CD**: Automated testing and deployment pipelines
+5. **Release Management**: Semantic versioning for releases
