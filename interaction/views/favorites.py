@@ -8,6 +8,7 @@ import json
 import uuid
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
+from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from django.http import HttpRequest, HttpResponse, JsonResponse
 from django.shortcuts import render, redirect, get_object_or_404
 from django.views.decorators.http import require_http_methods
@@ -58,7 +59,32 @@ def favorite_prompts(request: HttpRequest, ai_id: Optional[uuid.UUID] = None) ->
         queryset = queryset.filter(ai_tools__id=ai_tool_id)
     
     # Order by creation date
-    prompts = queryset.order_by('-created_at')
+    prompts_list = queryset.order_by('-created_at')
+    
+    # Paginate the prompts list
+    paginator = Paginator(prompts_list, 12)  # Show 12 prompts per page
+    page = request.GET.get('page', 1)
+    
+    try:
+        prompts = paginator.page(page)
+    except PageNotAnInteger:
+        # If page is not an integer, deliver first page
+        prompts = paginator.page(1)
+    except EmptyPage:
+        # If page is out of range, deliver last page of results
+        prompts = paginator.page(paginator.num_pages)
+    
+    # Calculate page range to display (show 5 pages around current page)
+    current_page = prompts.number
+    page_range_start = max(current_page - 2, 1)
+    page_range_end = min(current_page + 2, paginator.num_pages)
+    
+    # Ensure we always show 5 pages if possible
+    if page_range_end - page_range_start < 4 and paginator.num_pages > 4:
+        if page_range_start == 1:
+            page_range_end = min(5, paginator.num_pages)
+        elif page_range_end == paginator.num_pages:
+            page_range_start = max(paginator.num_pages - 4, 1)
     
     # Get all AI tools for the filter dropdown
     ai_tools = AITool.objects.all().order_by('name')
@@ -67,7 +93,12 @@ def favorite_prompts(request: HttpRequest, ai_id: Optional[uuid.UUID] = None) ->
         'prompts': prompts,
         'ai_tools': ai_tools,
         'selected_ai_tool_id': ai_tool_id,
-        'form': form
+        'form': form,
+        'page_obj': prompts,  # For consistent template access
+        'paginator': paginator,
+        'page_range': range(page_range_start, page_range_end + 1),
+        'show_first': page_range_start > 1,
+        'show_last': page_range_end < paginator.num_pages
     })
 
 

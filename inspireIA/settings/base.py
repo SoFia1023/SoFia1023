@@ -58,6 +58,7 @@ TEMPLATES: List[Dict[str, Any]] = [
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
         'DIRS': [
             BASE_DIR / 'inspireIA' / 'templates',
+            BASE_DIR / 'core' / 'templates',
         ],
         'APP_DIRS': True,
         'OPTIONS': {

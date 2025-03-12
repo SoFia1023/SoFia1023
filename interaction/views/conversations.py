@@ -8,6 +8,7 @@ import json
 import uuid
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
+from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from django.http import HttpRequest, HttpResponse, JsonResponse
 from django.shortcuts import render, redirect, get_object_or_404
 from django.urls import reverse
@@ -49,9 +50,34 @@ def conversation_history(request: HttpRequest) -> HttpResponse:
         form = ConversationForm()
     
     # Get the user's conversations
-    conversations = Conversation.objects.filter(
+    conversations_list = Conversation.objects.filter(
         user=request.user
     ).order_by('-updated_at')
+    
+    # Paginate the conversations list
+    paginator = Paginator(conversations_list, 10)  # Show 10 conversations per page
+    page = request.GET.get('page', 1)
+    
+    try:
+        conversations = paginator.page(page)
+    except PageNotAnInteger:
+        # If page is not an integer, deliver first page
+        conversations = paginator.page(1)
+    except EmptyPage:
+        # If page is out of range, deliver last page of results
+        conversations = paginator.page(paginator.num_pages)
+    
+    # Calculate page range to display (show 5 pages around current page)
+    current_page = conversations.number
+    page_range_start = max(current_page - 2, 1)
+    page_range_end = min(current_page + 2, paginator.num_pages)
+    
+    # Ensure we always show 5 pages if possible
+    if page_range_end - page_range_start < 4 and paginator.num_pages > 4:
+        if page_range_start == 1:
+            page_range_end = min(5, paginator.num_pages)
+        elif page_range_end == paginator.num_pages:
+            page_range_start = max(paginator.num_pages - 4, 1)
     
     # Get all AI tools for the form dropdown
     ai_tools = AITool.objects.all().order_by('name')
@@ -59,7 +85,12 @@ def conversation_history(request: HttpRequest) -> HttpResponse:
     return render(request, 'interaction/conversation_history.html', {
         'conversations': conversations,
         'form': form,
-        'ai_tools': ai_tools
+        'ai_tools': ai_tools,
+        'page_obj': conversations,  # For consistent template access
+        'paginator': paginator,
+        'page_range': range(page_range_start, page_range_end + 1),
+        'show_first': page_range_start > 1,
+        'show_last': page_range_end < paginator.num_pages
     })
 
 

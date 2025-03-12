@@ -9,6 +9,7 @@ import uuid
 from django.contrib import messages as django_messages
 from django.contrib.auth import get_user_model
 from django.contrib.auth.decorators import login_required
+from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from django.http import HttpRequest, HttpResponse, JsonResponse
 from django.shortcuts import render, redirect, get_object_or_404
 from django.views.decorators.http import require_http_methods
@@ -494,9 +495,34 @@ def manage_shared_chats(request: HttpRequest) -> HttpResponse:
         Rendered shared chats management page
     """
     # Get all shared chats created by the user
-    shared_chats = SharedChat.objects.filter(
+    shared_chats_list = SharedChat.objects.filter(
         created_by=request.user
     ).order_by('-created_at')
+    
+    # Paginate the shared chats list
+    paginator = Paginator(shared_chats_list, 10)  # Show 10 shared chats per page
+    page = request.GET.get('page', 1)
+    
+    try:
+        shared_chats = paginator.page(page)
+    except PageNotAnInteger:
+        # If page is not an integer, deliver first page
+        shared_chats = paginator.page(1)
+    except EmptyPage:
+        # If page is out of range, deliver last page of results
+        shared_chats = paginator.page(paginator.num_pages)
+    
+    # Calculate page range to display (show 5 pages around current page)
+    current_page = shared_chats.number
+    page_range_start = max(current_page - 2, 1)
+    page_range_end = min(current_page + 2, paginator.num_pages)
+    
+    # Ensure we always show 5 pages if possible
+    if page_range_end - page_range_start < 4 and paginator.num_pages > 4:
+        if page_range_start == 1:
+            page_range_end = min(5, paginator.num_pages)
+        elif page_range_end == paginator.num_pages:
+            page_range_start = max(paginator.num_pages - 4, 1)
     
     # Handle form submission for creating a new shared chat
     if request.method == 'POST':
@@ -555,7 +581,12 @@ def manage_shared_chats(request: HttpRequest) -> HttpResponse:
     return render(request, 'interaction/manage_shared_chats.html', {
         'shared_chats': shared_chats,
         'conversations': conversations,
-        'form': form
+        'form': form,
+        'page_obj': shared_chats,  # For consistent template access
+        'paginator': paginator,
+        'page_range': range(page_range_start, page_range_end + 1),
+        'show_first': page_range_start > 1,
+        'show_last': page_range_end < paginator.num_pages
     })
 
 
