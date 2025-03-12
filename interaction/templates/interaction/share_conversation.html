@@ -13,39 +13,36 @@
                 <div class="card-body">
                     <h6 class="card-subtitle mb-3 text-muted">Sharing "{{ conversation.title }}" with {{ conversation.ai_tool.name }}</h6>
                     
-                    <form method="post">
+                    <form method="post" action="{% url 'interaction:share_conversation_form' conversation_id=conversation.id %}">
+
                         {% csrf_token %}
                         
                         <div class="mb-4">
                             <label class="form-label">Sharing Options</label>
                             <div class="form-check mb-2">
-                                <input class="form-check-input" type="radio" name="share_type" id="sharePublic" value="public" checked>
-                                <label class="form-check-label" for="sharePublic">
+                                <input class="form-check-input" type="checkbox" name="is_public" id="isPublic">
+                                <label class="form-check-label" for="isPublic">
                                     <i class="bi bi-globe me-2"></i> Public Link
                                 </label>
                                 <div class="form-text ms-4">Anyone with the link can view this conversation.</div>
                             </div>
-                            <div class="form-check">
-                                <input class="form-check-input" type="radio" name="share_type" id="sharePrivate" value="private">
-                                <label class="form-check-label" for="sharePrivate">
-                                    <i class="bi bi-person-lock me-2"></i> Share with Specific User
-                                </label>
-                                <div class="form-text ms-4">Only the specified user can view this conversation.</div>
-                            </div>
                         </div>
                         
-                        <div class="mb-4" id="userInputContainer" style="display: none;">
-                            <label for="shared_with" class="form-label">Username to share with</label>
-                            <input type="text" class="form-control" id="shared_with" name="shared_with" placeholder="Enter username">
-                            <div class="form-text">The user must have an account on Inspire AI.</div>
+                        <div class="mb-4" id="recipientContainer">
+                            <label for="recipient" class="form-label">User to share with</label>
+                            <select class="form-control" id="recipient" name="recipient">
+                                <option value="">Select a user</option>
+                                {% for user in users %}
+                                <option value="{{ user.id }}">{{ user.username }}</option>
+                                {% endfor %}
+                            </select>
+                            <div class="form-text">Select a user to share this conversation with. Only required if not public.</div>
                         </div>
                         
-                        <div class="form-check mb-4">
-                            <input class="form-check-input" type="checkbox" name="is_public" id="isPublic">
-                            <label class="form-check-label" for="isPublic">
-                                Make this conversation publicly accessible
-                            </label>
-                            <div class="form-text">If checked, anyone with the link can view this conversation.</div>
+                        <div class="mb-4">
+                            <label for="expiration_days" class="form-label">Expiration (days)</label>
+                            <input type="number" class="form-control" id="expiration_days" name="expiration_days" value="7" min="0" max="365">
+                            <div class="form-text">Number of days until the shared link expires. Use 0 for no expiration.</div>
                         </div>
                         
                         <div class="d-flex justify-content-end mt-4">
@@ -63,25 +60,21 @@
 {% block extra_js %}
 <script>
     document.addEventListener('DOMContentLoaded', function() {
-        const sharePublic = document.getElementById('sharePublic');
-        const sharePrivate = document.getElementById('sharePrivate');
-        const userInputContainer = document.getElementById('userInputContainer');
         const isPublicCheckbox = document.getElementById('isPublic');
+        const recipientContainer = document.getElementById('recipientContainer');
+        const recipientSelect = document.getElementById('recipient');
         
-        // Toggle user input visibility based on share type
+        // Toggle recipient visibility based on is_public checkbox
         function updateFormState() {
-            if (sharePrivate.checked) {
-                userInputContainer.style.display = 'block';
-                isPublicCheckbox.checked = false;
-                isPublicCheckbox.disabled = true;
+            if (isPublicCheckbox.checked) {
+                recipientContainer.style.display = 'none';
+                recipientSelect.value = '';
             } else {
-                userInputContainer.style.display = 'none';
-                isPublicCheckbox.disabled = false;
+                recipientContainer.style.display = 'block';
             }
         }
         
-        sharePublic.addEventListener('change', updateFormState);
-        sharePrivate.addEventListener('change', updateFormState);
+        isPublicCheckbox.addEventListener('change', updateFormState);
         
         // Initial state
         updateFormState();

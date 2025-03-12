@@ -6,6 +6,7 @@ This module contains views related to chatting with AI tools, including direct c
 from typing import Any, Dict, Optional, Union
 import json
 import uuid
+from django.contrib import messages as django_messages
 from django.contrib.auth.decorators import login_required
 from django.http import HttpRequest, HttpResponse, JsonResponse
 from django.shortcuts import render, redirect, get_object_or_404
@@ -15,6 +16,7 @@ from django.utils import timezone
 from catalog.models import AITool
 from catalog.utils import AIService
 from interaction.models import Conversation, Message
+from interaction.forms import MessageForm, ConversationForm
 from interaction.utils import route_message_to_ai_tool
 
 
@@ -35,7 +37,7 @@ def direct_chat(request: HttpRequest) -> HttpResponse:
     # Get the conversation ID from the request, if any
     conversation_id = request.GET.get('conversation_id')
     conversation = None
-    messages = []
+    messages_list = []
     
     if conversation_id:
         try:
@@ -46,20 +48,24 @@ def direct_chat(request: HttpRequest) -> HttpResponse:
             )
             
             # Get the messages for this conversation
-            messages = Message.objects.filter(
+            messages_list = Message.objects.filter(
                 conversation=conversation
             ).order_by('timestamp')
         except (Conversation.DoesNotExist, ValueError):
             # If the conversation doesn't exist or ID is invalid, ignore it
             pass
     
+    # Initialize the message form
+    form = MessageForm()
+    
     # Get all AI tools for the tool selector
     ai_tools = AITool.objects.all().order_by('name')
     
     return render(request, 'interaction/direct_chat.html', {
         'conversation': conversation,
-        'messages': messages,
-        'ai_tools': ai_tools
+        'messages': messages_list,
+        'ai_tools': ai_tools,
+        'form': form
     })
 
 
@@ -85,8 +91,44 @@ def conversation_view(request: HttpRequest, conversation_id: uuid.UUID) -> HttpR
         user=request.user
     )
     
+    # Handle form submission for sending a new message
+    if request.method == 'POST':
+        # Create a new message instance but don't save it yet
+        new_message = Message(conversation=conversation, is_from_user=True)
+        form = MessageForm(request.POST, instance=new_message)
+        
+        if form.is_valid():
+            # Save the user message
+            user_message = form.save()
+            
+            # Get the AI tool for this conversation
+            ai_tool = conversation.ai_tool
+            
+            # Get the AI service for this tool
+            ai_service = AIService(ai_tool)
+            
+            # Get the AI response
+            ai_response = ai_service.get_response(user_message.content)
+            
+            # Save the AI response
+            Message.objects.create(
+                conversation=conversation,
+                content=ai_response,
+                is_from_user=False
+            )
+            
+            # Update the conversation's last activity time
+            conversation.updated_at = timezone.now()
+            conversation.save(update_fields=['updated_at'])
+            
+            # Redirect to avoid form resubmission
+            return redirect('interaction:conversation', conversation_id=conversation_id)
+    else:
+        # Initialize an empty form for GET requests
+        form = MessageForm()
+    
     # Get the messages for this conversation
-    messages = Message.objects.filter(
+    messages_list = Message.objects.filter(
         conversation=conversation
     ).order_by('timestamp')
     
@@ -95,8 +137,9 @@ def conversation_view(request: HttpRequest, conversation_id: uuid.UUID) -> HttpR
     
     return render(request, 'interaction/conversation.html', {
         'conversation': conversation,
-        'messages': messages,
-        'ai_tools': ai_tools
+        'messages': messages_list,
+        'ai_tools': ai_tools,
+        'form': form
     })
 
 
@@ -104,16 +147,16 @@ def conversation_view(request: HttpRequest, conversation_id: uuid.UUID) -> HttpR
 @require_http_methods(["POST"])
 def message_view(request: HttpRequest, conversation_id: Optional[uuid.UUID] = None) -> JsonResponse:
     """
-    View for sending and receiving messages.
+    View for sending and receiving messages via AJAX.
     
-    This view handles sending messages to AI tools and receiving responses.
+    This view handles sending messages to AI tools and receiving responses with validation.
     
     Args:
         request: The HTTP request object
         conversation_id: The UUID of the conversation, if any
         
     Returns:
-        JSON response with the AI's reply
+        JSON response with the AI's reply or validation errors
     """
     user = request.user
     
@@ -127,9 +170,19 @@ def message_view(request: HttpRequest, conversation_id: Optional[uuid.UUID] = No
             'error': 'Invalid JSON data'
         }, status=400)
     
+    # Validate the message
+    errors = {}
     if not user_message:
+        errors['message'] = ['Message cannot be empty.']
+    elif len(user_message) < 2:
+        errors['message'] = ['Message must be at least 2 characters long.']
+    elif len(user_message) > 5000:
+        errors['message'] = ['Message must be less than 5000 characters.']
+    
+    # If there are validation errors, return them
+    if errors:
         return JsonResponse({
-            'error': 'Message cannot be empty'
+            'errors': errors
         }, status=400)
     
     # Get or create the conversation
@@ -163,12 +216,22 @@ def message_view(request: HttpRequest, conversation_id: Optional[uuid.UUID] = No
             title=user_message[:50] + ('...' if len(user_message) > 50 else '')
         )
     
-    # Save the user message
-    Message.objects.create(
+    # Create a new message instance
+    new_message = Message(
         conversation=conversation,
         content=user_message,
         is_from_user=True
     )
+    
+    # Validate the message with our form
+    form = MessageForm(instance=new_message, data={'content': user_message})
+    if not form.is_valid():
+        return JsonResponse({
+            'errors': form.errors
+        }, status=400)
+    
+    # Save the user message
+    user_message_obj = form.save()
     
     # Get the AI tool for this conversation
     ai_tool = conversation.ai_tool
@@ -260,7 +323,7 @@ def chat_selection(request: HttpRequest) -> HttpResponse:
 
 @login_required
 def chat_view(request: HttpRequest, ai_id: Optional[uuid.UUID] = None, 
-              conversation_id: Optional[uuid.UUID] = None) -> HttpResponse:
+               conversation_id: Optional[uuid.UUID] = None) -> HttpResponse:
     """
     View for the chat interface.
     
@@ -277,7 +340,7 @@ def chat_view(request: HttpRequest, ai_id: Optional[uuid.UUID] = None,
     # Initialize variables
     ai_tool = None
     conversation = None
-    messages = []
+    messages_list = []
     
     # If a conversation ID is provided, load that conversation
     if conversation_id:
@@ -287,12 +350,89 @@ def chat_view(request: HttpRequest, ai_id: Optional[uuid.UUID] = None,
             user=request.user
         )
         ai_tool = conversation.ai_tool
-        messages = Message.objects.filter(
+        messages_list = Message.objects.filter(
             conversation=conversation
         ).order_by('timestamp')
-    # If an AI tool ID is provided, load that tool
+        
+        # Handle form submission for sending a new message
+        if request.method == 'POST':
+            # Create a new message instance but don't save it yet
+            new_message = Message(conversation=conversation, is_from_user=True)
+            form = MessageForm(request.POST, instance=new_message)
+            
+            if form.is_valid():
+                # Save the user message
+                user_message = form.save()
+                
+                # Get the AI service for this tool
+                ai_service = AIService(ai_tool)
+                
+                # Get the AI response
+                ai_response = ai_service.get_response(user_message.content)
+                
+                # Save the AI response
+                Message.objects.create(
+                    conversation=conversation,
+                    content=ai_response,
+                    is_from_user=False
+                )
+                
+                # Update the conversation's last activity time
+                conversation.updated_at = timezone.now()
+                conversation.save(update_fields=['updated_at'])
+                
+                # Redirect to avoid form resubmission
+                return redirect('interaction:chat', conversation_id=conversation_id)
+            else:
+                # If the form is invalid, add error messages
+                for field, errors in form.errors.items():
+                    for error in errors:
+                        django_messages.error(request, f"{field.capitalize()}: {error}")
+        else:
+            # Initialize an empty form for GET requests
+            form = MessageForm()
+    # If an AI tool ID is provided, load that tool and create a form for a new conversation
     elif ai_id:
         ai_tool = get_object_or_404(AITool, id=ai_id)
+        form = MessageForm()
+        
+        # Handle form submission for creating a new conversation and sending the first message
+        if request.method == 'POST':
+            # Create a new conversation
+            conversation = Conversation.objects.create(
+                user=request.user,
+                ai_tool=ai_tool,
+                title=request.POST.get('content', '')[:50] + ('...' if len(request.POST.get('content', '')) > 50 else '')
+            )
+            
+            # Create a new message instance but don't save it yet
+            new_message = Message(conversation=conversation, is_from_user=True)
+            form = MessageForm(request.POST, instance=new_message)
+            
+            if form.is_valid():
+                # Save the user message
+                user_message = form.save()
+                
+                # Get the AI service for this tool
+                ai_service = AIService(ai_tool)
+                
+                # Get the AI response
+                ai_response = ai_service.get_response(user_message.content)
+                
+                # Save the AI response
+                Message.objects.create(
+                    conversation=conversation,
+                    content=ai_response,
+                    is_from_user=False
+                )
+                
+                # Redirect to the new conversation
+                return redirect('interaction:chat', conversation_id=conversation.id)
+            else:
+                # If the form is invalid, add error messages
+                for field, errors in form.errors.items():
+                    for error in errors:
+                        django_messages.error(request, f"{field.capitalize()}: {error}")
     # If neither is provided, redirect to the chat selection page
     else:
         return redirect('interaction:chat_selection')
@@ -303,8 +443,9 @@ def chat_view(request: HttpRequest, ai_id: Optional[uuid.UUID] = None,
     return render(request, 'interaction/chat.html', {
         'ai_tool': ai_tool,
         'conversation': conversation,
-        'messages': messages,
-        'ai_tools': ai_tools
+        'messages': messages_list,
+        'ai_tools': ai_tools,
+        'form': form
     })
 
 

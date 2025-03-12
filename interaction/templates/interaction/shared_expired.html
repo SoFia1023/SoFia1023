@@ -1,0 +1,135 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Shared Conversation Expired - Inspire AI{% endblock %}
+
+{% block extra_css %}
+<style>
+    .expired-icon {
+        font-size: 4rem;
+        color: #ffc107;
+        animation: spin 10s linear infinite;
+    }
+    
+    @keyframes spin {
+        0% {
+            transform: rotate(0deg);
+        }
+        100% {
+            transform: rotate(360deg);
+        }
+    }
+    
+    .info-box {
+        background-color: #f8f9fa;
+        border-left: 4px solid #6c757d;
+        padding: 1rem;
+        margin: 1.5rem 0;
+        border-radius: 0.25rem;
+    }
+    
+    .timeline {
+        position: relative;
+        padding-left: 2rem;
+        margin: 2rem 0;
+        list-style: none;
+    }
+    
+    .timeline::before {
+        content: '';
+        position: absolute;
+        left: 0;
+        top: 0;
+        height: 100%;
+        width: 2px;
+        background-color: #dee2e6;
+    }
+    
+    .timeline-item {
+        position: relative;
+        padding-bottom: 1.5rem;
+    }
+    
+    .timeline-item::before {
+        content: '';
+        position: absolute;
+        left: -2rem;
+        top: 0;
+        width: 1rem;
+        height: 1rem;
+        border-radius: 50%;
+        background-color: #6c757d;
+        border: 2px solid #fff;
+    }
+    
+    .timeline-item:last-child {
+        padding-bottom: 0;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card shadow">
+                <div class="card-header bg-warning text-dark">
+                    <h5 class="mb-0"><i class="bi bi-clock-history me-2"></i>Expired Content</h5>
+                </div>
+                <div class="card-body text-center py-5">
+                    <div class="mb-4">
+                        <i class="bi bi-clock-history expired-icon"></i>
+                    </div>
+                    <h1 class="h3 mb-3">This Shared Conversation Has Expired</h1>
+                    <p class="text-muted mb-4">
+                        The shared conversation you're trying to access is no longer available.
+                        It was shared by <strong>{{ shared_by }}</strong> on {{ shared_at|date:"F j, Y" }} 
+                        and expired after {{ expiration_days }} days.
+                    </p>
+                    
+                    <div class="info-box text-start">
+                        <h5><i class="bi bi-info-circle me-2"></i>Timeline</h5>
+                        <ul class="timeline">
+                            <li class="timeline-item">
+                                <strong>Shared on:</strong> {{ shared_at|date:"F j, Y" }}
+                            </li>
+                            <li class="timeline-item">
+                                <strong>Expired on:</strong> {{ expired_at|date:"F j, Y"|default:"Unknown date" }}
+                            </li>
+                            <li class="timeline-item">
+                                <strong>Shared by:</strong> {{ shared_by }}
+                            </li>
+                        </ul>
+                    </div>
+                    
+                    <div class="info-box text-start">
+                        <h5><i class="bi bi-question-circle me-2"></i>What can I do?</h5>
+                        <ul class="mb-0">
+                            <li>Contact <strong>{{ shared_by }}</strong> to request a new shared link</li>
+                            <li>Create your own conversations in your account</li>
+                            <li>Explore other features of Inspire AI</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="mt-4">
+                        <a href="{% url 'home' %}" class="btn btn-primary">
+                            <i class="bi bi-house-door me-2"></i>Go to Homepage
+                        </a>
+                        {% if user.is_authenticated %}
+                        <a href="{% url 'interaction:conversation_history' %}" class="btn btn-outline-secondary ms-2">
+                            <i class="bi bi-chat-dots me-2"></i>My Conversations
+                        </a>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="card-footer text-muted">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <small><i class="bi bi-clock me-1"></i>Expired on: {{ expired_at|date:"F j, Y"|default:"Unknown date" }}</small>
+                        <small><i class="bi bi-person me-1"></i>Shared by: {{ shared_by }}</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

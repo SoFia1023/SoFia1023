@@ -27,6 +27,12 @@ urlpatterns: List[Union[URLPattern, URLResolver]] = [
     path('prompts/<uuid:prompt_id>/delete/', favorites.delete_favorite_prompt, name='delete_favorite_prompt'),
     
     # Sharing URLs
-    path('share/<uuid:conversation_id>/', sharing.share_conversation, name='share_conversation'),
+    path('share/<uuid:conversation_id>/', sharing.share_conversation_form, name='share_conversation_form'),
+    path('share/<uuid:conversation_id>/submit/', sharing.share_conversation, name='share_conversation'),
     path('shared/<str:access_token>/', sharing.view_shared_chat, name='view_shared_chat'),
+    path('shared/conversation/<str:access_token>/', sharing.shared_conversation, name='shared_conversation'),
+    path('shared/manage/', sharing.manage_shared_chats, name='manage_shared_chats'),
+    path('shared/<uuid:shared_chat_id>/delete/', sharing.delete_shared_chat, name='delete_shared_chat'),
+    path('shared/expired/', sharing.shared_expired, name='shared_expired'),
+    path('shared/access-denied/', sharing.shared_access_denied, name='shared_access_denied'),
 ] 

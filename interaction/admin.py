@@ -206,16 +206,16 @@ class FavoritePromptAdmin(admin.ModelAdmin):
 
 @admin.register(SharedChat)
 class SharedChatAdmin(admin.ModelAdmin):
-    list_display = ('conversation_link', 'shared_by', 'shared_with', 'is_public', 'created_at')
+    list_display = ('conversation_link', 'created_by_display', 'recipient_display', 'is_public', 'created_at')
     list_filter = ('is_public', 'created_at')
-    search_fields = ('conversation__title', 'shared_by__username', 'shared_with__username')
+    search_fields = ('conversation__title', 'created_by__username', 'recipient__username')
     readonly_fields = ('created_at', 'access_token', 'id')
     date_hierarchy = 'created_at'
-    raw_id_fields = ('conversation', 'shared_by', 'shared_with')
+    raw_id_fields = ('conversation', 'created_by', 'recipient')
     
     def get_queryset(self, request):
         """Optimize query by prefetching related objects"""
-        return super().get_queryset(request).select_related('conversation', 'shared_by', 'shared_with')
+        return super().get_queryset(request).select_related('conversation', 'created_by', 'recipient')
     
     def conversation_link(self, obj):
         """Display a link to the conversation"""
@@ -223,8 +223,24 @@ class SharedChatAdmin(admin.ModelAdmin):
         return format_html('<a href="{}">{}</a>', url, obj.conversation.title)
     conversation_link.short_description = 'Conversation'
     conversation_link.admin_order_field = 'conversation__title'
-
-# UserFavorite admin has been removed as we're now using the ManyToManyField in CustomUser
+    
+    def created_by_display(self, obj):
+        """Display the user who created the shared chat"""
+        if obj.created_by:
+            url = reverse('admin:users_customuser_change', args=[obj.created_by.id])
+            return format_html('<a href="{}">{}</a>', url, obj.created_by.username)
+        return '-'
+    created_by_display.short_description = 'Shared By'
+    created_by_display.admin_order_field = 'created_by__username'
+    
+    def recipient_display(self, obj):
+        """Display the user the conversation is shared with"""
+        if obj.recipient:
+            url = reverse('admin:users_customuser_change', args=[obj.recipient.id])
+            return format_html('<a href="{}">{}</a>', url, obj.recipient.username)
+        return 'Public' if obj.is_public else '-'
+    recipient_display.short_description = 'Shared With'
+    recipient_display.admin_order_field = 'recipient__username'
 
 # Register with our custom admin site
 admin_site.register(Conversation, ConversationAdmin)

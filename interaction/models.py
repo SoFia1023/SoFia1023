@@ -144,21 +144,22 @@ class SharedChat(models.Model):
     Model for sharing conversations with other users or publicly.
     
     This model enables users to share their conversations either with specific users
-    or publicly via an access token.
+    or publicly via an access token, with optional expiration.
     
     Attributes:
         id (UUIDField): Unique identifier for the shared chat
         conversation (ForeignKey): Reference to the conversation being shared
-        shared_by (ForeignKey): Reference to the user sharing the conversation
-        shared_with (ForeignKey): Reference to the user the conversation is shared with (if not public)
+        created_by (ForeignKey): Reference to the user who created the shared chat
+        recipient (ForeignKey): Reference to the user the conversation is shared with (if not public)
         is_public (BooleanField): Whether the conversation is publicly accessible
         access_token (CharField): Unique token for accessing the shared conversation
         created_at (DateTimeField): When the conversation was shared
+        expiration_days (PositiveIntegerField): Number of days until the shared chat expires
     """
     id: models.UUIDField = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     conversation: models.ForeignKey = models.ForeignKey(Conversation, on_delete=models.CASCADE)
-    shared_by: models.ForeignKey = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='shared_chats')
-    shared_with: models.ForeignKey = models.ForeignKey(
+    created_by: models.ForeignKey = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='shared_chats')
+    recipient: models.ForeignKey = models.ForeignKey(
         settings.AUTH_USER_MODEL, 
         on_delete=models.CASCADE, 
         null=True, 
@@ -168,16 +169,34 @@ class SharedChat(models.Model):
     is_public: models.BooleanField = models.BooleanField(default=False)
     access_token: models.CharField = models.CharField(max_length=64, unique=True)
     created_at: models.DateTimeField = models.DateTimeField(auto_now_add=True)
+    expiration_days: models.PositiveIntegerField = models.PositiveIntegerField(default=7, help_text="Number of days until the shared chat expires")
     
     def __str__(self) -> str:
-        shared_by_name = self.shared_by.username if hasattr(self.shared_by, 'username') else "Unknown User"
+        created_by_name = self.created_by.username if hasattr(self.created_by, 'username') else "Unknown User"
         if self.is_public:
-            return f"Public share by {shared_by_name}"
-        elif self.shared_with:
-            shared_with_name = self.shared_with.username if hasattr(self.shared_with, 'username') else "Unknown User"
-            return f"Shared by {shared_by_name} with {shared_with_name}"
+            return f"Public share by {created_by_name}"
+        elif self.recipient:
+            recipient_name = self.recipient.username if hasattr(self.recipient, 'username') else "Unknown User"
+            return f"Shared by {created_by_name} with {recipient_name}"
         else:
-            return f"Private share by {shared_by_name}"
+            return f"Private share by {created_by_name}"
+    
+    def is_expired(self) -> bool:
+        """
+        Check if the shared chat has expired.
+        
+        Returns:
+            bool: True if the shared chat has expired, False otherwise
+        """
+        if self.expiration_days <= 0:
+            # If expiration_days is 0 or negative, the shared chat never expires
+            return False
+            
+        # Calculate the expiration date
+        expiration_date = self.created_at + timezone.timedelta(days=self.expiration_days)
+        
+        # Check if the current time is past the expiration date
+        return timezone.now() > expiration_date
 
 
 # UserFavorite model has been removed in favor of using the ManyToManyField in CustomUser model
