@@ -39,6 +39,15 @@ def direct_chat(request: HttpRequest) -> HttpResponse:
     conversation = None
     messages_list = []
     
+    # Debug logging
+    logger = logging.getLogger(__name__)
+    logger.info(f"Direct chat view called with conversation_id: {conversation_id}")
+    
+    # Log all available messages in the database for debugging
+    all_messages_count = Message.objects.count()
+    all_conversations_count = Conversation.objects.count()
+    logger.info(f"Total messages in database: {all_messages_count}, Total conversations: {all_conversations_count}")
+    
     if conversation_id:
         try:
             # Get the conversation if it exists and belongs to the user
@@ -51,9 +60,31 @@ def direct_chat(request: HttpRequest) -> HttpResponse:
             messages_list = Message.objects.filter(
                 conversation=conversation
             ).order_by('timestamp')
+            
+            # Debug logging
+            logger.info(f"Found {messages_list.count()} messages for conversation {conversation_id}")
+            
+            # Force evaluation of the queryset
+            messages_list = list(messages_list)
+            
+            for msg in messages_list:
+                logger.info(f"Message: {msg.id}, is_user: {msg.is_user}, content: {msg.content[:50]}...")
         except (Conversation.DoesNotExist, ValueError):
-            # If the conversation doesn't exist or ID is invalid, ignore it
-            pass
+            # If the conversation doesn't exist or ID is invalid, create an empty list
+            messages_list = []
+            logger.warning(f"Conversation {conversation_id} not found or invalid")
+            
+    # If we have no messages but have conversations in the database, try to get the most recent conversation
+    if not messages_list and Conversation.objects.filter(user=request.user).exists():
+        try:
+            # Get the most recent conversation for this user
+            recent_conversation = Conversation.objects.filter(user=request.user).order_by('-updated_at').first()
+            if recent_conversation:
+                conversation = recent_conversation
+                messages_list = list(Message.objects.filter(conversation=conversation).order_by('timestamp'))
+                logger.info(f"Using most recent conversation: {conversation.id} with {len(messages_list)} messages")
+        except Exception as e:
+            logger.error(f"Error getting recent conversation: {str(e)}")
     
     # Initialize the message form
     form = MessageForm()
@@ -63,7 +94,9 @@ def direct_chat(request: HttpRequest) -> HttpResponse:
     
     return render(request, 'interaction/direct_chat.html', {
         'conversation': conversation,
-        'messages': messages_list,
+        'conversation_id': conversation_id,  # Pass the original conversation_id as well
+        'messages_list': messages_list,
+        'chat_messages': messages_list,  # Add an alternative name to avoid potential conflicts
         'ai_tools': ai_tools,
         'form': form
     })
@@ -160,15 +193,32 @@ def message_view(request: HttpRequest, conversation_id: Optional[uuid.UUID] = No
     """
     user = request.user
     
+    # Log request details
+    logger.info(f"Message view called with conversation_id: {conversation_id}")
+    logger.info(f"Request content type: {request.content_type}")
+    logger.info(f"POST data present: {bool(request.POST)}")
+    if request.POST:
+        logger.info(f"POST keys: {list(request.POST.keys())}")
+    
     # Get the message content from the request
-    try:
-        data = json.loads(request.body)
-        user_message = data.get('message', '').strip()
-        ai_tool_id = data.get('ai_tool_id')
-    except json.JSONDecodeError:
-        return JsonResponse({
-            'error': 'Invalid JSON data'
-        }, status=400)
+    # Try to get data from POST first (form data)
+    if request.POST:
+        user_message = request.POST.get('message', '').strip()
+        ai_tool_id = request.POST.get('ai_tool_id')
+        logger.info(f"Got message from POST: '{user_message[:50]}...' (truncated)")
+    else:
+        # If not in POST, try to parse JSON data
+        try:
+            logger.info("No POST data, trying to parse request body as JSON")
+            data = json.loads(request.body)
+            user_message = data.get('message', '').strip()
+            ai_tool_id = data.get('ai_tool_id')
+            logger.info(f"Got message from JSON: '{user_message[:50]}...' (truncated)")
+        except json.JSONDecodeError:
+            logger.error("Failed to parse request body as JSON")
+            return JsonResponse({
+                'error': 'Invalid request data'
+            }, status=400)
     
     # Validate the message
     errors = {}
@@ -207,7 +257,9 @@ def message_view(request: HttpRequest, conversation_id: Optional[uuid.UUID] = No
         
         # If no AI tool is specified, use smart routing
         if not ai_tool:
-            ai_tool, confidence = route_message_to_ai_tool(user_message)
+            ai_tool = route_message_to_ai_tool(user_message)
+            # Log the selected AI tool for debugging
+            logger.info(f"Smart routing selected AI tool: {ai_tool.name if ai_tool else 'None'}")
         
         # Create a new conversation with the selected AI tool
         conversation = Conversation.objects.create(
@@ -220,7 +272,7 @@ def message_view(request: HttpRequest, conversation_id: Optional[uuid.UUID] = No
     new_message = Message(
         conversation=conversation,
         content=user_message,
-        is_from_user=True
+        is_user=True  # Using the correct field name from the model
     )
     
     # Validate the message with our form
@@ -236,30 +288,48 @@ def message_view(request: HttpRequest, conversation_id: Optional[uuid.UUID] = No
     # Get the AI tool for this conversation
     ai_tool = conversation.ai_tool
     
-    # Get the AI service for this tool
-    ai_service = AIService(ai_tool)
+    # Get the AI tool configuration
+    service_config = {
+        'api_type': ai_tool.api_type,
+        'api_model': ai_tool.api_model
+    }
     
-    # Get the AI response
-    ai_response = ai_service.get_response(user_message)
+    # Get the AI response using the static method
+    response = AIService.send_to_ai_service(user_message, service_config)
+    
+    # Extract the response content
+    if response.get('success', False):
+        ai_response = response.get('data', 'Sorry, I could not process your request.')
+    else:
+        ai_response = response.get('error', 'Sorry, an error occurred while processing your request.')
     
     # Save the AI response
     ai_message = Message.objects.create(
         conversation=conversation,
         content=ai_response,
-        is_from_user=False
+        is_user=False  # Using the correct field name from the model
     )
     
     # Update the conversation's last activity time
     conversation.updated_at = timezone.now()
     conversation.save(update_fields=['updated_at'])
     
-    return JsonResponse({
-        'message': ai_response,
-        'conversation_id': str(conversation.id),
-        'ai_tool_name': ai_tool.name,
-        'timestamp': ai_message.timestamp.isoformat()
-    })
+    # Check if the request is an AJAX request
+    if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+        # If it's an AJAX request, return JSON as before
+        return JsonResponse({
+            'message': ai_response,
+            'conversation_id': str(conversation.id),
+            'ai_tool_name': ai_tool.name,
+            'timestamp': ai_message.timestamp.isoformat()
+        })
+    else:
+        # If it's a regular form submission, redirect to the chat interface
+        return redirect(f'/interaction/direct-chat/?conversation_id={conversation.id}')
 
+
+import logging
+logger = logging.getLogger(__name__)
 
 @login_required
 @require_http_methods(["POST"])
@@ -276,18 +346,41 @@ def direct_chat_message(request: HttpRequest) -> JsonResponse:
     Returns:
         JSON response with the AI's reply
     """
+    # Log request details
+    logger.info(f"Received direct chat message request: POST={bool(request.POST)}, FILES={bool(request.FILES)}")
+    logger.info(f"Content type: {request.content_type}")
+    
+    # Log POST data
+    if request.POST:
+        logger.info(f"POST data keys: {list(request.POST.keys())}")
+    
     # Get the conversation ID from the request, if any
     conversation_id = request.POST.get('conversation_id')
+    logger.info(f"Conversation ID from POST: {conversation_id}")
+    
+    # Log all request headers for debugging
+    logger.info(f"Request headers: {dict(request.headers)}")
+    
+    # Check if this is an AJAX request
+    is_ajax = request.headers.get('X-Requested-With') == 'XMLHttpRequest'
+    logger.info(f"Is AJAX request: {is_ajax}")
+    
+    # Log all form data for debugging
+    logger.info(f"POST data: {dict(request.POST)}")
     
     if conversation_id:
         try:
             # Convert the conversation ID to a UUID
             conversation_uuid = uuid.UUID(conversation_id)
+            logger.info(f"Valid conversation UUID: {conversation_uuid}")
             # Call the message view with the conversation ID
             return message_view(request, conversation_uuid)
-        except ValueError:
-            # If the conversation ID is invalid, ignore it
-            pass
+        except (ValueError, TypeError):
+            # If the conversation ID is invalid, log it and continue without it
+            logger.warning(f"Invalid conversation ID format: {conversation_id}")
+            conversation_id = None
+    else:
+        logger.info("No conversation ID provided")
     
     # If no conversation ID is provided or it's invalid, call the message view without it
     return message_view(request)

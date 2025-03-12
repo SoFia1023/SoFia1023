@@ -18,6 +18,23 @@
     
     <!-- Messages area -->
     <div id="chatMessages" style="flex: 1; overflow-y: auto; padding: 16px 24px;">
+        <!-- Debug info (collapsible) -->
+        <details style="background-color: #f8f9fa; padding: 12px; margin-bottom: 16px; border-radius: 8px; font-size: 0.875rem; border: 1px solid #e5e7eb;">
+            <summary style="font-weight: 600; cursor: pointer; color: #4b5563;">Debug Info</summary>
+            <div style="margin-top: 8px; padding-top: 8px; border-top: 1px solid #e5e7eb;">
+                <p style="margin: 4px 0;">Conversation ID: {{ conversation.id|default:'None' }}</p>
+                <p style="margin: 4px 0;">Messages count: {{ messages_list|length }}</p>
+                <p style="margin: 4px 0;">Messages data:</p>
+                <ul style="margin: 4px 0; padding-left: 20px;">
+                    {% for message in messages_list %}
+                        <li style="margin: 4px 0;">ID: {{ message.id }}, is_user: {{ message.is_user }}, content: {{ message.content|truncatechars:50 }}</li>
+                    {% empty %}
+                        <li style="margin: 4px 0;">No messages found</li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </details>
+        
         <!-- Actual messages -->
         <div id="messagesContainer">
             {% if messages_list|length == 0 %}
@@ -113,6 +130,7 @@
         // Scroll to bottom
         function scrollToBottom() {
             chatMessages.scrollTop = chatMessages.scrollHeight;
+            console.log('Scrolled to bottom, height:', chatMessages.scrollHeight);
         }
         
         // Scroll to bottom on page load

@@ -9,7 +9,43 @@
   <title>{% block title %}Inspire AI{% endblock %}</title>
   
   <!-- Bootstrap 5.3.2 CSS -->
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-T3c6CoIi6uLrA9TneNEoa7RxnatzjcDSCmG1MXxSR1GAsXEV/Dwwykc2MPK8M2HN" crossorigin="anonymous">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" crossorigin="anonymous" referrerpolicy="no-referrer">
+  
+  <!-- Bootstrap Icons -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" crossorigin="anonymous" referrerpolicy="no-referrer">
+  
+  <!-- Fallback for Bootstrap if CDN fails -->
+  <script>
+    // Check if Bootstrap CSS loaded correctly
+    window.addEventListener('load', function() {
+      var bootstrapCSS = document.querySelector('link[href*="bootstrap.min.css"]');
+      if (bootstrapCSS && !isStylesheetLoaded(bootstrapCSS)) {
+        console.log('Bootstrap CSS failed to load, using fallback');
+        var fallbackCSS = document.createElement('link');
+        fallbackCSS.rel = 'stylesheet';
+        fallbackCSS.href = '/static/vendor/bootstrap/css/bootstrap.min.css';
+        document.head.appendChild(fallbackCSS);
+      }
+      
+      var bootstrapIcons = document.querySelector('link[href*="bootstrap-icons.css"]');
+      if (bootstrapIcons && !isStylesheetLoaded(bootstrapIcons)) {
+        console.log('Bootstrap Icons failed to load, using fallback');
+        var fallbackIcons = document.createElement('link');
+        fallbackIcons.rel = 'stylesheet';
+        fallbackIcons.href = '/static/vendor/bootstrap-icons/bootstrap-icons.css';
+        document.head.appendChild(fallbackIcons);
+      }
+    });
+    
+    // Helper function to check if stylesheet loaded
+    function isStylesheetLoaded(link) {
+      try {
+        return link.sheet && link.sheet.cssRules.length > 0;
+      } catch (e) {
+        return false;
+      }
+    }
+  </script>
   
   <!-- Font Awesome 6 -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
