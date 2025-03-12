@@ -129,7 +129,7 @@ MEDIA_ROOT: Path = BASE_DIR / 'media'
 AUTH_USER_MODEL: str = 'users.CustomUser'
 
 # Authentication settings
-LOGIN_URL = '/login/'
+LOGIN_URL = '/users/login/'
 LOGIN_REDIRECT_URL = '/'
 
 # Logging configuration

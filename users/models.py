@@ -5,6 +5,13 @@ from typing import List
 class CustomUser(AbstractUser):
     email: models.EmailField = models.EmailField(unique=True, help_text="User email")
     first_name: models.CharField = models.CharField(max_length=255, help_text="User first name")  
+    bio: models.TextField = models.TextField(blank=True, max_length=500, help_text="User biography")
+    profile_picture: models.ImageField = models.ImageField(
+        upload_to='profile_pictures/',
+        blank=True,
+        null=True,
+        help_text="User profile picture"
+    )
 
     favorites: models.ManyToManyField = models.ManyToManyField(
         'catalog.AITool',  
