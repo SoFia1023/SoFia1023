@@ -311,15 +311,12 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## 👥 Team
 
-- Mateo Lopera Ortiz - Project Lead
-- EAFIT University - Proyecto Integrador 1
+- Mateo Lopera Ortiz
+- Maria Mercedes Olaya Lopez
+- Sofia Acosta Pareja
 
 ## 🙏 Acknowledgements
 
-- Django Team for the amazing web framework
-- Bootstrap Team for the frontend framework
-- OpenAI for API integration examples
-- Hugging Face for model hosting and APIs
 - EAFIT University for project guidance and support
 
 ---
