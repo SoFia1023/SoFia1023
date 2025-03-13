@@ -6,10 +6,14 @@ This module contains views related to AI tool details and comparisons.
 import uuid
 from typing import Any, Dict, List, Optional
 from django.http import HttpRequest, HttpResponse
-from django.shortcuts import render, get_object_or_404
+from django.shortcuts import render, get_object_or_404,redirect
 from django.views.generic import DetailView
 
-from catalog.models import AITool
+from catalog.models import AITool,Rating
+from catalog.forms import RatingForm
+from django.contrib import messages
+from django.urls import reverse
+
 # Using CustomUser.favorites directly
 
 
@@ -53,35 +57,59 @@ class AIToolDetailView(DetailView):
 def presentationAI(request: HttpRequest, id: uuid.UUID) -> HttpResponse:
     """
     View for displaying a presentation-style page for an AI tool.
-    
+
     This view renders a presentation-style page for a specific AI tool,
-    focusing on its features and capabilities.
-    
+    allowing users to rate it, mark it as a favorite, and view related tools.
+
     Args:
-        request: The HTTP request object
-        id: The UUID of the AI tool
-        
+        request: The HTTP request object.
+        id: The UUID of the AI tool.
+
     Returns:
-        Rendered presentation page
+        Rendered presentation page.
     """
-    # Get the AI tool
+    # Get AI and related tools
     ai_tool = get_object_or_404(AITool, id=id)
+    related_tools = AITool.objects.filter(category=ai_tool.category).exclude(id=ai_tool.id)[:4]
     
-    # Check if the user has favorited this AI tool
-    is_favorite = False
-    if request.user.is_authenticated:
-        is_favorite = request.user.favorites.filter(id=ai_tool.id).exists()
-    
-    # Get related AI tools in the same category
-    related_tools = AITool.objects.filter(
-        category=ai_tool.category
-    ).exclude(id=ai_tool.id)[:4]
-    
+    # Check if the user has it in favorites
+    is_favorite = request.user.is_authenticated and request.user.favorites.filter(id=ai_tool.id).exists()
+
+    # Get ratings and star ratings
+    ratings = ai_tool.ratings.all()
+    average_rating = ai_tool.get_average_rating()
+
+    # Manage rating submission
+    if request.method == "POST":
+        form = RatingForm(request.POST)
+        if form.is_valid():
+            rating, created = Rating.objects.update_or_create(
+                user=request.user, ai_tool=ai_tool,
+                defaults={'stars': form.cleaned_data['stars'], 'comment': form.cleaned_data['comment']}
+            )
+             # Recalcular el promedio después de guardar la calificación 
+            ai_tool.refresh_from_db()
+            average_rating = ai_tool.get_average_rating()
+
+            # Add a success message
+            messages.success(request, '¡Rating saved successfully!')
+        else:
+            # Add an error message if the form is invalid
+            messages.error(request, 'There was a problem saving the rating.')
+
+    else:
+        form = RatingForm()
+
     return render(request, 'catalog/PresentationAI.html', {
         'ai_tool': ai_tool,
         'is_favorite': is_favorite,
-        'related_tools': related_tools
+        'related_tools': related_tools,
+        'ratings': ratings,
+        'average_rating': average_rating,
+        'form': form
     })
+
+
 
 
 def compare_tools(request: HttpRequest) -> HttpResponse:

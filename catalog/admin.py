@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import AITool
+from .models import AITool, Rating
 from inspireIA.admin import admin_site
 from django.utils.html import format_html
 from django.urls import reverse
@@ -8,6 +8,8 @@ from django.http import HttpResponseRedirect, HttpRequest
 from django.core.management import call_command
 from typing import List, Dict, Any, Optional, Union, Tuple, Set, Callable, Type, cast
 from django.db.models.query import QuerySet
+
+
 
 class AIToolAdmin(admin.ModelAdmin):
     list_display = ('name', 'provider', 'category', 'popularity', 'api_type', 'is_featured', 'view_favorites_count', 'image_preview')
@@ -161,8 +163,16 @@ class AIToolAdmin(admin.ModelAdmin):
             )
     refresh_logos.short_description = "🖼️ Refresh logos for selected tools"
 
+
+
+class RatingAdmin(admin.ModelAdmin):
+    list_display = ('user', 'ai_tool', 'stars', 'created_at')
+    list_filter = ('stars', 'created_at')
+    search_fields = ('user__username', 'ai_tool__name', 'comment')
+
 # Register models with our custom admin site
 admin_site.register(AITool, AIToolAdmin)
 
 # Also register with the default admin site for backward compatibility
 admin.site.register(AITool, AIToolAdmin)
+admin.site.register(Rating, RatingAdmin)

@@ -243,6 +243,10 @@
     animation: messageInLeft 0.3s ease forwards;
   }
   
+  .ratings-section {
+    font-family: inherit;
+  }
+
   @keyframes messageInRight {
     from { opacity: 0; transform: translateX(20px); }
     to { opacity: 1; transform: translateX(0); }
@@ -283,93 +287,7 @@
     text-decoration: none;
   }
   
-  .rating-stars {
-    font-size: 1.5rem;
-    margin-bottom: 1rem;
-  }
-  
-  .rating-stars i {
-    color: var(--neutral-300);
-    margin-right: 0.25rem;
-    cursor: pointer;
-    transition: all 0.2s ease;
-  }
-  
-  .rating-stars i.active, .rating-stars i:hover {
-    color: var(--warning-color);
-  }
-  
-  .popularity-gauge {
-    position: relative;
-    height: 8px;
-    background-color: var(--neutral-200);
-    border-radius: 4px;
-    overflow: hidden;
-  }
-  
-  .popularity-value {
-    position: absolute;
-    top: 0;
-    left: 0;
-    height: 100%;
-    background-color: var(--warning-color);
-    border-radius: 4px;
-    transition: width 1s ease;
-  }
-  
-  .rating-distribution {
-    margin-top: 1.5rem;
-  }
-  
-  .rating-bar {
-    display: flex;
-    align-items: center;
-    margin-bottom: 0.75rem;
-  }
-  
-  .rating-label {
-    width: 30px;
-    margin-right: 1rem;
-    color: var(--neutral-700);
-    font-size: 0.85rem;
-  }
-  
-  .rating-progress {
-    flex: 1;
-    height: 6px;
-    background-color: var(--neutral-200);
-    border-radius: 3px;
-    position: relative;
-    overflow: hidden;
-  }
-  
-  .rating-bar-value {
-    position: absolute;
-    top: 0;
-    left: 0;
-    height: 100%;
-    background-color: var(--warning-color);
-    border-radius: 3px;
-  }
-  
-  .rating-count {
-    width: 30px;
-    margin-left: 1rem;
-    color: var(--neutral-600);
-    font-size: 0.85rem;
-    text-align: right;
-  }
-  
-  .animate-on-scroll {
-    opacity: 0;
-    transform: translateY(30px);
-    transition: opacity 0.6s ease, transform 0.6s ease;
-  }
-  
-  .animate-on-scroll.visible {
-    opacity: 1;
-    transform: translateY(0);
-  }
+
   
   .category-card {
     background-color: rgba(91, 70, 244, 0.03);
@@ -628,7 +546,7 @@
               </button>
             </div>
           </div>
-          
+           
           <div class="d-flex justify-content-end mt-3">
             <button id="download-button" class="btn btn-outline-secondary btn-sm">
               <i class="fas fa-download me-1"></i>Download Conversation
@@ -637,56 +555,55 @@
         </div>
         
         <div class="section-divider"></div>
-        
-        <!-- Ratings & Reviews -->
-        <div class="animate-on-scroll" style="animation-delay: 0.5s">
+
+         <!-- Qualifications Section -->
+        <div class="ratings-section mt-4">
           <h2 class="section-title">
             <i class="fas fa-star"></i>Ratings & Reviews
           </h2>
-          
-          <div class="row align-items-center">
-            <div class="col-md-6">
-              <div class="text-center mb-4">
-                <div class="display-4 fw-bold text-warning">{{ ai_tool.popularity }}</div>
-                <div class="text-muted mb-2">out of 10</div>
-                
-                <div class="rating-stars">
-                  {% for i in "12345678910"|make_list %}
-                    <i class="fas fa-star {% if forloop.counter <= ai_tool.popularity %}active{% endif %}"></i>
-                  {% endfor %}
-                </div>
-                
-                <div class="popularity-gauge mb-2">
-                  <div class="popularity-value" style="width: {{ ai_tool.popularity|multiply:10 }}%;"></div>
-                </div>
-                
-                <div class="text-muted small">Based on user ratings and popularity metrics</div>
+          <h1 class="fw-bold mb-2">{{ ai_tool.name }}</h1>
+
+          <h3>Average rating: {{ average_rating }} ⭐</h3>
+          <br>
+      
+          {% if user.is_authenticated %}
+          <h4>Rate this AI</h4>
+          <form method="post">
+              {% csrf_token %}
+              {{ form.as_p }}
+              <button type="submit" class="btn btn-primary">Send</button>
+          </form>
+          {% else %}
+          <a href="{% url 'catalog:login' %}" class="btn btn-outline-primary mt-2">
+              <i class="fas fa-sign-in-alt"></i> Sign in to rate
+          </a>
+          {% endif %}
+          <br>
+          <br>
+
+          <h3>Opinions</h3>
+          {% for rating in ratings %}
+              <div class="opinion">
+                  <p><strong>{{ rating.user.username }}</strong> - 
+                      <span class="stars">
+                          {% for i in "12345"|make_list %}
+                              {% if forloop.counter <= rating.stars %}
+                                  ⭐
+                              {% else %}
+                                  ☆
+                              {% endif %}
+                          {% endfor %}
+                      </span>
+                  </p>
+                  <p>{{ rating.comment }}</p> <!-- Comentario del usuario -->
               </div>
-            </div>
-            
-            <div class="col-md-6">
-              <div class="rating-distribution">
-                {% for i in "12345"|make_list %}
-                  {% with num_reversed=6|subtract:forloop.counter %}
-                    <div class="rating-bar">
-                      <div class="rating-label">{{ num_reversed }}</div>
-                      <div class="rating-progress">
-                        <div class="rating-bar-value" style="width: {% if num_reversed == 5 %}60%{% elif num_reversed == 4 %}40%{% elif num_reversed == 3 %}80%{% elif num_reversed == 2 %}30%{% else %}10%{% endif %};"></div>
-                      </div>
-                      <div class="rating-count">{% if num_reversed == 5 %}24{% elif num_reversed == 4 %}16{% elif num_reversed == 3 %}32{% elif num_reversed == 2 %}12{% else %}4{% endif %}</div>
-                    </div>
-                  {% endwith %}
-                {% endfor %}
-              </div>
-              
-              <div class="d-grid mt-4">
-                <button class="btn btn-outline-primary" id="rate-button">
-                  <i class="fas fa-star me-1"></i>Rate this AI Tool
-                </button>
-              </div>
-            </div>
-          </div>
+              <hr> <!-- Línea divisoria entre cada opinión -->
+          {% empty %}
+              <p>There are no ratings or comments yet.</p>
+          {% endfor %}
+
         </div>
+        
       </div>
     </div>
   </div>
@@ -810,6 +727,7 @@
 
 <script>
   document.addEventListener("DOMContentLoaded", function() {
+ 
     // Process description text
     let description = `{{ ai_tool.description|escapejs }}`; 
     let parts = description.split('.'); // Split by periods
@@ -979,5 +897,8 @@
       });
     }
   });
+
+  
+
 </script>
 {% endblock %}

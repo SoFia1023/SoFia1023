@@ -84,7 +84,7 @@ def login_view(request: HttpRequest) -> HttpResponse:
     else:
         form = AuthenticationForm()
         
-    return render(request, 'catalog/auth/login.html', {
+    return render(request, 'catalog/login.html', {
         'form': form
     })
 

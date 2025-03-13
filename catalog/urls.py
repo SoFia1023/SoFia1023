@@ -7,6 +7,7 @@ app_name = 'catalog'
 # Type hint for URL patterns
 urlpatterns: List[Union[URLPattern, URLResolver]] = [
     # Main pages
+    path('', views.home, name='home'),
     path('', views.CatalogView.as_view(), name='catalog'),
     path('presentation/<uuid:id>/', views.presentationAI, name='presentationAI'),
     path('compare/', views.compare_tools, name='compare'),
@@ -16,6 +17,7 @@ urlpatterns: List[Union[URLPattern, URLResolver]] = [
     path('login/', views.login_view, name='login'),
     path('logout/', views.logout_view, name='logout'),
     path('profile/', views.profile_view, name='profile'),
+
     
     # Favorites
     path('ai/<uuid:ai_id>/favorite/', views.toggle_favorite, name='toggle_favorite'),
