@@ -25,6 +25,6 @@ urlpatterns: List[Union[URLPattern, URLResolver]] = [
     path('dashboard/', dashboard, name='dashboard'),
     
     # Admin URLs
-    path('admin/users/<int:user_id>/permissions/', check_user_permissions, name='check_user_permissions'),
+    path('admin/users/<uuid:user_id>/permissions/', check_user_permissions, name='check_user_permissions'),
 ]
 

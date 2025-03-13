@@ -7,7 +7,8 @@ from typing import Any, Dict
 from django.http import HttpRequest, HttpResponse
 from django.shortcuts import render
 
-from catalog.models import AITool
+from django.db.models import Avg
+from catalog.models import AITool, Rating
 
 
 def home(request: HttpRequest) -> HttpResponse:
@@ -23,9 +24,11 @@ def home(request: HttpRequest) -> HttpResponse:
     Returns:
         Rendered home page with popular AI tools context
     """
-    # Get 3 most popular AIs to showcase
-    popular_ais = AITool.objects.all().order_by('-popularity')[:3]
+    popular_ais = AITool.objects.annotate(
+        average_rating=Avg('ratings__stars')
+    ).order_by('-average_rating')[:6]
     
-    return render(request, 'catalog/home.html', {
-        'popular_ais': popular_ais
-    })
+    context = {
+        'popular_ais': popular_ais,
+    }
+    return render(request, 'catalog/home.html', context)

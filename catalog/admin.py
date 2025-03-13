@@ -12,7 +12,7 @@ from django.db.models.query import QuerySet
 
 
 class AIToolAdmin(admin.ModelAdmin):
-    list_display = ('name', 'provider', 'category', 'popularity', 'api_type', 'is_featured', 'view_favorites_count', 'image_preview')
+    list_display = ('name', 'provider', 'category', 'get_popularity', 'api_type', 'is_featured', 'view_favorites_count', 'image_preview')
     list_filter = ('category', 'api_type', 'is_featured', 'provider')
     search_fields = ('name', 'provider', 'description', 'category')
     list_editable = ('is_featured',)
@@ -38,6 +38,10 @@ class AIToolAdmin(admin.ModelAdmin):
         'duplicate_tools',
         'refresh_logos'
     ]
+
+    def get_popularity(self, obj):
+        return f"{obj.popularity:.1f}"
+    get_popularity.short_description = 'Popularidad'
     
     def get_queryset(self, request: HttpRequest) -> QuerySet[AITool]:
         """Optimize query by annotating with favorites count"""

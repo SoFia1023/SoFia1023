@@ -53,20 +53,19 @@ class AIToolDetailView(DetailView):
         
         return context
 
-
+# Make a rating with stars and reviews.  
 def presentationAI(request: HttpRequest, id: uuid.UUID) -> HttpResponse:
     """
     View for displaying a presentation-style page for an AI tool.
 
     This view renders a presentation-style page for a specific AI tool,
-    allowing users to rate it, mark it as a favorite, and view related tools.
+    allowing users to rate it.
 
     Args:
         request: The HTTP request object.
         id: The UUID of the AI tool.
 
-    Returns:
-        Rendered presentation page.
+
     """
     # Get AI and related tools
     ai_tool = get_object_or_404(AITool, id=id)
@@ -78,6 +77,9 @@ def presentationAI(request: HttpRequest, id: uuid.UUID) -> HttpResponse:
     # Get ratings and star ratings
     ratings = ai_tool.ratings.all()
     average_rating = ai_tool.get_average_rating()
+
+    # Convert string response to numeric for popularity
+    popularity = average_rating if isinstance(average_rating, (int, float)) else 0
 
     # Manage rating submission
     if request.method == "POST":
@@ -106,6 +108,7 @@ def presentationAI(request: HttpRequest, id: uuid.UUID) -> HttpResponse:
         'related_tools': related_tools,
         'ratings': ratings,
         'average_rating': average_rating,
+        'popularity': popularity,  # Enviar el promedio como popularidad
         'form': form
     })
 
