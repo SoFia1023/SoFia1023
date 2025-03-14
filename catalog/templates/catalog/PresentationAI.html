@@ -496,61 +496,6 @@
         </div>
         
         <div class="section-divider"></div>
-        
-        <!-- Interactive Demo -->
-        <div class="mb-4 animate-on-scroll" style="animation-delay: 0.4s">
-          <h2 class="section-title">
-            <i class="fas fa-robot"></i>Try It Out
-          </h2>
-          
-          <p class="text-muted mb-4">Experience {{ ai_tool.name }} directly through our platform:</p>
-          
-          <div class="chat-container">
-            <div class="chat-header">
-              <div class="d-flex align-items-center">
-                {% if ai_tool.image %}
-                  <img src="{{ ai_tool.image.url }}" alt="{{ ai_tool.name }}" class="rounded" width="30" height="30" style="object-fit: cover;">
-                {% else %}
-                  <div class="rounded bg-primary text-white d-inline-flex align-items-center justify-content-center" style="width: 30px; height: 30px; font-size: 0.8rem;">
-                    {{ ai_tool.name|slice:":1"|upper }}
-                  </div>
-                {% endif %}
-                <span class="ms-2 fw-medium">{{ ai_tool.name }}</span>
-              </div>
-              
-              <div>
-                <button id="clear-button" class="btn btn-sm btn-outline-secondary">
-                  <i class="fas fa-trash-alt me-1"></i>Clear
-                </button>
-              </div>
-            </div>
-            
-            <div id="ai-response" class="chat-messages">
-              <div class="text-center text-muted my-5">
-                <div class="mb-3">
-                  <i class="fas fa-comment-dots fa-3x"></i>
-                </div>
-                <p>Start a conversation with {{ ai_tool.name }}!</p>
-                <p class="small">Type your message below to try this AI tool.</p>
-              </div>
-            </div>
-            
-            <div class="chat-input-container">
-              <input type="text" id="ai-input" class="form-control chat-input" placeholder="Type your message here...">
-              <button id="send-button" class="btn chat-submit">
-                <i class="fas fa-paper-plane"></i>
-              </button>
-            </div>
-          </div>
-           
-          <div class="d-flex justify-content-end mt-3">
-            <button id="download-button" class="btn btn-outline-secondary btn-sm">
-              <i class="fas fa-download me-1"></i>Download Conversation
-            </button>
-          </div>
-        </div>
-        
-        <div class="section-divider"></div>
 
          <!-- # Make a rating with stars and reviews.-->
          <div class="ratings-section mt-4">
@@ -618,53 +563,6 @@
   
   <!-- Sidebar -->
   <div class="col-lg-4">
-    <!-- Related AIs -->
-    <div class="card shadow-sm mb-4 animate-on-scroll" style="animation-delay: 0.15s">
-      <div class="card-header bg-white py-3">
-        <h3 class="h5 mb-0 fw-bold">Related AI Tools</h3>
-      </div>
-      
-      <div class="card-body p-0">
-        {% if related_ais %}
-          {% for related in related_ais %}
-            <div class="related-tool {% if not forloop.last %}border-bottom{% endif %} p-3">
-              <div class="d-flex">
-                {% if related.image %}
-                  <img src="{{ related.image.url }}" alt="{{ related.name }}" class="related-tool-img me-3">
-                {% else %}
-                  <div class="rounded bg-light-purple text-primary d-inline-flex align-items-center justify-content-center related-tool-img me-3">
-                    <span class="fw-bold">{{ related.name|slice:":1"|upper }}</span>
-                  </div>
-                {% endif %}
-                
-                <div>
-                  <h4 class="h6 fw-bold mb-1">{{ related.name }}</h4>
-                  <p class="text-muted small mb-2">{{ related.provider }}</p>
-                  
-                  <div class="d-flex">
-                    <a href="{% url 'catalog:presentationAI' related.id %}" class="btn btn-sm btn-primary me-2">
-                      View
-                    </a>
-                    
-                    <a href="{% url 'interaction:chat' ai_id=related.id %}" class="btn btn-sm btn-outline-primary">
-                      <i class="fas fa-comment-alt me-1"></i>Chat
-                    </a>
-                  </div>
-                </div>
-              </div>
-            </div>
-          {% endfor %}
-        {% else %}
-          <div class="p-4 text-center">
-            <div class="text-muted mb-3">
-              <i class="fas fa-search fa-2x"></i>
-            </div>
-            <p class="text-muted">No related AI tools found.</p>
-          </div>
-        {% endif %}
-      </div>
-    </div>
-    
     <!-- Category Information -->
     <div class="card shadow-sm mb-4 animate-on-scroll" style="animation-delay: 0.25s">
       <div class="card-header bg-white py-3">
@@ -768,21 +666,6 @@
       }
     });
     
-    // Chat functionality
-    const aiInput = document.getElementById('ai-input');
-    const sendButton = document.getElementById('send-button');
-    const aiResponse = document.getElementById('ai-response');
-    const clearButton = document.getElementById('clear-button');
-    const downloadButton = document.getElementById('download-button');
-    
-    // Sample responses for demo
-    const sampleResponses = [
-      "I'm an AI assistant designed to help answer your questions and provide information about {{ ai_tool.name }}.",
-      "That's an interesting question! Let me think about that...",
-      "I can help you with that. Here's what I found about {{ ai_tool.name }}...",
-      "Based on my knowledge of {{ ai_tool.name }}, I can offer the following information...",
-      "I'm not sure about that specific query. Could you provide more details?"
-    ];
     
     // Send button functionality
     sendButton.addEventListener('click', function() {
@@ -866,11 +749,7 @@
         </div>
       `;
     });
-    
-    // Download button (demo)
-    downloadButton.addEventListener('click', function() {
-      showFeedback('Conversation downloaded!');
-    });
+  
     
     // Copy link button
     document.getElementById('copy-link-button').addEventListener('click', function() {

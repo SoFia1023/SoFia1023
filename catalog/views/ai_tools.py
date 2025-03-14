@@ -53,6 +53,7 @@ class AIToolDetailView(DetailView):
         
         return context
 
+
 # Make a rating with stars and reviews.  
 def presentationAI(request: HttpRequest, id: uuid.UUID) -> HttpResponse:
     """View for displaying a presentation-style page for an AI tool."""
