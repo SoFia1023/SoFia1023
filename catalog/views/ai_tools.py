@@ -55,60 +55,47 @@ class AIToolDetailView(DetailView):
 
 # Make a rating with stars and reviews.  
 def presentationAI(request: HttpRequest, id: uuid.UUID) -> HttpResponse:
-    """
-    View for displaying a presentation-style page for an AI tool.
-
-    This view renders a presentation-style page for a specific AI tool,
-    allowing users to rate it.
-
-    Args:
-        request: The HTTP request object.
-        id: The UUID of the AI tool.
-
-
-    """
-    # Get AI and related tools
-    ai_tool = get_object_or_404(AITool, id=id)
+    """View for displaying a presentation-style page for an AI tool."""
+    
+    # Get AI tool with prefetched ratings
+    ai_tool = get_object_or_404(
+        AITool.objects.prefetch_related('ratings'), 
+        id=id
+    )
+    
+    # Get related tools
     related_tools = AITool.objects.filter(category=ai_tool.category).exclude(id=ai_tool.id)[:4]
     
     # Check if the user has it in favorites
     is_favorite = request.user.is_authenticated and request.user.favorites.filter(id=ai_tool.id).exists()
 
-    # Get ratings and star ratings
-    ratings = ai_tool.ratings.all()
-    average_rating = ai_tool.get_average_rating()
-
-    # Convert string response to numeric for popularity
-    popularity = average_rating if isinstance(average_rating, (int, float)) else 0
-
     # Manage rating submission
-    if request.method == "POST":
+    if request.method == "POST" and request.user.is_authenticated:
         form = RatingForm(request.POST)
         if form.is_valid():
-            rating, created = Rating.objects.update_or_create(
-                user=request.user, ai_tool=ai_tool,
-                defaults={'stars': form.cleaned_data['stars'], 'comment': form.cleaned_data['comment']}
+            Rating.objects.update_or_create(
+                user=request.user,
+                ai_tool=ai_tool,
+                defaults={
+                    'stars': form.cleaned_data['stars'],
+                    'comment': form.cleaned_data['comment']
+                }
             )
-             # Recalcular el promedio después de guardar la calificación 
-            ai_tool.refresh_from_db()
-            average_rating = ai_tool.get_average_rating()
-
-            # Add a success message
             messages.success(request, '¡Rating saved successfully!')
+            return redirect('catalog:presentationAI', id=id)
         else:
-            # Add an error message if the form is invalid
-            messages.error(request, 'There was a problem saving the rating.')
-
+            messages.error(request, 'Error saving rating.')
     else:
         form = RatingForm()
 
+    # Prepare context with all necessary data
     return render(request, 'catalog/PresentationAI.html', {
         'ai_tool': ai_tool,
         'is_favorite': is_favorite,
         'related_tools': related_tools,
-        'ratings': ratings,
-        'average_rating': average_rating,
-        'popularity': popularity,  # Enviar el promedio como popularidad
+        'ratings': ai_tool.ratings.select_related('user'),
+        'average_rating': ai_tool.popularity,  # Using popularity field directly
+        'popularity': ai_tool.popularity,  # For consistency
         'form': form
     })
 

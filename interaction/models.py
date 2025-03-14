@@ -23,15 +23,15 @@ class Conversation(models.Model):
         updated_at (DateTimeField): When the conversation was last updated
     """
     id: models.UUIDField = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    user: models.ForeignKey = models.ForeignKey(
-        settings.AUTH_USER_MODEL, 
-        on_delete=models.CASCADE, 
-        null=True, 
+    user = models.ForeignKey(
+        'users.CustomUser',  
+        on_delete=models.CASCADE,
+        null=True,
         blank=True,
         related_name='interaction_conversations'
     )
-    ai_tool: models.ForeignKey = models.ForeignKey(
-        AITool, 
+    ai_tool = models.ForeignKey(
+        'catalog.AITool',  
         on_delete=models.CASCADE,
         related_name='interaction_conversations'
     )

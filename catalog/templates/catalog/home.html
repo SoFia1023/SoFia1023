@@ -681,10 +681,10 @@
               
               <span class="ai-card-category">{{ ai.category }}</span>
               <span class="ai-card-rating">
-                <i class="fas fa-star text-warning me-1"></i> 
-                {{ ai.average_rating|default:"No ratings"|floatformat:1 }}
-                {% if ai.average_rating %}/5{% endif %}
-            </span>
+                  <i class="fas fa-star text-warning me-1"></i> 
+                  {{ ai.popularity|default:"No ratings"|floatformat:1 }}
+                  {% if ai.popularity %}/5{% endif %}
+              </span>
               
             </div>
             

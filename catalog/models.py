@@ -1,13 +1,10 @@
 import uuid
 from django.db import models
 from django.conf import settings
-from typing import Any, Optional
 from django.db.models import Avg
 
 class AITool(models.Model):
-    """
-    Model representing an AI tool available in the catalog.
-    """
+    """Model representing an AI tool available in the catalog."""
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)  
     name = models.CharField(max_length=255)
     provider = models.CharField(max_length=255)
@@ -16,13 +13,6 @@ class AITool(models.Model):
     description = models.TextField()
     image = models.ImageField(upload_to='ai_images/', null=True, blank=True)
     popularity = models.FloatField(default=0)
-
-    def update_popularity(self):
-        """Actualiza la popularidad basada en el promedio de calificaciones"""
-        avg = self.ratings.aggregate(Avg('stars'))['stars__avg']
-        self.popularity = avg if avg else 0
-        self.save()
-    
     
     # API integration fields
     api_type = models.CharField(
@@ -41,31 +31,42 @@ class AITool(models.Model):
 
     def __str__(self):
         return self.name
-    
 
-    def get_average_rating(self):
-        """Calcula el promedio de calificación en estrellas."""
-        avg_rating = self.ratings.aggregate(Avg('stars'))['stars__avg']
-        return round(avg_rating, 2) if avg_rating else "There are no ratings yet."
-    
-
-# Make a rating with stars and reviews.  
 class Rating(models.Model):
+    """Model for storing user ratings and reviews."""
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     user = models.ForeignKey(
-        'users.CustomUser',  # Usar referencia por string
+        settings.AUTH_USER_MODEL,  
         on_delete=models.CASCADE,
         related_name='ai_ratings'
     )
-    ai_tool = models.ForeignKey(AITool, on_delete=models.CASCADE, related_name="ratings")
+    ai_tool = models.ForeignKey(
+        'catalog.AITool',  
+        on_delete=models.CASCADE,
+        related_name="ratings"
+    )
     stars = models.PositiveSmallIntegerField(
         choices=[(i, f"{i} star{'s' if i > 1 else ''}") for i in range(1, 6)]
     )
     comment = models.TextField(blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
+    def save(self, *args, **kwargs):
+        """Save rating and update AI tool popularity"""
+        super().save(*args, **kwargs)
+        # Update popularity directly
+        avg = self.ai_tool.ratings.aggregate(Avg('stars'))['stars__avg']
+        self.ai_tool.popularity = round(avg, 2) if avg else 0
+        self.ai_tool.save(update_fields=['popularity'])
+
     class Meta:
-        unique_together = ('user', 'ai_tool')  # Prevents a user from rating the same AI twice
+        unique_together = ('user', 'ai_tool')
 
     def __str__(self):
-        return f"{self.user.first_name} ({self.user.id}) - {self.ai_tool.name} - {self.stars}⭐"
+        return (
+            f"Rating {self.id} - "
+            f"User: {self.user.id} ({self.user.email}) - "
+            f"Tool: {self.ai_tool.id} ({self.ai_tool.name}) - "
+            f"{self.stars}⭐ - "
+            f"Created: {self.created_at.strftime('%Y-%m-%d %H:%M')}"
+        )

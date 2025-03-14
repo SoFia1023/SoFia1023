@@ -9,7 +9,7 @@ urlpatterns: List[Union[URLPattern, URLResolver]] = [
     # Main pages
     path('', views.home, name='home'),
     path('', views.CatalogView.as_view(), name='catalog'),
-    path('presentation/<uuid:id>/', views.presentationAI, name='presentationAI'),
+    path(' presentation/<uuid:id>/', views.presentationAI, name='presentationAI'),
     path('compare/', views.compare_tools, name='compare'),
     
     # User authentication

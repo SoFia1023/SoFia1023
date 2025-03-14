@@ -12,7 +12,7 @@ from django.db.models.query import QuerySet
 
 
 class AIToolAdmin(admin.ModelAdmin):
-    list_display = ('name', 'provider', 'category', 'get_popularity', 'api_type', 'is_featured', 'view_favorites_count', 'image_preview')
+    list_display = ('name', 'provider', 'category', 'popularity', 'api_type', 'is_featured', 'view_favorites_count', 'image_preview')
     list_filter = ('category', 'api_type', 'is_featured', 'provider')
     search_fields = ('name', 'provider', 'description', 'category')
     list_editable = ('is_featured',)
@@ -39,9 +39,6 @@ class AIToolAdmin(admin.ModelAdmin):
         'refresh_logos'
     ]
 
-    def get_popularity(self, obj):
-        return f"{obj.popularity:.1f}"
-    get_popularity.short_description = 'Popularidad'
     
     def get_queryset(self, request: HttpRequest) -> QuerySet[AITool]:
         """Optimize query by annotating with favorites count"""
@@ -168,15 +165,47 @@ class AIToolAdmin(admin.ModelAdmin):
     refresh_logos.short_description = "🖼️ Refresh logos for selected tools"
 
 
-
 class RatingAdmin(admin.ModelAdmin):
-    list_display = ('user', 'ai_tool', 'stars', 'created_at')
+    # Display fields in list view
+    list_display = ('get_user_info', 'get_tool_info', 'stars', 'comment', 'created_at')
+    
+    # Filtering and search
     list_filter = ('stars', 'created_at')
-    search_fields = ('user__username', 'ai_tool__name', 'comment')
+    search_fields = ('user__email', 'ai_tool__name', 'comment')
+    
+    # Read-only fields
+    readonly_fields = ('id', 'created_at')
+    
+    # Field organization
+    fieldsets = (
+        ('Rating Information', {
+            'fields': ('user', 'ai_tool', 'stars')
+        }),
+        ('Review', {
+            'fields': ('comment',),
+            'description': 'Optional text review'
+        }),
+        ('Metadata', {
+            'fields': ('id', 'created_at'),
+            'classes': ('collapse',)
+        })
+    )
 
+    def get_user_info(self, obj):
+        """Display user ID and email"""
+        return f"{obj.user.email} (ID: {obj.user.id})"
+    get_user_info.short_description = 'User'
+
+    def get_tool_info(self, obj):
+        """Display tool name and ID"""
+        return f"{obj.ai_tool.name} (ID: {obj.ai_tool.id})"
+    get_tool_info.short_description = 'AI Tool'
+
+    
 # Register models with our custom admin site
 admin_site.register(AITool, AIToolAdmin)
 
 # Also register with the default admin site for backward compatibility
 admin.site.register(AITool, AIToolAdmin)
 admin.site.register(Rating, RatingAdmin)
+
